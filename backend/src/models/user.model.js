@@ -25,9 +25,9 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
     year: {
-      type: Number,
+      type: String,
       required: true,
-      default: 2024,
+      default: "first year",
     },
   },
   { timestamps: true },

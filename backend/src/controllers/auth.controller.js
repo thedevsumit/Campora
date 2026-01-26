@@ -4,10 +4,8 @@ const User = require("../models/user.model");
 const sendOtpMail = require("../lib/sendMail");
 const Otp = require("../models/otp.model");
 
-
-const sendOtp = async (req,res) => 
-{
-    try {
+const sendOtp = async (req, res) => {
+  try {
     const { email } = req.body;
 
     if (!email) return res.status(400).json({ message: "Email required" });
@@ -16,8 +14,8 @@ const sendOtp = async (req,res) =>
     if (userExists)
       return res.status(400).json({ message: "User already exists" });
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); 
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     await Otp.deleteMany({ email });
 
@@ -27,9 +25,11 @@ const sendOtp = async (req,res) =>
 
     return res.status(200).json({ message: "OTP sent successfully" });
   } catch (err) {
-    return res.status(500).json({ message: "OTP sending failed", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "OTP sending failed", error: err.message });
   }
-}
+};
 const signup = async (req, res) => {
   const { fullName, password, email, profilePic, dept, year, otp } = req.body;
 
@@ -161,4 +161,16 @@ const logout = (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, sendOtp };
+
+const checkAuth = (req, res) => {
+  try {
+    const user = req.user;
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({
+      msg: "Interal server error",
+    });
+  }
+};
+
+module.exports = { signup, login, logout, sendOtp, checkAuth };
