@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: "first year",
     },
+    role:
+    {
+      type: String,
+      default: "Member"
+    }
   },
   { timestamps: true },
 );

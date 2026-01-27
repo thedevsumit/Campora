@@ -10,6 +10,10 @@ import { ToastContainer } from "react-toastify";
 import { Loader } from "lucide-react";
 import HomePage from "./components/HomePage";
 import LoginPage from "./components/LoginPage";
+import ClubDashboard from "./components/ClubDashboard";
+import ClubsPage from "./components/ClubPage";
+import ClubDetailsModal from "./components/ClubDetailsModal";
+
 
 function App() {
   const { checkAuth, authUser, isCheckingAuth,onlineUsers } = userAuthStore();
@@ -42,6 +46,10 @@ function App() {
           <Route
             path="/signup"
             element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/clubs"
+            element = < ClubDetailsModal />  
           />
         </Routes>
       </BrowserRouter>
