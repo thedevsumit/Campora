@@ -19,13 +19,11 @@ export default function SignUpPage() {
   const [isOtpVerified, setIsOtpVerified] = useState(false);
   const [isLoadingOtp, setIsLoadingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  // console.log(authUser);
   const handleSubmit = () => {
     if (!isOtpVerified) {
       alert("Please verify your email with OTP first");
       return;
     }
-    // console.log("Form submitted:", formData);
     navigate("/");
 
   };
@@ -71,13 +69,11 @@ export default function SignUpPage() {
     try {
       setIsVerifyingOtp(true);
 
-      // signup API call with FULL data + otp
       const payload = {
         ...formData,
         otp: otp,
       };
 
-      // console.log(payload);
       signupAuth(payload);
 
       setIsOtpVerified(true);
@@ -100,7 +96,6 @@ export default function SignUpPage() {
           </h1>
 
           <div className="space-y-4">
-            {/* Name Input */}
             <div>
               <label
                 htmlFor="fullName"
@@ -119,7 +114,6 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Email Input with Get OTP Button */}
             <div>
               <label
                 htmlFor="email"
@@ -154,7 +148,6 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* OTP Input - Shows only after OTP is sent */}
             {isOtpSent && !isOtpVerified && (
               <div>
                 <label
@@ -185,14 +178,12 @@ export default function SignUpPage() {
               </div>
             )}
 
-            {/* Success Message */}
             {isOtpVerified && (
               <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-lg text-sm">
                 ✓ Email verified successfully
               </div>
             )}
 
-            {/* Department Input */}
             <div>
               <label
                 htmlFor="dept"
@@ -219,7 +210,6 @@ export default function SignUpPage() {
               </select>
             </div>
 
-            {/* Year Input */}
             <div>
               <label
                 htmlFor="year"
@@ -242,7 +232,6 @@ export default function SignUpPage() {
               </select>
             </div>
 
-            {/* Password Input */}
             <div>
               <label
                 htmlFor="password"
@@ -261,7 +250,6 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Terms Checkbox */}
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -275,7 +263,6 @@ export default function SignUpPage() {
               </label>
             </div>
 
-            {/* Signup Button */}
             <button
               onClick={handleSubmit}
               disabled={!isOtpVerified}
@@ -284,7 +271,6 @@ export default function SignUpPage() {
               {!isOtpVerified ? "Verify Email First" : "Signup"}
             </button>
 
-            {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
@@ -294,7 +280,6 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* Social Login Buttons */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => console.log("Google login")}
@@ -340,7 +325,6 @@ export default function SignUpPage() {
               </button>
             </div>
 
-            {/* Sign In Link */}
             <div className="text-center mt-6">
               <span className="text-sm text-gray-600">
                 Have an account?{" "}
@@ -356,7 +340,6 @@ export default function SignUpPage() {
         </div>
       </div>
 
-      {/* Right side - Image */}
       <div className="hidden md:block md:w-1/2">
         <div className="h-full flex items-center justify-center">
           <img
