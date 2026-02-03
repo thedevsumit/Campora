@@ -8,12 +8,13 @@ const ClubDetailsModal = ({ club, onClose }) => {
   const isOwner = authUser?._id === club.createdBy;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#020617] w-full max-w-lg rounded-xl p-6 relative">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white w-full max-w-lg rounded-xl p-6 relative shadow-xl border border-gray-200">
+        
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-white"
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
         >
           ✕
         </button>
@@ -22,20 +23,28 @@ const ClubDetailsModal = ({ club, onClose }) => {
         <div className="flex items-center gap-4 mb-4">
           <img
             src={club.clubIcon || "/placeholder.png"}
-            className="w-20 h-20 rounded-xl object-cover"
+            alt="Club Icon"
+            className="w-20 h-20 rounded-xl object-cover border border-gray-300"
           />
           <div>
-            <h2 className="text-2xl font-bold">{club.clubName}</h2>
-            <p className="text-sm text-gray-400">Club Details</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {club.clubName}
+            </h2>
+            <p className="text-sm text-gray-500">
+              Club Details
+            </p>
           </div>
         </div>
 
-        <p className="text-gray-300 mb-6">{club.description}</p>
+        {/* Description */}
+        <p className="text-gray-700 mb-6">
+          {club.description}
+        </p>
 
         {/* ACTIONS */}
         {isOwner ? (
           <div className="flex gap-3">
-            <button className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg">
+            <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors">
               Edit Club
             </button>
             <button
@@ -43,17 +52,17 @@ const ClubDetailsModal = ({ club, onClose }) => {
                 deleteClub(club._id);
                 onClose();
               }}
-              className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg"
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-medium transition-colors"
             >
               Delete Club
             </button>
           </div>
         ) : (
           <div className="flex gap-3">
-            <button className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-lg">
+            <button className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors">
               Join Club
             </button>
-            <button className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg">
+            <button className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-medium transition-colors">
               View Events
             </button>
           </div>

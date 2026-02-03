@@ -14,12 +14,15 @@ const ClubsPage = () => {
 
   return (
     <>
-      <Navbar/>
-      <div className="min-h-screen bg-[#0f172a] p-8 text-white">
-        <h1 className="text-3xl font-bold mb-6">All Clubs</h1>
+      <Navbar />
+
+      <div className="min-h-screen bg-gray-100 p-8 text-gray-900">
+        <h1 className="text-3xl font-bold mb-6">
+          All Clubs
+        </h1>
 
         {isFetchingClubs ? (
-          <p>Loading clubs...</p>
+          <p className="text-gray-600">Loading clubs...</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {clubs.map((club) => (
