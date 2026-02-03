@@ -27,10 +27,15 @@ const ClubCard = ({ club, onClick }) => {
           <div className="flex items-center gap-4 flex-1">
             <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 ring-2 ring-gray-200 dark:ring-gray-600 group-hover:ring-green-500 transition-all duration-200">
               <img
-                src={club.clubIcon || "/placeholder.png"}
+                src={
+                  club.clubIcon
+                    ? `http://localhost:5000${club.clubIcon}`
+                    : "/placeholder.png"
+                }
                 alt={club.clubName}
                 className="w-full h-full object-cover"
               />
+
             </div>
 
             <div className="flex-1 min-w-0">

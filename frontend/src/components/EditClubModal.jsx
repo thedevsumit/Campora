@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useClubStore } from '../store/useClubStore';
 
 const EditClubModal = ({ show, onClose, clubData, onSave }) => {
+  const { updateClub } = useClubStore();
   const [editFormData, setEditFormData] = useState({
     clubName: clubData?.clubName || '',
     description: clubData?.description || ''
@@ -40,6 +42,9 @@ const EditClubModal = ({ show, onClose, clubData, onSave }) => {
       // API call here
       // const response = await fetch('YOUR_API_ENDPOINT/api/clubs/update', {...});
       
+      updateClub(clubData._id, submitData);
+        
+      
       if (onSave) {
         onSave({
           ...editFormData,
@@ -48,7 +53,7 @@ const EditClubModal = ({ show, onClose, clubData, onSave }) => {
       }
       
       onClose();
-      alert('Club updated successfully!');
+      // alert('Club updated successfully!');
     } catch (error) {
       console.error('Error updating club:', error);
       alert('Failed to update club');

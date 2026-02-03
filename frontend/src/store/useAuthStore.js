@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "react-toastify";
-// import { io } from "socket.io-client";
-// const BASE_URL = "https://chatlly.onrender.com";
+
 const BASE_URL = "http://localhost:5000"
 export const userAuthStore = create((set, get) => ({
   authUser: null,
@@ -10,8 +9,6 @@ export const userAuthStore = create((set, get) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
-//   onlineUsers: [],
-//   socket: null,
 
   checkAuth: async () => {
     set({ isCheckingAuth: true });

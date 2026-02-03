@@ -2,9 +2,9 @@ const mongoose  = require("mongoose");
 const Club = require("../models/club.model");
 
 
- const createClub = async (req, res) => {
+const createClub = async (req, res) => {
   try {
-    const { clubName, clubIcon, description } = req.body;
+    const { clubName, description } = req.body;
 
     if (!clubName || !description) {
       return res.status(400).json({
@@ -19,9 +19,9 @@ const Club = require("../models/club.model");
 
     const club = await Club.create({
       clubName: clubName.trim(),
-      clubIcon: clubIcon || "",
       description: description.trim(),
       createdBy: req.user._id,
+      clubIcon: req.file ? `/uploads/${req.file.filename}` : "", // ✅ KEY FIX
     });
 
     return res.status(201).json({
@@ -32,8 +32,8 @@ const Club = require("../models/club.model");
     console.log("❌ createClub error:", err);
     return res.status(500).json({ message: err.message });
   }
-
 };
+
 
 
  const getAllClubs = async (req, res) => {
@@ -72,10 +72,13 @@ const Club = require("../models/club.model");
 };
 
 
- const updateClub = async (req, res) => {
+const updateClub = async (req, res) => {
   try {
     const { clubId } = req.params;
-    const { clubName, clubIcon, description } = req.body;
+
+    // ✅ SAFE access
+    const clubName = req.body?.clubName;
+    const description = req.body?.description;
 
     if (!mongoose.Types.ObjectId.isValid(clubId)) {
       return res.status(400).json({ message: "Invalid clubId" });
@@ -91,9 +94,15 @@ const Club = require("../models/club.model");
       return res.status(403).json({ message: "Not allowed" });
     }
 
+    // ✅ Update only if present
     if (clubName) club.clubName = clubName.trim();
-    if (clubIcon !== undefined) club.clubIcon = clubIcon;
     if (description) club.description = description.trim();
+
+    // ✅ FILE comes from req.file (NOT req.body)
+    if (req.file) {
+      club.clubIcon = `/uploads/${req.file.filename}`;
+ // or req.file.filename
+    }
 
     await club.save();
 
@@ -106,6 +115,7 @@ const Club = require("../models/club.model");
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
  const deleteClub = async (req, res) => {
   try {

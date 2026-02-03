@@ -13,13 +13,14 @@ const app = express()
 app.use(cookieParser());
 app.use(
   cors({
-    // origin: "https://gochatlly.onrender.com",
     origin: "http://localhost:5173 ",
     credentials: true,
   }),
 ); 
 app.use(express.json());
-app.use("/api/auth",authRoutes)
+app.use("/uploads", express.static("uploads"));
+
+app.use("/api/auth",authRoutes);
 
 app.use("/api/clubs", clubRoutes);
 app.get("/",(req,res)=>

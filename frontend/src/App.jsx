@@ -49,7 +49,7 @@ function App() {
           />
           <Route
             path="/clubs"
-            element = < ClubDetailsModal />  
+            element = < ClubsPage />  
           />
         </Routes>
       </BrowserRouter>

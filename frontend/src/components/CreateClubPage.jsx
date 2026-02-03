@@ -40,10 +40,11 @@ export default function CreateClubPage() {
     setIsSubmitting(true);
 
     try {
-      
-    
-      createClub(formData);
-      
+      createClub({
+        clubName: formData.clubName,
+        description: formData.description,
+        clubIcon: clubIcon, // ✅ THIS WAS MISSING
+      });
     } catch (error) {
       console.error('Error creating club:', error);
       alert('An error occurred while creating the club');

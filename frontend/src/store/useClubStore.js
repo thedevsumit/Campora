@@ -42,11 +42,27 @@ export const useClubStore = create((set, get) => ({
     }
   },
 
-  // ✅ CREATE CLUB
+// ✅ CREATE CLUB (FIXED)
   createClub: async (data) => {
     set({ isCreatingClub: true });
     try {
-      const resp = await axiosInstance.post("/clubs", data);
+      const formData = new FormData();
+
+      Object.keys(data).forEach((key) => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, data[key]);
+        }
+      });
+
+      const resp = await axiosInstance.post(
+        "/clubs",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       // add new club to top
       set((state) => ({
@@ -62,6 +78,7 @@ export const useClubStore = create((set, get) => ({
       set({ isCreatingClub: false });
     }
   },
+
 
   // ✅ UPDATE CLUB
   updateClub: async (clubId, data) => {
