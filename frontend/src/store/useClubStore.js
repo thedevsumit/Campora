@@ -12,75 +12,63 @@ export const useClubStore = create((set, get) => ({
   isUpdatingClub: false,
   isDeletingClub: false,
 
-  // ✅ GET ALL CLUBS
+  /* ================= FETCH ================= */
+
   getAllClubs: async () => {
     set({ isFetchingClubs: true });
     try {
       const resp = await axiosInstance.get("/clubs");
       set({ clubs: resp.data.clubs || [] });
     } catch (error) {
-      console.log(error);
-      const msg = error.response?.data?.msg || "Failed to fetch clubs";
-      toast.error(msg);
+      console.error(error);
+      toast.error("Failed to fetch clubs");
     } finally {
       set({ isFetchingClubs: false });
     }
   },
 
-  // ✅ GET CLUB BY ID
   getClubById: async (clubId) => {
     set({ isFetchingClub: true });
     try {
       const resp = await axiosInstance.get(`/clubs/${clubId}`);
       set({ selectedClub: resp.data.club });
     } catch (error) {
-      console.log(error);
-      const msg = error.response?.data?.msg || "Failed to fetch club";
-      toast.error(msg);
+      console.error(error);
+      toast.error("Failed to fetch club");
     } finally {
       set({ isFetchingClub: false });
     }
   },
 
-// ✅ CREATE CLUB (FIXED)
+  /* ================= CRUD ================= */
+
   createClub: async (data) => {
     set({ isCreatingClub: true });
     try {
       const formData = new FormData();
-
       Object.keys(data).forEach((key) => {
         if (data[key] !== undefined && data[key] !== null) {
           formData.append(key, data[key]);
         }
       });
 
-      const resp = await axiosInstance.post(
-        "/clubs",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const resp = await axiosInstance.post("/clubs", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      // add new club to top
       set((state) => ({
         clubs: [resp.data.club, ...state.clubs],
       }));
 
-      toast.success("Club created successfully ✅");
+      toast.success("Club created");
     } catch (error) {
-      console.log(error);
-      const msg = error.response?.data?.msg || "Failed to create club";
-      toast.error(msg);
+      console.error(error);
+      toast.error("Failed to create club");
     } finally {
       set({ isCreatingClub: false });
     }
   },
 
-
-  // ✅ UPDATE CLUB
   updateClub: async (clubId, data) => {
     set({ isUpdatingClub: true });
     try {
@@ -94,17 +82,15 @@ export const useClubStore = create((set, get) => ({
             : state.selectedClub,
       }));
 
-      toast.success("Club updated ✅");
+      toast.success("Club updated");
     } catch (error) {
-      console.log(error);
-      const msg = error.response?.data?.msg || "Failed to update club";
-      toast.error(msg);
+      console.error(error);
+      toast.error("Failed to update club");
     } finally {
       set({ isUpdatingClub: false });
     }
   },
 
-  // ✅ DELETE CLUB
   deleteClub: async (clubId) => {
     set({ isDeletingClub: true });
     try {
@@ -116,18 +102,97 @@ export const useClubStore = create((set, get) => ({
           state.selectedClub?._id === clubId ? null : state.selectedClub,
       }));
 
-      toast.success("Club deleted ✅");
+      toast.success("Club deleted");
     } catch (error) {
-      console.log(error);
-      const msg = error.response?.data?.msg || "Failed to delete club";
-      toast.error(msg);
+      console.error(error);
+      toast.error("Failed to delete club");
     } finally {
       set({ isDeletingClub: false });
     }
   },
 
-  // ✅ OPTIONAL: clear selected club
-  clearSelectedClub: () => {
-    set({ selectedClub: null });
+  /* ================= MEMBERSHIP ================= */
+
+  joinClub: async (clubId, user) => {
+    try {
+      await axiosInstance.post(`/clubs/${clubId}/join`);
+
+      const { selectedClub } = get();
+
+      set({
+        selectedClub: {
+          ...selectedClub,
+          members: [...selectedClub.members, { user, role: "Member" }],
+          followers: selectedClub.followers.filter((u) => u?._id !== user._id),
+        },
+      });
+
+      toast.success("Joined club");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to join club");
+    }
   },
+
+  leaveClub: async (clubId, user) => {
+    try {
+      await axiosInstance.post(`/clubs/${clubId}/leave`);
+
+      const { selectedClub } = get();
+
+      set({
+        selectedClub: {
+          ...selectedClub,
+          members: selectedClub.members.filter((m) => m.user?._id !== user._id),
+        },
+      });
+
+      toast.success("Left club");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to leave club");
+    }
+  },
+
+  followClub: async (clubId, user) => {
+    try {
+      await axiosInstance.post(`/clubs/${clubId}/follow`);
+
+      const { selectedClub } = get();
+
+      set({
+        selectedClub: {
+          ...selectedClub,
+          followers: [...selectedClub.followers, user],
+        },
+      });
+
+      toast.success("Followed club");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to follow");
+    }
+  },
+
+  unfollowClub: async (clubId, user) => {
+    try {
+      await axiosInstance.post(`/clubs/${clubId}/unfollow`);
+
+      const { selectedClub } = get();
+
+      set({
+        selectedClub: {
+          ...selectedClub,
+          followers: selectedClub.followers.filter((u) => u?._id !== user._id),
+        },
+      });
+
+      toast.success("Unfollowed club");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to unfollow");
+    }
+  },
+
+  clearSelectedClub: () => set({ selectedClub: null }),
 }));

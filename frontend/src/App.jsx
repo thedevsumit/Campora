@@ -1,8 +1,6 @@
-import { useState,useEffect } from "react";
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { userAuthStore } from "./store/useAuthStore";
 import SignUpPage from "./components/SignUp";
@@ -10,14 +8,12 @@ import { ToastContainer } from "react-toastify";
 import { Loader } from "lucide-react";
 import HomePage from "./components/HomePage";
 import LoginPage from "./components/LoginPage";
-import ClubDashboard from "./components/ClubDashboard";
 import ClubsPage from "./components/ClubPage";
-import ClubDetailsModal from "./components/ClubDetailsModal";
-
+import ClubDetailsPage from "./components/ClubDetailsPage";
 
 function App() {
-  const { checkAuth, authUser, isCheckingAuth,onlineUsers } = userAuthStore();
-  // console.log(onlineUsers)
+  const { checkAuth, authUser, isCheckingAuth } = userAuthStore();
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -49,7 +45,11 @@ function App() {
           />
           <Route
             path="/clubs"
-            element = < ClubsPage />  
+            element={authUser ? <ClubsPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/clubs/:clubId"
+            element={authUser ? <ClubDetailsPage /> : <Navigate to="/login" />}
           />
         </Routes>
       </BrowserRouter>

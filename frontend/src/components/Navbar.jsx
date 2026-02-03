@@ -17,7 +17,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <a href="/" className="text-2xl font-bold text-green-700">
-            ClubHub
+            Campora
           </a>
 
           {/* Desktop Navigation */}

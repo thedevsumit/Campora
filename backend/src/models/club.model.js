@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const clubSchema = new mongoose.Schema(
   {
@@ -7,21 +7,17 @@ const clubSchema = new mongoose.Schema(
       required: true,
       trim: true,
       unique: true,
-      minlength: 2,
-      maxlength: 60,
     },
 
     clubIcon: {
-      type: String, 
+      type: String,
       default: "",
-      trim: true,
     },
 
     description: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 500,
     },
 
     createdBy: {
@@ -29,6 +25,31 @@ const clubSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    members: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        role: {
+          type: String,
+          enum: ["Member", "Admin"],
+          default: "Member",
+        },
+        joinedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
 
     isActive: {
       type: Boolean,
@@ -38,6 +59,4 @@ const clubSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-
-const Club = mongoose.model("Club", clubSchema);
-module.exports = Club;
+module.exports = mongoose.model("Club", clubSchema);

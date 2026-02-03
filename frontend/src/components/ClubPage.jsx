@@ -1,45 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useClubStore } from "../store/useClubStore";
 import ClubCard from "../components/ClubCard";
-import ClubDetailsModal from "../components/ClubDetailsModal";
 import Navbar from "./Navbar";
 
 const ClubsPage = () => {
   const { clubs, getAllClubs, isFetchingClubs } = useClubStore();
-  const [selectedClub, setSelectedClub] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getAllClubs();
-  }, []);
+  }, [getAllClubs]);
 
   return (
     <>
       <Navbar />
-
       <div className="min-h-screen bg-gray-100 p-8 text-gray-900">
-        <h1 className="text-3xl font-bold mb-6">
-          All Clubs
-        </h1>
+        <h1 className="text-3xl font-bold mb-6">All Clubs</h1>
 
         {isFetchingClubs ? (
-          <p className="text-gray-600">Loading clubs...</p>
+          <p>Loading clubs...</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {clubs.map((club) => (
               <ClubCard
                 key={club._id}
                 club={club}
-                onClick={() => setSelectedClub(club)}
+                onClick={() => navigate(`/clubs/${club._id}`)}
               />
             ))}
           </div>
-        )}
-
-        {selectedClub && (
-          <ClubDetailsModal
-            club={selectedClub}
-            onClose={() => setSelectedClub(null)}
-          />
         )}
       </div>
     </>

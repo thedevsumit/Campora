@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import EditClubModal from './EditClubModal';
+import React, { useState } from "react";
 
 const ClubCard = ({ club, onClick }) => {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const handleEditClick = (e) => {
-    e.stopPropagation(); // ✅ prevents card click
+    e.stopPropagation(); // prevents card click
     setShowEditModal(true);
   };
 
   const handleSaveEdit = (updatedData) => {
-    console.log('Updated club data:', updatedData);
+    console.log("Updated club data:", updatedData);
+    setShowEditModal(false);
   };
 
   return (
@@ -24,7 +24,7 @@ const ClubCard = ({ club, onClick }) => {
           group relative overflow-hidden
         "
       >
-        {/* Hover Gradient (VISUAL ONLY) */}
+        {/* Hover Gradient */}
         <div
           className="
             absolute inset-0
@@ -81,7 +81,12 @@ const ClubCard = ({ club, onClick }) => {
             "
             title="Edit Club"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -92,7 +97,7 @@ const ClubCard = ({ club, onClick }) => {
           </button>
         </div>
 
-        {/* Arrow (VISUAL ONLY) */}
+        {/* Arrow */}
         <div
           className="
             absolute right-5 top-1/2 -translate-y-1/2
@@ -103,19 +108,21 @@ const ClubCard = ({ club, onClick }) => {
             pointer-events-none
           "
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </div>
       </div>
-
-      {/* Edit Modal */}
-      <EditClubModal
-        show={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        clubData={club}
-        onSave={handleSaveEdit}
-      />
     </>
   );
 };
