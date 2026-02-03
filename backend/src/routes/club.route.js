@@ -12,6 +12,9 @@ const {
   leaveClub,
   followClub,
   unfollowClub,
+  getJoinedClubs,
+  getFollowedClubs,
+  getAttendedEvents,
 } = require("../controllers/club.controller");
 
 const clubRoutes = express.Router();
@@ -46,5 +49,10 @@ clubRoutes.post("/:clubId/leave", protectRoute, leaveClub);
 clubRoutes.post("/:clubId/follow", protectRoute, followClub);
 
 clubRoutes.post("/:clubId/unfollow", protectRoute, unfollowClub);
+
+clubRoutes.get("/users/me/clubs/joined", protectRoute, getJoinedClubs);
+clubRoutes.get("/users/me/clubs/followed", protectRoute, getFollowedClubs);
+clubRoutes.get("/users/me/events/attended", protectRoute, getAttendedEvents);
+
 
 module.exports = { clubRoutes };

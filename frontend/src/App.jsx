@@ -10,6 +10,7 @@ import HomePage from "./components/HomePage";
 import LoginPage from "./components/LoginPage";
 import ClubsPage from "./components/ClubPage";
 import ClubDetailsPage from "./components/ClubDetailsPage";
+import ProfilePage from "./components/Profile";
 
 function App() {
   const { checkAuth, authUser, isCheckingAuth } = userAuthStore();
@@ -46,6 +47,10 @@ function App() {
           <Route
             path="/clubs"
             element={authUser ? <ClubsPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/profile"
+            element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
           />
           <Route
             path="/clubs/:clubId"

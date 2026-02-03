@@ -3,6 +3,7 @@ const dotenv = require("dotenv")
 const connectDB = require("./lib/db");
 const { authRoutes } = require("./routes/auth.route");
 const { clubRoutes } = require("./routes/club.route");
+const userRoutes = require("./routes/user.route");
 const cookieParser = require("cookie-parser");
 const cors = require("cors"); 
 
@@ -21,6 +22,9 @@ app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
 app.use("/api/auth",authRoutes);
+
+app.use("/api/users", userRoutes);
+
 
 app.use("/api/clubs", clubRoutes);
 app.get("/",(req,res)=>

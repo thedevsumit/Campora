@@ -270,6 +270,64 @@ const unfollowClub = async (req, res) => {
   }
 };
 
+/* =========================
+   GET JOINED CLUBS (PROFILE)
+========================= */
+const getJoinedClubs = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: "joinedClubs",
+        match: { isActive: true },
+        select: "clubName clubIcon description createdBy members followers",
+      });
+
+    return res.status(200).json({
+      clubs: user.joinedClubs || [],
+    });
+  } catch (err) {
+    console.error("getJoinedClubs error:", err);
+    return res.status(500).json({ message: "Failed to fetch joined clubs" });
+  }
+};
+
+/* =========================
+   GET FOLLOWED CLUBS (PROFILE)
+========================= */
+const getFollowedClubs = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: "followedClubs",
+        match: { isActive: true },
+        select: "clubName clubIcon description createdBy members followers",
+      });
+
+    return res.status(200).json({
+      clubs: user.followedClubs || [],
+    });
+  } catch (err) {
+    console.error("getFollowedClubs error:", err);
+    return res.status(500).json({ message: "Failed to fetch followed clubs" });
+  }
+};
+
+/* =========================
+   GET ATTENDED EVENTS (PROFILE)
+========================= */
+const getAttendedEvents = async (req, res) => {
+  try {
+    // Later you will populate from Event model
+    return res.status(200).json({
+      events: [],
+    });
+  } catch (err) {
+    console.error("getAttendedEvents error:", err);
+    return res.status(500).json({ message: "Failed to fetch events" });
+  }
+};
+
+
 module.exports = {
   createClub,
   getAllClubs,
@@ -280,4 +338,8 @@ module.exports = {
   followClub,
   leaveClub,
   unfollowClub,
+    // PROFILE
+  getJoinedClubs,
+  getFollowedClubs,
+  getAttendedEvents,
 };

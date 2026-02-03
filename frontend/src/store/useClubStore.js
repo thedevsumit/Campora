@@ -12,6 +12,15 @@ export const useClubStore = create((set, get) => ({
   isUpdatingClub: false,
   isDeletingClub: false,
 
+    /* ================= PROFILE ================= */
+
+  joinedClubs: [],
+  followedClubs: [],
+  attendedEvents: [],
+
+  isFetchingProfileClubs: false,
+  isFetchingProfileEvents: false,
+
   /* ================= FETCH ================= */
 
   getAllClubs: async () => {
@@ -195,4 +204,46 @@ export const useClubStore = create((set, get) => ({
   },
 
   clearSelectedClub: () => set({ selectedClub: null }),
+
+    /* ================= PROFILE FETCH ================= */
+
+  getJoinedClubs: async () => {
+    set({ isFetchingProfileClubs: true });
+    try {
+      const resp = await axiosInstance.get("/users/me/clubs/joined");
+      set({ joinedClubs: resp.data.clubs || [] });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch joined clubs");
+    } finally {
+      set({ isFetchingProfileClubs: false });
+    }
+  },
+
+  getFollowedClubs: async () => {
+    set({ isFetchingProfileClubs: true });
+    try {
+      const resp = await axiosInstance.get("/users/me/clubs/followed");
+      set({ followedClubs: resp.data.clubs || [] });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch followed clubs");
+    } finally {
+      set({ isFetchingProfileClubs: false });
+    }
+  },
+
+  getAttendedEvents: async () => {
+    set({ isFetchingProfileEvents: true });
+    try {
+      const resp = await axiosInstance.get("/users/me/events/attended");
+      set({ attendedEvents: resp.data.events || [] });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch attended events");
+    } finally {
+      set({ isFetchingProfileEvents: false });
+    }
+  },
+
 }));
