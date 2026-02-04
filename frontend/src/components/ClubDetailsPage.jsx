@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useClubStore } from "../store/useClubStore";
 import { userAuthStore } from "../store/useAuthStore";
 import Navbar from "./Navbar";
 
 const ClubDetailsPage = () => {
   const { clubId } = useParams();
+  const navigate = useNavigate(); // ✅ ADDED
   const { authUser } = userAuthStore();
 
   const {
@@ -31,17 +32,15 @@ const ClubDetailsPage = () => {
     );
   }
 
-  // ✅ OWNER CHECK (works for populated & non-populated)
+  // OWNER CHECK
   const isOwner =
     selectedClub.createdBy?._id === authUser._id ||
     selectedClub.createdBy === authUser._id;
 
-  // ✅ SAFE MEMBER CHECK
   const isMember = selectedClub.members?.some(
     (m) => m.user?._id === authUser._id,
   );
 
-  // ✅ SAFE FOLLOWER CHECK
   const isFollower = selectedClub.followers?.some(
     (u) => u?._id === authUser._id,
   );
@@ -89,9 +88,7 @@ const ClubDetailsPage = () => {
             </div>
           </div>
 
-          {/* ================= ACTION BUTTONS ================= */}
           <div className="flex flex-wrap gap-4 mb-10">
-            {/* JOIN */}
             {!isMember && (
               <button
                 onClick={() => joinClub(selectedClub._id, authUser)}
@@ -101,7 +98,6 @@ const ClubDetailsPage = () => {
               </button>
             )}
 
-            {/* FOLLOW / UNFOLLOW (only if not member) */}
             {!isMember &&
               (isFollower ? (
                 <button
@@ -119,7 +115,6 @@ const ClubDetailsPage = () => {
                 </button>
               ))}
 
-            {/* LEAVE */}
             {isMember && !isOwner && (
               <button
                 onClick={() => leaveClub(selectedClub._id, authUser)}
@@ -129,7 +124,6 @@ const ClubDetailsPage = () => {
               </button>
             )}
 
-            {/* OWNER BADGE */}
             {isMember && isOwner && (
               <span className="bg-blue-100 text-blue-700 px-6 py-2 rounded-lg font-medium">
                 You are the Owner
@@ -137,7 +131,6 @@ const ClubDetailsPage = () => {
             )}
           </div>
 
-          {/* ================= MEMBERS ================= */}
           <div className="mb-12">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               Members ({selectedClub.members?.length || 0})
@@ -150,13 +143,20 @@ const ClubDetailsPage = () => {
                 {selectedClub.members.map((m) => (
                   <div
                     key={m.user?._id}
-                    className="flex items-center gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg hover:bg-gray-100 transition"
+                    onClick={() => navigate(`/profile/${m.user?._id}`)} // ✅ CLICK
+                    className="cursor-pointer flex items-center gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg hover:bg-gray-100 transition"
                   >
-                    <img
-                      src={m.user?.profilePic || "/avatar.png"}
-                      className="w-10 h-10 rounded-full object-cover"
-                      alt="Member"
-                    />
+                    <div className="w-13 h-13  rounded-full overflow-hidden bg-green-700 flex items-center justify-center text-white font-semibold">
+                      {m.user.profilePic ? (
+                        <img
+                          src={`http://localhost:5000${m.user.profilePic}`}
+                          alt={m.user.fullName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{m.user.fullName?.[0]}</span>
+                      )}
+                    </div>
 
                     <div>
                       <p className="font-semibold text-gray-900">
@@ -170,7 +170,6 @@ const ClubDetailsPage = () => {
             )}
           </div>
 
-          {/* ================= FOLLOWERS ================= */}
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-4">
               Followers ({selectedClub.followers?.length || 0})
@@ -183,13 +182,20 @@ const ClubDetailsPage = () => {
                 {selectedClub.followers.map((user) => (
                   <div
                     key={user?._id}
-                    className="flex items-center gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg hover:bg-gray-100 transition"
+                    onClick={() => navigate(`/profile/${user?._id}`)} // ✅ CLICK
+                    className="cursor-pointer flex items-center gap-4 bg-gray-50 border border-gray-200 p-4 rounded-lg hover:bg-gray-100 transition"
                   >
-                    <img
-                      src={user?.profilePic || "/avatar.png"}
-                      className="w-10 h-10 rounded-full object-cover"
-                      alt="Follower"
-                    />
+                    <div className="w-13 h-13  rounded-full overflow-hidden bg-green-700 flex items-center justify-center text-white font-semibold">
+                      {user.profilePic ? (
+                        <img
+                          src={`http://localhost:5000${user.profilePic}`}
+                          alt={user.fullName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{user.fullName?.[0]}</span>
+                      )}
+                    </div>
 
                     <div>
                       <p className="font-semibold text-gray-900">

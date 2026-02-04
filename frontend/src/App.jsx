@@ -11,6 +11,7 @@ import LoginPage from "./components/LoginPage";
 import ClubsPage from "./components/ClubPage";
 import ClubDetailsPage from "./components/ClubDetailsPage";
 import ProfilePage from "./components/Profile";
+import UserProfilePage from "./components/UserProfilePage";
 
 function App() {
   const { checkAuth, authUser, isCheckingAuth } = userAuthStore();
@@ -56,6 +57,7 @@ function App() {
             path="/clubs/:clubId"
             element={authUser ? <ClubDetailsPage /> : <Navigate to="/login" />}
           />
+          <Route path="/profile/:userId" element={<UserProfilePage />} />
         </Routes>
       </BrowserRouter>
     </div>

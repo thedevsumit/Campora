@@ -173,4 +173,24 @@ const checkAuth = (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, sendOtp, checkAuth };
+const getUserProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId)
+      .select("fullName email dept about profilePic joinedClubs followedClubs")
+      .populate("joinedClubs", "clubName clubIcon description")
+      .populate("followedClubs", "clubName clubIcon description");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ user });
+  } catch (err) {
+    console.error("getUserProfile error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { signup, login, logout, sendOtp, checkAuth, getUserProfile };

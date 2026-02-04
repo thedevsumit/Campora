@@ -10,11 +10,14 @@ const {
   getFollowedClubs,
   getAttendedEvents,
 } = require("../controllers/club.controller");
+const { getUserProfile } = require("../controllers/auth.controller");
 
 // PROFILE ROUTES
 router.get("/me/clubs/joined", protectRoute, getJoinedClubs);
 router.get("/me/clubs/followed", protectRoute, getFollowedClubs);
 router.get("/me/events/attended", protectRoute, getAttendedEvents);
+router.get("/:userId/profile", protectRoute, getUserProfile);
+
 router.patch(
   "/me",
   protectRoute,
