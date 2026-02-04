@@ -3,8 +3,10 @@ import { useState } from "react";
 import EditProfileModal from "../components/EditProfile";
 
 import { userAuthStore } from "../store/useAuthStore";
-import Navbar from "./Navbar";
+// import Navbar from "./Navbar";
 import { useClubStore } from "../store/useClubStore";
+import Navbar from "./Navbar";
+// import Navbar from "./Navbar";
 
 const ProfilePage = () => {
   const { authUser, logout, updateProfile } = userAuthStore();

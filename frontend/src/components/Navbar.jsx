@@ -21,15 +21,22 @@ export default function Navbar() {
 
           {/* ================= DESKTOP NAV ================= */}
           <div className="hidden md:flex items-center space-x-8">
-            {["Home", "Clubs", "Events", "About"].map((item) => (
+            {["Home", "Clubs", "Events", "About", "Chat"].map((item) => (
               <a
                 key={item}
-                href={`/${item.toLowerCase()}`}
+                href={item === "Chat" ? "/chat" : `/${item.toLowerCase()}`}
                 className="text-gray-800 hover:text-green-700 font-medium transition-colors"
               >
                 {item}
               </a>
             ))}
+
+            <a
+              href="/chat/requests"
+              className="text-gray-800 hover:text-green-700 font-medium transition-colors"
+            >
+              Requests
+            </a>
           </div>
 
           {/* ================= USER DROPDOWN ================= */}
@@ -41,14 +48,14 @@ export default function Navbar() {
               >
                 {/* AVATAR */}
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-green-700 flex items-center justify-center text-white font-semibold">
-                  {authUser.profilePic ? (
+                  {authUser?.profilePic ? (
                     <img
                       src={`http://localhost:5000${authUser.profilePic}`}
                       alt={authUser.fullName}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span>{authUser.fullName?.[0]}</span>
+                    <span>{authUser?.fullName?.[0]}</span>
                   )}
                 </div>
 
@@ -143,15 +150,23 @@ export default function Navbar() {
         {isMobileMenuOpen && (
           <div className="md:hidden mt-2 pb-4 border-t border-gray-200">
             <div className="flex flex-col space-y-3 pt-4">
-              {["Home", "Clubs", "Events", "About"].map((item) => (
+              {["Home", "Clubs", "Events", "About", "Chat"].map((item) => (
                 <a
                   key={item}
-                  href={`/${item.toLowerCase()}`}
+                  href={item === "Chat" ? "/chat" : `/${item.toLowerCase()}`}
                   className="text-gray-700 hover:text-green-700 font-medium"
                 >
                   {item}
                 </a>
               ))}
+
+              <a
+                href="/chat/requests"
+                className="text-gray-700 hover:text-green-700 font-medium"
+              >
+                Requests
+              </a>
+
               <hr />
               <button
                 onClick={handleLogout}

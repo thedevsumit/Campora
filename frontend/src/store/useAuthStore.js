@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "react-toastify";
+import { socket } from "../lib/socket";
 
-const BASE_URL = "http://localhost:5000"
 export const userAuthStore = create((set, get) => ({
   authUser: null,
   isSigningUp: false,
@@ -10,12 +10,32 @@ export const userAuthStore = create((set, get) => ({
   isUpdatingProfile: false,
   isCheckingAuth: true,
 
+  /* ================= SOCKET HELPERS ================= */
+  connectSocket: () => {
+    const { authUser } = get();
+    if (!authUser?._id) return;
+
+    if (!socket.connected) {
+      socket.connect();
+      socket.emit("join", authUser._id);
+      console.log("🟢 Socket connected & joined:", authUser._id);
+    }
+  },
+
+  disconnectSocket: () => {
+    if (socket.connected) {
+      socket.disconnect();
+      console.log("🔴 Socket disconnected");
+    }
+  },
+
+  /* ================= AUTH ================= */
   checkAuth: async () => {
     set({ isCheckingAuth: true });
     try {
       const resp = await axiosInstance.get("/auth/check");
       set({ authUser: resp.data });
-    //   get().connectSocket();
+      get().connectSocket(); // ✅ connect after auth
     } catch (error) {
       set({ authUser: null });
     } finally {
@@ -29,7 +49,7 @@ export const userAuthStore = create((set, get) => ({
       const resp = await axiosInstance.post("/auth/login", data);
       set({ authUser: resp.data });
       toast.success("Logged in successfully!");
-    //   get().connectSocket();
+      get().connectSocket(); // ✅ connect on login
     } catch (error) {
       const msg = error.response?.data?.msg || "Login failed";
       toast.error(msg);
@@ -44,42 +64,28 @@ export const userAuthStore = create((set, get) => ({
       const resp = await axiosInstance.post("/auth/signup", data);
       set({ authUser: resp.data });
       toast.success("Account created successfully!");
-    //   get().connectSocket();
+      get().connectSocket(); // ✅ connect on signup
     } catch (error) {
-        console.log(error)
       const msg = error.response?.data?.msg || "Signup failed";
       toast.error(msg);
     } finally {
       set({ isSigningUp: false });
     }
   },
+
   logout: async () => {
     try {
-      const resp = await axiosInstance.post("/auth/logout");
+      await axiosInstance.post("/auth/logout");
+      get().disconnectSocket(); // ✅ disconnect on logout
       set({ authUser: null });
-      toast.success("Logged out succesfully!");
-      // get().disconnectSocket();
+      toast.success("Logged out successfully!");
     } catch (error) {
-      const msg = error.response?.data?.msg || "Signup failed";
+      const msg = error.response?.data?.msg || "Logout failed";
       toast.error(msg);
     }
   },
-  // updateProfile: async (data) => {
-  //   set({ isUpdatingProfile: true });
-  //   try {
-  //     const res = await axiosInstance.put("/auth/profile", data);
-  //     set({ authUser: res.data });
-  //     toast.success("Profile updated successfully");
-  //     set({ isUpdatingProfile: false });
-  //   } catch (error) {
-  //     console.log("error in update profile:", error);
-  //     toast.error(error.response.data.message);
-  //     set({ isUpdatingProfile: false });
-  //   } finally {
-  //     set({ isUpdatingProfile: false });
-  //   }
-  // },
 
+  /* ================= PROFILE ================= */
   updateProfile: async (data) => {
     try {
       const formData = new FormData();
@@ -98,23 +104,4 @@ export const userAuthStore = create((set, get) => ({
       toast.error("Failed to update profile");
     }
   },
-
-
-//   connectSocket: () => {
-//     const { authUser } = get();
-//     if (!authUser || get().socket?.connected) return;
-//     const socket = io(BASE_URL, {
-//       query: {
-//         userId: authUser._id,
-//       },
-//     });
-//     socket.connect();
-//     set({ socket: socket });
-//     socket.on("getOnlineUsers", (userIds) => {
-//       set({ onlineUsers: userIds });
-//     });
-//   },
-//   disconnectSocket: () => {
-//     if (get().socket?.connected) get().socket.disconnect();
-//   },
 }));

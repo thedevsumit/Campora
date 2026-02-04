@@ -12,6 +12,10 @@ import ClubsPage from "./components/ClubPage";
 import ClubDetailsPage from "./components/ClubDetailsPage";
 import ProfilePage from "./components/Profile";
 import UserProfilePage from "./components/UserProfilePage";
+import ChatRequestsPage from "./pages/ChatRequestsPage";
+import ChatInboxPage from "./pages/ChatInboxPage";
+import PrivateChatPage from "./pages/PrivateChatPage";
+
 
 function App() {
   const { checkAuth, authUser, isCheckingAuth } = userAuthStore();
@@ -58,6 +62,9 @@ function App() {
             element={authUser ? <ClubDetailsPage /> : <Navigate to="/login" />}
           />
           <Route path="/profile/:userId" element={<UserProfilePage />} />
+          <Route path="/chat/requests" element={<ChatRequestsPage />} />
+          <Route path="/chat" element={<ChatInboxPage />} />
+          <Route path="/chat/:userId" element={<PrivateChatPage />} />
         </Routes>
       </BrowserRouter>
     </div>
