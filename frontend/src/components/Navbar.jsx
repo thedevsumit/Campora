@@ -15,13 +15,13 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* ================= LOGO ================= */}
-          <a href="/" className="text-2xl font-bold text-green-700">
+          <a href="/home" className="text-2xl font-bold text-green-700">
             Campora
           </a>
 
           {/* ================= DESKTOP NAV ================= */}
           <div className="hidden md:flex items-center space-x-8">
-            {["Home", "Clubs", "Events", "About", "Chat"].map((item) => (
+            {["Clubs", "Events", "About", "Chat"].map((item) => (
               <a
                 key={item}
                 href={item === "Chat" ? "/chat" : `/${item.toLowerCase()}`}

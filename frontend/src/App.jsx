@@ -15,6 +15,7 @@ import UserProfilePage from "./components/UserProfilePage";
 import ChatRequestsPage from "./pages/ChatRequestsPage";
 import ChatInboxPage from "./pages/ChatInboxPage";
 import PrivateChatPage from "./pages/PrivateChatPage";
+import ClubAdminDashboard from "./components/ClubAdminDashboard";
 
 
 function App() {
@@ -38,6 +39,10 @@ function App() {
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
           <Route
+            path="/home"
+            element={authUser ? <HomePage /> : <Navigate to="/signup" />}
+          />
+          <Route
             path="/"
             element={authUser ? <HomePage /> : <Navigate to="/signup" />}
           />
@@ -52,6 +57,10 @@ function App() {
           <Route
             path="/clubs"
             element={authUser ? <ClubsPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/clubs/:clubId/admin"
+            element={authUser ? <ClubAdminDashboard /> : <Navigate to="/login" />}
           />
           <Route
             path="/profile"

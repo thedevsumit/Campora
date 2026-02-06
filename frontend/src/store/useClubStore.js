@@ -16,6 +16,7 @@ export const useClubStore = create((set, get) => ({
 
   joinedClubs: [],
   followedClubs: [],
+  createdClubs: [],
   attendedEvents: [],
 
   isFetchingProfileClubs: false,
@@ -245,5 +246,19 @@ export const useClubStore = create((set, get) => ({
       set({ isFetchingProfileEvents: false });
     }
   },
+
+  getCreatedClubs: async () => {
+    set({ isFetchingProfileClubs: true });
+    try {
+      const resp = await axiosInstance.get("/clubs/users/me/clubs/created");
+      set({ createdClubs: resp.data.clubs || [] });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch created clubs");
+    } finally {
+      set({ isFetchingProfileClubs: false });
+    }
+  },
+
 
 }));

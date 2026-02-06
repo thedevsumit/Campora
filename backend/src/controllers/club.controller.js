@@ -327,6 +327,102 @@ const getAttendedEvents = async (req, res) => {
   }
 };
 
+const getAdminClubData = async (req, res) => {
+  try {
+    const club = await Club.findById(req.params.clubId)
+      .populate("members.user", "fullName profilePic email")
+      .populate("followers", "fullName profilePic");
+
+    return res.json({ club });
+  } catch (err) {
+    console.error("getAdminClubData:", err);
+    res.status(500).json({ message: "Failed to fetch admin data" });
+  }
+};
+
+const addMember = async (req, res) => {
+  try {
+    const { email, role } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ✅ atomic add (no duplicates possible)
+    const updatedClub = await Club.findOneAndUpdate(
+      {
+        _id: req.params.clubId,
+        "members.user": { $ne: user._id }, // only if not already member
+      },
+      {
+        $push: { members: { user: user._id, role } },
+      },
+      { new: true }
+    );
+
+    // ❗ If null → already member
+    if (!updatedClub) {
+      return res.status(400).json({ message: "Already a member" });
+    }
+
+    return res.json({ message: "Member added", club: updatedClub });
+  } catch (err) {
+    console.error("addMember:", err);
+    res.status(500).json({ message: "Failed to add member" });
+  }
+};
+
+
+const removeMember = async (req, res) => {
+  try {
+    const { memberId } = req.params;
+
+    req.club.members = req.club.members.filter(
+      (m) => m.user.toString() !== memberId
+    );
+
+    await req.club.save();
+
+    res.json({ message: "Member removed" });
+  } catch (err) {
+    console.error("removeMember:", err);
+    res.status(500).json({ message: "Failed to remove member" });
+  }
+};
+
+const changeMemberRole = async (req, res) => {
+  try {
+    const { memberId } = req.params;
+    const { role } = req.body;
+
+    const member = req.club.members.find(
+      (m) => m.user.toString() === memberId
+    );
+
+    if (!member) return res.status(404).json({ message: "Member not found" });
+
+    member.role = role;
+    await req.club.save();
+
+    res.json({ message: "Role updated" });
+  } catch (err) {
+    console.error("changeMemberRole:", err);
+    res.status(500).json({ message: "Failed to update role" });
+  }
+};
+
+const getCreatedClubs = async (req, res) => {
+  try {
+    const clubs = await Club.find({
+      createdBy: req.user._id,
+      isActive: true,
+    }).select("clubName clubIcon description members followers createdAt");
+
+    return res.status(200).json({ clubs });
+  } catch (err) {
+    console.error("getCreatedClubs error:", err);
+    return res.status(500).json({ message: "Failed to fetch created clubs" });
+  }
+};
 
 module.exports = {
   createClub,
@@ -342,4 +438,10 @@ module.exports = {
   getJoinedClubs,
   getFollowedClubs,
   getAttendedEvents,
+
+  getAdminClubData,
+  addMember,
+  removeMember,
+  changeMemberRole,
+  getCreatedClubs,
 };

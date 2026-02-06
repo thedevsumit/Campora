@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Navbar from "./Navbar";
 import { axiosInstance } from "../lib/axios";
+import { userAuthStore } from "../store/useAuthStore";
 
 const UserProfilePage = () => {
+  const { authUser} = userAuthStore();
   const { userId } = useParams();
   const [user, setUser] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
@@ -88,6 +90,10 @@ const UserProfilePage = () => {
 
           {/* ================= CLUB SECTIONS ================= */}
           <ClubSection title="My Clubs" clubs={user.joinedClubs} />
+          <div className="bg-white rounded-xl shadow border border-gray-200 p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">About</h2>
+            <p className="text-gray-600 leading-relaxed">{authUser?.about}</p>
+          </div>
           <ClubSection title="Followed Clubs" clubs={user.followedClubs} />
         </div>
       </div>

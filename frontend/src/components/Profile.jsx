@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import EditProfileModal from "../components/EditProfile";
 
 import { userAuthStore } from "../store/useAuthStore";
@@ -10,6 +11,7 @@ import Navbar from "./Navbar";
 
 const ProfilePage = () => {
   const { authUser, logout, updateProfile } = userAuthStore();
+  const navigate = useNavigate();
   const {
     joinedClubs,
     followedClubs,
@@ -18,12 +20,15 @@ const ProfilePage = () => {
     getJoinedClubs,
     getFollowedClubs,
     getAttendedEvents,
+    createdClubs,
+    getCreatedClubs,
   } = useClubStore();
 
   useEffect(() => {
     getJoinedClubs();
     getFollowedClubs();
     getAttendedEvents();
+    getCreatedClubs();
   }, []);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
@@ -146,6 +151,50 @@ const ProfilePage = () => {
                 {followedClubs.map((club) => (
                   <div
                     key={club._id}
+                    className="flex items-center gap-4 border border-gray-200 rounded-lg p-4 hover:shadow transition cursor-pointer"
+                  >
+                    {/* Club Icon */}
+                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <img
+                        src={
+                          club.clubIcon
+                            ? `http://localhost:5000${club.clubIcon}`
+                            : "/placeholder.png"
+                        }
+                        alt={club.clubName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Club Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {club.clubName}
+                      </h3>
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {club.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* CLUBS CREATED */}
+          <div className="bg-white rounded-xl shadow border border-gray-200 p-6 mt-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Created Clubs
+            </h2>
+
+            {createdClubs.length === 0 ? (
+              <p className="text-gray-500">You’re not following any clubs.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {createdClubs.map((club) => (
+                  <div
+                    key={club._id}
+                    onClick={() => navigate(`/clubs/${club._id}/admin`)}
                     className="flex items-center gap-4 border border-gray-200 rounded-lg p-4 hover:shadow transition cursor-pointer"
                   >
                     {/* Club Icon */}
