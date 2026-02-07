@@ -21,7 +21,7 @@ const app = express();
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5174", // ⚠️ removed extra space
+    origin: "http://localhost:5173", // ⚠️ removed extra space
     credentials: true,
   }),
 );
@@ -34,6 +34,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRouter);
 app.use("/api/chats", privateRouter);
 app.use("/api/clubs", clubRoutes);
+app.use("/api/clubs", require("./routes/clubChat.route"));
 
 app.get("/", (req, res) => {
   res.send({ msg: "Server is Live!" });
@@ -43,7 +44,7 @@ app.get("/", (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
@@ -55,7 +56,13 @@ io.on("connection", (socket) => {
     socket.join(userId);
     console.log(`👤 User joined room: ${userId}`);
   });
+   socket.on("joinClub", (clubId) => {
+     socket.join(`club_${clubId}`);
+   });
 
+   socket.on("leaveClub", (clubId) => {
+     socket.leave(`club_${clubId}`);
+   });
   socket.on("disconnect", () => {
     console.log("🔴 Socket disconnected:", socket.id);
   });

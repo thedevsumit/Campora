@@ -12,7 +12,11 @@ const clubMessageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    content: String,
+    content: {
+      type: String,
+      trim: true,
+      required: true,
+    },
   },
   { timestamps: true },
 );

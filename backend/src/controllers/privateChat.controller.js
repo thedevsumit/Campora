@@ -36,9 +36,11 @@ const getMessages = async (req, res) => {
 
     const chatId = getChatId(senderId, receiverId);
 
-    const messages = await PrivateMessage.find({ chatId }).sort({
-      createdAt: 1,
-    });
+    // 🔥 POPULATE sender & receiver
+    const messages = await PrivateMessage.find({ chatId })
+      .populate("sender", "fullName profilePic")
+      .populate("receiver", "fullName profilePic")
+      .sort({ createdAt: 1 });
 
     res.status(200).json({ messages });
   } catch (err) {
@@ -67,15 +69,18 @@ const sendMessage = async (req, res) => {
 
     const chatId = getChatId(senderId, receiverId);
 
-    // ✅ SAVE MESSAGE
-    const message = await PrivateMessage.create({
+    // ✅ CREATE MESSAGE
+    let message = await PrivateMessage.create({
       chatId,
       sender: senderId,
       receiver: receiverId,
       content: content.trim(),
     });
 
-    // 🔥 SOCKET.IO EMIT (NEW)
+    // 🔥 POPULATE BEFORE EMIT
+    message = await message.populate("sender", "fullName profilePic");
+
+    // 🔥 SOCKET.IO EMIT
     const io = req.app.get("io");
     io.to(receiverId.toString()).emit("receiveMessage", message);
 
@@ -96,7 +101,6 @@ const getConversations = async (req, res) => {
       $or: [{ sender: userId }, { receiver: userId }],
     }).populate("sender receiver", "fullName profilePic");
 
-    // Deduplicate users (extra safety)
     const userMap = new Map();
 
     requests.forEach((r) => {

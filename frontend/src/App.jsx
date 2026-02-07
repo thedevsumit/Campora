@@ -16,6 +16,7 @@ import ChatRequestsPage from "./pages/ChatRequestsPage";
 import ChatInboxPage from "./pages/ChatInboxPage";
 import PrivateChatPage from "./pages/PrivateChatPage";
 import ClubAdminDashboard from "./components/ClubAdminDashboard";
+import ClubGroupChatPage from "./pages/ClubGroupChatPage ";
 
 
 function App() {
@@ -60,7 +61,9 @@ function App() {
           />
           <Route
             path="/clubs/:clubId/admin"
-            element={authUser ? <ClubAdminDashboard /> : <Navigate to="/login" />}
+            element={
+              authUser ? <ClubAdminDashboard /> : <Navigate to="/login" />
+            }
           />
           <Route
             path="/profile"
@@ -74,6 +77,7 @@ function App() {
           <Route path="/chat/requests" element={<ChatRequestsPage />} />
           <Route path="/chat" element={<ChatInboxPage />} />
           <Route path="/chat/:userId" element={<PrivateChatPage />} />
+          <Route path="/clubs/:clubId/chat" element={<ClubGroupChatPage />} />
         </Routes>
       </BrowserRouter>
     </div>

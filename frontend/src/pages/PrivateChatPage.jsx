@@ -1,98 +1,129 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../lib/axios";
-import { userAuthStore } from "../store/useAuthStore";
 import { socket } from "../lib/socket";
+import { userAuthStore } from "../store/useAuthStore";
 import Navbar from "../components/Navbar";
 
-const PrivateChatPage = () => {
+/* HELPERS */
+const formatTime = (d) =>
+  new Date(d).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const getImageUrl = (path) =>
+  path?.startsWith("http")
+    ? path
+    : path
+      ? `http://localhost:5000${path}`
+      : null;
+
+const Avatar = ({ src, name }) =>
+  src ? (
+    <img src={getImageUrl(src)} className="w-9 h-9 rounded-full object-cover" />
+  ) : (
+    <div className="w-9 h-9 bg-emerald-600 text-white rounded-full flex items-center justify-center">
+      {name?.[0]}
+    </div>
+  );
+
+export default function PrivateChatPage() {
   const { userId } = useParams();
   const { authUser } = userAuthStore();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const bottomRef = useRef(null);
+  const bottomRef = useRef();
 
-  /* ================= LOAD OLD MESSAGES ================= */
+  /* LOAD */
   useEffect(() => {
     axiosInstance
       .get(`/chats/messages/${userId}`)
-      .then((res) => setMessages(res.data.messages))
-      .catch(() => console.error("Failed to load messages"));
+      .then((res) => setMessages(res.data.messages));
   }, [userId]);
 
-  /* ================= SOCKET LISTENER ================= */
+  /* SOCKET */
   useEffect(() => {
-    const handleReceiveMessage = (message) => {
-      // ignore messages sent by self (safety)
-      if (message.sender === authUser._id) return;
+    socket.emit("join", authUser._id);
 
-      setMessages((prev) => [...prev, message]);
+    const handler = (msg) => {
+      if (msg.sender._id === authUser._id) return;
+      setMessages((p) => (p.some((m) => m._id === msg._id) ? p : [...p, msg]));
     };
 
-    socket.on("receiveMessage", handleReceiveMessage);
-
-    return () => {
-      socket.off("receiveMessage", handleReceiveMessage);
-    };
+    socket.on("receiveMessage", handler);
+    return () => socket.off("receiveMessage", handler);
   }, [authUser._id]);
 
-  /* ================= AUTO SCROLL ================= */
+  /* SCROLL */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ================= SEND MESSAGE ================= */
-  const sendMessage = async () => {
+  /* SEND */
+  const send = async () => {
     if (!text.trim()) return;
 
-    // optimistic UI (sender only)
-    const tempMessage = {
-      _id: Date.now(),
-      sender: authUser._id,
-      receiver: userId,
-      content: text,
-      createdAt: new Date(),
-    };
-
-    setMessages((prev) => [...prev, tempMessage]);
-    setText("");
-
-    try {
-      await axiosInstance.post(`/chats/messages/${userId}`, {
+    setMessages((p) => [
+      ...p,
+      {
+        _id: Date.now(),
+        sender: authUser,
         content: text,
-      });
-    } catch (err) {
-      console.error("Failed to send message", err);
-    }
+        createdAt: new Date(),
+      },
+    ]);
+
+    setText("");
+    await axiosInstance.post(`/chats/messages/${userId}`, {
+      content: text,
+    });
   };
 
   return (
     <>
       <Navbar />
 
-      {/* Page */}
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
-        {/* Chat area */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-2xl mx-auto space-y-2">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-100 via-gray-100 to-slate-200">
+        {/* CHAT AREA */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="max-w-2xl mx-auto space-y-3">
             {messages.map((m) => {
-              const isMe = m.sender === authUser._id;
+              const me = m.sender._id === authUser._id;
 
               return (
                 <div
                   key={m._id}
-                  className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                  className={`flex items-end gap-2 ${
+                    me ? "justify-end" : "justify-start"
+                  }`}
                 >
+                  {!me && (
+                    <Avatar
+                      src={m.sender.profilePic}
+                      name={m.sender.fullName}
+                    />
+                  )}
+
                   <div
-                    className={`px-4 py-2 rounded-2xl max-w-xs break-words shadow
-                      ${
-                        isMe
-                          ? "bg-emerald-600 text-white rounded-br-sm"
-                          : "bg-white text-gray-800 rounded-bl-sm"
-                      }`}
+                    className={`px-4 py-2 rounded-2xl max-w-xs shadow-sm ${
+                      me
+                        ? "bg-emerald-600 text-white rounded-br-sm"
+                        : "bg-gray-200 text-gray-900 border border-gray-300 rounded-bl-sm"
+                    }`}
                   >
-                    {m.content}
+                    <p className="leading-snug">{m.content}</p>
+                    <span className="block text-[11px] mt-1 opacity-60 text-right">
+                      {formatTime(m.createdAt)}
+                    </span>
                   </div>
+
+                  {me && (
+                    <Avatar
+                      src={authUser.profilePic}
+                      name={authUser.fullName}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -100,21 +131,21 @@ const PrivateChatPage = () => {
           </div>
         </div>
 
-        {/* Input bar */}
-        <div className="bg-white border-t p-4">
-          <div className="max-w-2xl mx-auto flex gap-2">
+        {/* INPUT BAR */}
+        <div className=" border-t px-4 py-2">
+          <div className="max-w-2xl mx-auto flex items-center gap-2">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 px-4 py-2 rounded-full border
-                         focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              className="flex-1 h-10 px-4 rounded-full border border-gray-300
+                       focus:outline-none focus:ring-2 focus:ring-emerald-400 text-black"
+              placeholder="Type a message…"
+              onKeyDown={(e) => e.key === "Enter" && send()}
             />
             <button
-              onClick={sendMessage}
-              className="bg-emerald-600 hover:bg-emerald-700
-                         text-white px-6 rounded-full transition"
+              onClick={send}
+              className="h-10 px-5 rounded-full bg-emerald-600
+                       text-white hover:bg-emerald-700 transition"
             >
               Send
             </button>
@@ -123,6 +154,5 @@ const PrivateChatPage = () => {
       </div>
     </>
   );
-};
 
-export default PrivateChatPage;
+}

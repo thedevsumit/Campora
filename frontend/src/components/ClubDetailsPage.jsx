@@ -97,7 +97,15 @@ const ClubDetailsPage = () => {
                 Join Club
               </button>
             )}
-
+            {isMember && (
+              <button
+                onClick={() => navigate(`/clubs/${selectedClub._id}/chat`)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium"
+              >
+                Open Group Chat
+              </button>
+            )}
+  
             {!isMember &&
               (isFollower ? (
                 <button
