@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useClubAdminStore } from '../store/useClubAdminStore';
 import Navbar from './Navbar';
-// import EditClubModal from './EditClubModal';
+import EditClubModal from './EditClubModal';
 
 export default function ClubAdminDashboard() {
   const { clubId } = useParams();
@@ -663,13 +663,15 @@ await fetchAdminClub(clubId);
         </div>
       )}
 
-      {/* Edit Modal Component */}
-      {/* <EditClubModal 
+      /* Edit Modal Component */
+      <EditClubModal 
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
         clubData={clubData}
+        clubId={clubId}
         onSave={handleSaveEdit}
-      /> */}
+        onUpdated={() => fetchAdminClub(clubId)}
+      /> 
 
       <style jsx>{`
         @keyframes fadeIn {
