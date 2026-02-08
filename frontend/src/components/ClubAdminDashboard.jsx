@@ -15,9 +15,13 @@ export default function ClubAdminDashboard() {
     addMember,
     removeMember,
     changeRole,
+    createAnnouncement,
+    fetchAnnouncements,
+    deleteAnnouncement
     } = useClubAdminStore();
 
   const [clubData, setClubData] = useState(null);
+  const [sending, setSending] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -28,7 +32,8 @@ export default function ClubAdminDashboard() {
   const [announcementData, setAnnouncementData] = useState({
     title: '',
     message: '',
-    audience: 'members' // members or all
+    audience: 'members',
+    duration: 60, 
   });
 
   const [newMember, setNewMember] = useState({
@@ -91,7 +96,21 @@ export default function ClubAdminDashboard() {
   };
 
 const handleAnnouncementSubmit = async () => {
-alert('Announcements backend not connected yet');
+  if (sending) return; // ⭐ prevents double call
+
+  if (!announcementData.title || !announcementData.message) return;
+
+  try {
+    setSending(true);
+
+    await createAnnouncement(clubId, announcementData);
+    await fetchAdminClub(clubId);
+
+    setShowAnnouncementModal(false);
+    setAnnouncementData({ title: "", message: "", audience: "members" });
+  } finally {
+    setSending(false);
+  }
 };
 
 
@@ -116,6 +135,14 @@ const handleChangeRole = async (memberId, role) => {
 await changeRole(clubId, memberId, role);
 await fetchAdminClub(clubId);
 };
+
+const handleDeleteAnnouncement = async (announcementId) => {
+  await deleteAnnouncement(clubId, announcementId);
+
+  // ⭐ refresh UI after delete
+  await fetchAdminClub(clubId);
+};
+
 
   if (isLoading) {
     return (
@@ -403,22 +430,99 @@ await fetchAdminClub(clubId);
         )}
 
         {activeTab === 'announcements' && (
-          <div className="space-y-6">
+        <div className="space-y-6">
+
+            {/* Header */}
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Announcements</h2>
-              <button 
+            <h2 className="text-2xl font-bold text-gray-900">Announcements</h2>
+
+            <button
                 onClick={() => setShowAnnouncementModal(true)}
                 className="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
-              >
+            >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                />
                 </svg>
                 New Announcement
-              </button>
+            </button>
             </div>
 
-          </div>
+            {/* Announcements List */}
+            <div className="space-y-4">
+
+              {adminClub?.announcements?.length === 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
+                  <p className="text-gray-500">No announcements yet</p>
+                </div>
+              )}
+
+              {adminClub?.announcements?.map((a) => {
+
+                const isExpired =
+                  a.expiresAt && new Date(a.expiresAt) < new Date();
+
+                return (
+                  <div
+                    key={a._id} // ⭐ IMPORTANT: use _id not index
+                    className={`bg-white rounded-xl p-6 border shadow-sm ${
+                      isExpired ? "opacity-50" : "border-gray-200"
+                    }`}
+                  >
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {a.title}
+                      </h3>
+
+                      <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full capitalize">
+                        {a.audience}
+                      </span>
+                    </div>
+
+                    {/* Message */}
+                    <p className="text-gray-600 mb-3">
+                      {a.message}
+                    </p>
+
+                    {/* Dates */}
+                    <div className="flex justify-between items-center">
+                      <div className="text-xs text-gray-400 space-y-1">
+                        <p>Created: {new Date(a.createdAt).toLocaleString()}</p>
+
+                        {a.expiresAt && (
+                          <p>
+                            Expires: {new Date(a.expiresAt).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Delete Button */}
+                      {!isExpired && (
+                        <button
+                          onClick={() => handleDeleteAnnouncement(a._id)}
+                          className="text-red-500 hover:text-red-700 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Expired label */}
+                    {isExpired && (
+                      <p className="text-xs text-red-400 mt-2">
+                        Expired
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+        </div>
         )}
+
 
         {activeTab === 'analytics' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -529,6 +633,24 @@ await fetchAdminClub(clubId);
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Active for(Minutes)
+                  </label>
+                <input
+                  type="number"
+                  placeholder="Active for (minutes)"
+                  value={announcementData.duration}
+                  onChange={(e) =>
+                    setAnnouncementData({
+                      ...announcementData,
+                      duration: Number(e.target.value),
+                    })
+                  }
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
+                />
+                {/* Fixed: replaced <div/> with </div> */}
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -569,10 +691,12 @@ await fetchAdminClub(clubId);
                 <div className="flex gap-3 pt-4">
                   <button
                     onClick={handleAnnouncementSubmit}
-                    className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-lg transition-colors"
+                    disabled={sending}
+                    className="flex-1 bg-green-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg"
                   >
-                    Send Announcement
+                    {sending ? "Sending..." : "Send Announcement"}
                   </button>
+
                   <button
                     onClick={() => setShowAnnouncementModal(false)}
                     className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition-colors"
@@ -663,7 +787,7 @@ await fetchAdminClub(clubId);
         </div>
       )}
 
-      /* Edit Modal Component */
+      {/* Edit Modal Component */}
       <EditClubModal 
         show={showEditModal}
         onClose={() => setShowEditModal(false)}

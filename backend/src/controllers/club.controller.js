@@ -329,10 +329,16 @@ const getAttendedEvents = async (req, res) => {
 
 const getAdminClubData = async (req, res) => {
   try {
-    const club = await Club.findById(req.params.clubId)
-      .populate("members.user", "fullName profilePic email")
-      .populate("followers", "fullName profilePic");
+    const now = new Date();
 
+    
+    const club = await Club.findById(req.params.clubId)
+    .populate("members.user", "fullName profilePic email")
+    .populate("followers", "fullName profilePic");
+    
+    club.announcements = club.announcements.filter(
+      (a) => !a.expiresAt || a.expiresAt > now
+    );
     return res.json({ club });
   } catch (err) {
     console.error("getAdminClubData:", err);
@@ -424,6 +430,63 @@ const getCreatedClubs = async (req, res) => {
   }
 };
 
+const createAnnouncement = async (req, res) => {
+  try {
+    const { title, message, audience, duration } = req.body;
+
+    if (!title || !message)
+      return res.status(400).json({ message: "Title & message required" });
+
+    // duration in minutes
+    const expiresAt = duration
+      ? new Date(Date.now() + duration * 60 * 1000)
+      : null;
+
+    const club = await Club.findByIdAndUpdate(
+      req.club._id,
+      {
+        $push: {
+          announcements: {
+            $each: [{ title, message, audience, expiresAt }],
+            $position: 0,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    res.json({ club });
+  } catch (err) {
+    console.error("createAnnouncement:", err);
+    res.status(500).json({ message: "Failed to create announcement" });
+  }
+};
+
+
+const getAnnouncements = async (req, res) => {
+  try {
+    res.json({ announcements: req.club.announcements });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch announcements" });
+  }
+};
+
+const deleteAnnouncement = async (req, res) => {
+  try {
+    const { announcementId } = req.params;
+
+    await Club.findByIdAndUpdate(req.club._id, {
+      $pull: { announcements: { _id: announcementId } },
+    });
+
+    res.json({ message: "Announcement deleted" });
+  } catch (err) {
+    console.error("deleteAnnouncement:", err);
+    res.status(500).json({ message: "Failed to delete announcement" });
+  }
+};
+
+
 module.exports = {
   createClub,
   getAllClubs,
@@ -444,4 +507,7 @@ module.exports = {
   removeMember,
   changeMemberRole,
   getCreatedClubs,
+  createAnnouncement,
+  getAnnouncements,
+  deleteAnnouncement,
 };

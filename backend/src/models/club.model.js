@@ -34,8 +34,8 @@ const clubSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ["Member", "Admin"],
-          default: "Member",
+          enum: ["member", "admin"],
+          default: "member",
         },
         joinedAt: {
           type: Date,
@@ -55,6 +55,20 @@ const clubSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    announcements: [
+      {
+        title: { type: String, required: true },
+        message: { type: String, required: true },
+        audience: {
+          type: String,
+          enum: ["members", "followers", "all"],
+          default: "members",
+        },
+        createdAt: { type: Date, default: Date.now },
+        expiresAt: { type: Date },
+      },
+    ],
   },
   { timestamps: true },
 );

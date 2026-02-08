@@ -22,6 +22,9 @@ const {
   removeMember,
   changeMemberRole,
   getCreatedClubs,
+  createAnnouncement,
+  getAnnouncements,
+  deleteAnnouncement,
 } = require("../controllers/club.controller");
 
 const isClubCreator = require("../middleware/isClubCreator");
@@ -75,6 +78,28 @@ clubRoutes.get("/users/me/clubs/followed", protectRoute, getFollowedClubs);
 clubRoutes.get("/users/me/events/attended", protectRoute, getAttendedEvents);
 
 clubRoutes.get("/users/me/clubs/created", protectRoute, getCreatedClubs);
+
+clubRoutes.post(
+  "/:clubId/admin/announcements",
+  protectRoute,
+  isClubCreator,
+  createAnnouncement
+);
+
+clubRoutes.delete(
+  "/:clubId/admin/announcements/:announcementId",
+  protectRoute,
+  isClubCreator,
+  deleteAnnouncement
+);
+
+
+clubRoutes.get(
+  "/:clubId/announcements",
+  protectRoute,
+  getAnnouncements
+);
+
 
 
 
