@@ -43,7 +43,6 @@ export default function ClubAdminDashboard() {
 
   const [members, setMembers] = useState([]);
 
-/* ================= FETCH REAL DATA ================= */
     useEffect(() => {
     const load = async () => {
     if (!clubId) return;
@@ -96,7 +95,7 @@ export default function ClubAdminDashboard() {
   };
 
 const handleAnnouncementSubmit = async () => {
-  if (sending) return; // ⭐ prevents double call
+  if (sending) return; 
 
   if (!announcementData.title || !announcementData.message) return;
 
@@ -139,7 +138,6 @@ await fetchAdminClub(clubId);
 const handleDeleteAnnouncement = async (announcementId) => {
   await deleteAnnouncement(clubId, announcementId);
 
-  // ⭐ refresh UI after delete
   await fetchAdminClub(clubId);
 };
 
@@ -465,7 +463,7 @@ const handleDeleteAnnouncement = async (announcementId) => {
 
                 return (
                   <div
-                    key={a._id} // ⭐ IMPORTANT: use _id not index
+                    key={a._id} 
                     className={`bg-white rounded-xl p-6 border shadow-sm ${
                       isExpired ? "opacity-50" : "border-gray-200"
                     }`}
@@ -649,7 +647,6 @@ const handleDeleteAnnouncement = async (announcementId) => {
                   }
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                 />
-                {/* Fixed: replaced <div/> with </div> */}
                 </div>
 
                 <div>
