@@ -3,6 +3,9 @@ import { useParams } from 'react-router-dom';
 import { useClubAdminStore } from '../store/useClubAdminStore';
 import Navbar from './Navbar';
 import EditClubModal from './EditClubModal';
+import ClubAdminEventsManager from './ClubAdminEventsManager';
+import { axiosInstance } from "../lib/axios";
+
 
 export default function ClubAdminDashboard() {
   const { clubId } = useParams();
@@ -140,6 +143,19 @@ const handleDeleteAnnouncement = async (announcementId) => {
 
   await fetchAdminClub(clubId);
 };
+
+const handleCreateEvent = async (form) => {
+  try {
+    await axiosInstance.post(`/events/club/${clubId}`, form);
+    alert("Event created successfully");
+
+    // optional: refresh admin data later when we add event list
+  } catch (err) {
+    console.error(err);
+    alert("Failed to create event");
+  }
+};
+
 
 
   if (isLoading) {
@@ -425,6 +441,10 @@ const handleDeleteAnnouncement = async (announcementId) => {
               </table>
             </div>
           </div>
+        )}
+
+        {activeTab === "events" && (
+          <ClubAdminEventsManager clubId={clubId} onCreate={handleCreateEvent} />
         )}
 
         {activeTab === 'announcements' && (

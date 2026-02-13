@@ -17,6 +17,7 @@ import ChatInboxPage from "./pages/ChatInboxPage";
 import PrivateChatPage from "./pages/PrivateChatPage";
 import ClubAdminDashboard from "./components/ClubAdminDashboard";
 import ClubGroupChatPage from "./pages/ClubGroupChatPage ";
+import EventsPage from "./components/EventsPage";
 
 
 function App() {
@@ -46,6 +47,10 @@ function App() {
           <Route
             path="/"
             element={authUser ? <HomePage /> : <Navigate to="/signup" />}
+          />
+          <Route
+            path="/events"
+            element={authUser ? <EventsPage /> : <Navigate to="/signup" />}
           />
           <Route
             path="/login"

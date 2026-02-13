@@ -10,6 +10,8 @@ const cors = require("cors");
 const chatRouter = require("./routes/chatRequest.route");
 const privateRouter = require("./routes/privateChat.route");
 
+const { eventRoutes } = require("./routes/event.route");
+
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -35,6 +37,8 @@ app.use("/api/chat", chatRouter);
 app.use("/api/chats", privateRouter);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/clubs", require("./routes/clubChat.route"));
+app.use("/api/events", eventRoutes);
+
 
 app.get("/", (req, res) => {
   res.send({ msg: "Server is Live!" });

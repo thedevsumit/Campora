@@ -1,0 +1,23 @@
+const express = require("express");
+const protectRoute = require("../middleware/auth.middleware");
+
+const {
+  createEvent,
+  getAllEvents,
+  registerForEvent,
+  getEventRegistrations,
+  deleteEvent,
+} = require("../controllers/event.controller");
+
+const router = express.Router();
+
+/* STUDENT */
+router.get("/", protectRoute, getAllEvents);
+router.post("/:eventId/register", protectRoute, registerForEvent);
+
+/* ADMIN */
+router.post("/club/:clubId", protectRoute, createEvent);
+router.get("/:eventId/registrations", protectRoute, getEventRegistrations);
+router.delete("/:eventId", protectRoute, deleteEvent);
+
+module.exports = { eventRoutes: router };
