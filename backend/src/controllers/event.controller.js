@@ -118,10 +118,47 @@ const deleteEvent = async (req, res) => {
   }
 };
 
+const getClubEvents = async (req, res) => {
+  try {
+    const { clubId } = req.params;
+
+    const events = await Event.find({ club: clubId })
+      .populate("club", "clubName clubIcon")
+      .sort({ createdAt: -1 });
+
+    res.json({ events });
+  } catch (err) {
+    console.error("getClubEvents:", err);
+    res.status(500).json({ message: "Failed to fetch club events" });
+  }
+};
+
+const getEventById = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    const event = await Event.findById(eventId)
+      .populate("club", "clubName clubIcon");
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    res.json({ event });
+  } catch (err) {
+    console.error("getEventById:", err);
+    res.status(500).json({ message: "Failed to fetch event" });
+  }
+};
+
+
+
 module.exports = {
   createEvent,
   getAllEvents,
   registerForEvent,
   getEventRegistrations,
   deleteEvent,
+  getClubEvents,
+  getEventById,
 };

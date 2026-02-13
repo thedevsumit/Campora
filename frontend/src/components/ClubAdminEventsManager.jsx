@@ -1,35 +1,19 @@
-import React, { useState } from "react";
-import { useEffect } from "react";
-import { axiosInstance } from "../lib/axios";
+import React, { useState, useEffect } from "react";
+import { useEventStore } from "../store/useEventStore";
 
-
-export default function ClubAdminEventsManager({ onCreate }) {
+export default function ClubAdminEventsManager({ clubId }) {
   const [showModal, setShowModal] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchEvents = async () => {
-    try {
-      console.log("FETCHING EVENTS FOR:", clubId);
+  /* ================= ZUSTAND ================= */
+  const { clubEvents, fetchClubEvents, createEvent, loading } = useEventStore();
 
-      const res = await axiosInstance.get(`/events/club/${clubId}`);
-
-      console.log("EVENTS RESPONSE:", res.data);
-
-      setEvents(res.data.events);
-    } catch (err) {
-      console.error("FETCH EVENTS ERROR:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ⭐ THIS WAS MISSING
+  /* ================= FETCH CLUB EVENTS ================= */
   useEffect(() => {
     if (!clubId) return;
-    fetchEvents();
-  }, [clubId]);
+    fetchClubEvents(clubId);
+  }, [clubId, fetchClubEvents]);
 
+  /* ================= FORM STATE ================= */
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -45,6 +29,7 @@ export default function ClubAdminEventsManager({ onCreate }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  /* ================= CREATE EVENT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -53,7 +38,7 @@ export default function ClubAdminEventsManager({ onCreate }) {
       return;
     }
 
-    await onCreate(form);
+    await createEvent(clubId, form);
 
     setShowModal(false);
 
@@ -82,13 +67,37 @@ export default function ClubAdminEventsManager({ onCreate }) {
         </button>
       </div>
 
-      {/* Empty state */}
-      <p className="text-gray-500 text-sm">
-        Create and manage events for your club. Registered students and stats will
-        appear here.
-      </p>
+      {/* Loading */}
+      {loading && <p className="text-gray-500">Loading events...</p>}
 
-      {/* Create Event Modal */}
+      {/* Empty state */}
+      {!loading && clubEvents.length === 0 && (
+        <p className="text-gray-500 text-sm">
+          No events yet. Create your first club event 🚀
+        </p>
+      )}
+
+      {/* Events List */}
+      <div className="space-y-3 mt-4">
+        {clubEvents.map((event) => (
+          <div
+            key={event._id}
+            className="border rounded-lg p-4 flex justify-between items-center"
+          >
+            <div>
+              <h3 className="font-semibold text-gray-900">{event.title}</h3>
+              <p className="text-sm text-gray-500">
+                {event.date} • {event.time} • {event.venue}
+              </p>
+              <p className="text-xs text-gray-400">
+                {event.registeredCount || 0}/{event.maxParticipants} registered
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ================= CREATE EVENT MODAL ================= */}
       {showModal && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
