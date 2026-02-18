@@ -14,6 +14,10 @@ const { eventRoutes } = require("./routes/event.route");
 
 const http = require("http");
 const { Server } = require("socket.io");
+const adminRouter = require("./routes/admin.route");
+const clubManageRoutes = require("./routes/club.manage.routes");
+
+
 
 dotenv.config();
 
@@ -38,7 +42,8 @@ app.use("/api/chats", privateRouter);
 app.use("/api/clubs", clubRoutes);
 app.use("/api/clubs", require("./routes/clubChat.route"));
 app.use("/api/events", eventRoutes);
-
+app.use("/api/admin",adminRouter)
+app.use("/api/clubs", clubManageRoutes);
 
 app.get("/", (req, res) => {
   res.send({ msg: "Server is Live!" });

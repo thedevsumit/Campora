@@ -7,7 +7,6 @@ export const useClubAdminStore = create((set) => ({
   loading: false,
   announcements: [],
 
-
   fetchAdminClub: async (clubId) => {
     set({ loading: true });
     try {
@@ -21,18 +20,42 @@ export const useClubAdminStore = create((set) => ({
   },
 
   addMember: async (clubId, data) => {
-    await axiosInstance.post(`/clubs/admin/${clubId}/members`, data);
-    toast.success("Member added");
-  },
+    try {
+      // First find user by email
+      const userRes = await axiosInstance.get(`/users/by-email/${data.email}`);
 
+      const userId = userRes.data._id;
+
+      await axiosInstance.put(`/clubs/${clubId}/add-member`, {
+        userId,
+        role: data.role,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add member");
+    }
+  },
   removeMember: async (clubId, memberId) => {
-    await axiosInstance.delete(`/clubs/admin/${clubId}/members/${memberId}`);
-    toast.success("Member removed");
+    try {
+      await axiosInstance.put(`/clubs/${clubId}/remove-member`, {
+        userId: memberId,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove member");
+    }
   },
 
   changeRole: async (clubId, memberId, role) => {
-    await axiosInstance.patch(`/clubs/admin/${clubId}/members/${memberId}`, { role });
-    toast.success("Role updated");
+    try {
+      await axiosInstance.put(`/clubs/${clubId}/update-role`, {
+        userId: memberId,
+        newRole: role,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update role");
+    }
   },
 
   createAnnouncement: async (clubId, data) => {
@@ -43,14 +66,12 @@ export const useClubAdminStore = create((set) => ({
   fetchAnnouncements: async (clubId) => {
     const res = await axiosInstance.get(`/clubs/${clubId}/announcements`);
     set({ announcements: res.data.announcements });
- },
-  
- deleteAnnouncement: async (clubId, announcementId) => {
-  await axiosInstance.delete(
-    `/clubs/${clubId}/admin/announcements/${announcementId}`
-  );
-  toast.success("Announcement deleted");
+  },
 
-},
-
+  deleteAnnouncement: async (clubId, announcementId) => {
+    await axiosInstance.delete(
+      `/clubs/${clubId}/admin/announcements/${announcementId}`,
+    );
+    toast.success("Announcement deleted");
+  },
 }));

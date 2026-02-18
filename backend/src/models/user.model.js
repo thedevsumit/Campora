@@ -4,12 +4,21 @@ const userSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true },
     fullName: { type: String, required: true },
-    about: { type: String, required: false, default: "This user hasn’t added a about yet. Clubs are better when people know who you are!" },
+    about: {
+      type: String,
+      required: false,
+      default:
+        "This user hasn’t added a about yet. Clubs are better when people know who you are!",
+    },
     password: { type: String, required: true },
     profilePic: { type: String, default: "" },
     dept: { type: String, required: true },
     year: { type: String, required: true },
-
+    role: {
+      type: String,
+      enum: ["student", "superAdmin"],
+      default: "student",
+    },
     joinedClubs: [
       {
         type: mongoose.Schema.Types.ObjectId,

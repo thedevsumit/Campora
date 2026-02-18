@@ -38,7 +38,11 @@ export default function Navbar() {
               Requests
             </a>
           </div>
-
+          {authUser.role === "superAdmin" && (
+             <a href="/admin/dashboard">
+            Admin Panel      
+             </a>
+          )}
           {/* ================= USER DROPDOWN ================= */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="relative">

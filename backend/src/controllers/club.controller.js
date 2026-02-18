@@ -42,7 +42,7 @@ const createClub = async (req, res) => {
 ========================= */
 const getAllClubs = async (req, res) => {
   try {
-    const clubs = await Club.find({ isActive: true })
+    const clubs = await Club.find({ status: "approved", isActive: true })
       .sort({ createdAt: -1 })
       .select(
         "clubName clubIcon description createdBy members followers createdAt",
@@ -188,6 +188,15 @@ const joinClub = async (req, res) => {
     return res.status(500).json({ message: "Failed to join club" });
   }
 };
+
+const getUserByEmail = async (req, res) => {
+  const user = await User.findOne({ email: req.params.email });
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  res.json(user);
+};
+
 
 /* =========================
    FOLLOW CLUB
@@ -510,4 +519,5 @@ module.exports = {
   createAnnouncement,
   getAnnouncements,
   deleteAnnouncement,
+  getUserByEmail
 };

@@ -26,6 +26,23 @@ const clubSchema = new mongoose.Schema(
       required: true,
     },
 
+    // 🔥 NEW: Approval System
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      index: true
+    },
+
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    approvedAt: {
+      type: Date,
+    },
+
     members: [
       {
         user: {
@@ -34,7 +51,7 @@ const clubSchema = new mongoose.Schema(
         },
         role: {
           type: String,
-          enum: ["member", "admin"],
+          enum: ["member","moderator","admin"],
           default: "member",
         },
         joinedAt: {
@@ -56,7 +73,7 @@ const clubSchema = new mongoose.Schema(
       default: true,
     },
 
-    announcements: [
+    announcements: [ 
       {
         title: { type: String, required: true },
         message: { type: String, required: true },
