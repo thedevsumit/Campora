@@ -10,12 +10,15 @@ export default function CreateClubPage() {
   const [formData, setFormData] = useState({
     clubName: '',
     description: '',
+    category: '',
   });
 
   const [clubIcon, setClubIcon] = useState(null);
   const [iconPreview, setIconPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createClub } = useClubStore();
+
+  const categories = ["Technical", "Cultural", "Sports", "Arts", "Business", "Social", "Academic", "Other"];
 
   const handleChange = (e) => {
     setFormData({
@@ -39,7 +42,7 @@ export default function CreateClubPage() {
 
   const handleSubmit = async () => {
     if (!formData.clubName.trim() || !formData.description.trim()) {
-      alert('Please fill in all fields');
+      alert('Please fill in all required fields');
       return;
     }
 
@@ -49,6 +52,7 @@ export default function CreateClubPage() {
       await createClub({
         clubName: formData.clubName,
         description: formData.description,
+        category: formData.category,
         clubIcon: clubIcon,
       });
       navigate('/clubs');
@@ -126,6 +130,23 @@ export default function CreateClubPage() {
               name="clubName"
               placeholder="Enter club name"
             />
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Category
+              </label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">

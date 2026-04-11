@@ -52,6 +52,7 @@ const ClubDetailsPage = () => {
       <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 text-white py-20 overflow-hidden">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary-400/20 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-secondary-500/10 rounded-full blur-3xl" />
 
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center gap-8">
@@ -81,13 +82,13 @@ const ClubDetailsPage = () => {
             <div className="text-center md:text-left flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-5 h-5 text-primary-200" />
-                <span className="text-primary-200 text-sm font-medium">Campus Club</span>
+                <span className="text-primary-200 text-sm font-medium capitalize">{selectedClub.category || "Campus Club"}</span>
               </div>
               <h1 className="text-4xl font-extrabold mb-3 animate-fade-in-up">
                 {selectedClub.clubName}
               </h1>
               <p className="text-primary-100 text-lg max-w-2xl mb-4 animate-fade-in-up stagger-1">
-                {selectedClub.description}
+                {selectedClub.description || "No description provided for this club yet."}
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-3 animate-fade-in-up stagger-2">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-xl rounded-xl px-4 py-2">

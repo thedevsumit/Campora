@@ -18,6 +18,7 @@ import PrivateChatPage from "./pages/PrivateChatPage";
 import ClubAdminDashboard from "./components/ClubAdminDashboard";
 import ClubGroupChatPage from "./pages/ClubGroupChatPage";
 import EventsPage from "./components/EventsPage";
+import CreateClubPage from "./components/CreateClubPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ResourceBookingPage from "./pages/ResourceBookingPage";
@@ -68,6 +69,10 @@ function App() {
           <Route
             path="/clubs"
             element={authUser ? <ClubsPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/create-club"
+            element={authUser ? <CreateClubPage /> : <Navigate to="/login" />}
           />
           <Route
             path="/clubs/:clubId/admin"
