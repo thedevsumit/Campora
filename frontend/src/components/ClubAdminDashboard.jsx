@@ -4,24 +4,17 @@ import { useClubAdminStore } from "../store/useClubAdminStore";
 import Navbar from "./Navbar";
 import EditClubModal from "./EditClubModal";
 import ClubAdminEventsManager from "./ClubAdminEventsManager";
+import Button from "./ui/Button";
+import Badge from "./ui/Badge";
+import Input from "./ui/Input";
+import Modal from "./ui/Modal";
 import { axiosInstance } from "../lib/axios";
 import { userAuthStore } from "../store/useAuthStore";
+import { Settings, Users, Calendar, Megaphone, Crown, Shield, Trash2, UserPlus, ArrowRight } from "lucide-react";
 
 export default function ClubAdminDashboard() {
   const { clubId } = useParams();
-
-  const {
-    adminClub,
-    loading,
-    fetchAdminClub,
-    addMember,
-    removeMember,
-    changeRole,
-    createAnnouncement,
-    fetchAnnouncements,
-    deleteAnnouncement,
-  } = useClubAdminStore();
-
+  const { adminClub, loading, fetchAdminClub, addMember, removeMember, changeRole, createAnnouncement, fetchAnnouncements, deleteAnnouncement } = useClubAdminStore();
   const { authUser } = userAuthStore();
   const [clubData, setClubData] = useState(null);
   const [sending, setSending] = useState(false);
@@ -32,1089 +25,281 @@ export default function ClubAdminDashboard() {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
 
-  const [announcementData, setAnnouncementData] = useState({
-    title: "",
-    message: "",
-    audience: "members",
-    duration: 60,
-  });
-
-  const [newMember, setNewMember] = useState({
-    email: "",
-    role: "member", // member, moderator
-  });
-
+  const [announcementData, setAnnouncementData] = useState({ title: "", message: "", audience: "members", duration: 60 });
+  const [newMember, setNewMember] = useState({ email: "", role: "member" });
   const [members, setMembers] = useState([]);
 
   useEffect(() => {
     const load = async () => {
       if (!clubId) return;
-
       await fetchAdminClub(clubId);
     };
-
     load();
   }, [clubId, fetchAdminClub]);
 
   useEffect(() => {
     if (!adminClub) return;
-
     setClubData({
       clubName: adminClub.clubName,
       description: adminClub.description,
       icon: adminClub.clubIcon,
       members: adminClub.members.length,
       followers: adminClub.followers.length,
-      events: 0,
-      announcements: 0,
-      createdAt: adminClub.createdAt,
     });
-
-     setMembers(
-       adminClub.members.map((m) => ({
-         id: m.user._id,
-         name: m.user.fullName,
-         email: m.user.email,
-         role: m.role || "member",
-         department: "N/A",
-         joinedAt: new Date(m.joinedAt).toISOString().split("T")[0],
-       })),
-     );
-
+    setMembers(adminClub.members.map((m) => ({
+      id: m.user._id,
+      name: m.user.fullName,
+      email: m.user.email,
+      role: m.role || "member",
+      department: "N/A",
+      joinedAt: new Date(m.joinedAt).toISOString().split("T")[0],
+    })));
     setIsLoading(false);
   }, [adminClub]);
 
-  const currentUserRole = adminClub?.members?.find(
-    (m) => m.user._id === authUser?._id,
-  )?.role;
-
-  const handleSaveEdit = (updatedData) => {
-    setClubData({
-      ...clubData,
-      ...updatedData,
-    });
-  };
+  const currentUserRole = adminClub?.members?.find((m) => m.user._id === authUser?._id)?.role;
 
   const handleAnnouncementSubmit = async () => {
     if (sending) return;
-
-    if (!announcementData.title || !announcementData.message) return;
-
+    setSending(true);
     try {
-      setSending(true);
-
-      await createAnnouncement(clubId, announcementData);
-      await fetchAdminClub(clubId);
-
+      await createAnnouncement(announcementData);
       setShowAnnouncementModal(false);
-      setAnnouncementData({ title: "", message: "", audience: "members" });
+      setAnnouncementData({ title: "", message: "", audience: "members", duration: 60 });
+    } catch (error) {
+      console.error(error);
     } finally {
       setSending(false);
     }
   };
 
   const handleAddMember = async () => {
-    if (!newMember.email) return alert("Enter email");
-
+    if (!newMember.email) return;
     try {
-      await addMember(clubId, {
-        email: newMember.email,
-        role: newMember.role.toLowerCase(),
-      });
-
+      await addMember(newMember);
       setShowAddMemberModal(false);
       setNewMember({ email: "", role: "member" });
-
-      await fetchAdminClub(clubId);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to add member");
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const handleRemoveMember = async (memberId) => {
-    try {
-      await removeMember(clubId, memberId);
-      await fetchAdminClub(clubId);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to remove member");
-    }
-  };
+  const tabs = [
+    { id: "overview", label: "Overview", icon: Settings },
+    { id: "members", label: "Members", icon: Users },
+    { id: "events", label: "Events", icon: Calendar },
+    { id: "announcements", label: "Announcements", icon: Megaphone },
+  ];
 
-  const handleChangeRole = async (memberId, role) => {
-    try {
-      await changeRole(clubId, memberId, role);
-      await fetchAdminClub(clubId);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update role");
-    }
-  };
-
-  const handleDeleteAnnouncement = async (announcementId) => {
-    await deleteAnnouncement(clubId, announcementId);
-
-    await fetchAdminClub(clubId);
-  };
-
-  const handleCreateEvent = async (form) => {
-    try {
-      await axiosInstance.post(`/events/club/${clubId}`, form);
-      alert("Event created successfully");
-
-      // optional: refresh admin data later when we add event list
-    } catch (err) {
-      console.error(err);
-      alert("Failed to create event");
-    }
-  };
-
-  console.log("Members:", adminClub?.members);
-
-
-  if (isLoading) {
+  if (isLoading || !clubData) {
     return (
-      <>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
         <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-green-700 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading admin dashboard...</p>
-          </div>
+        <div className="flex items-center justify-center py-24">
+          <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        {/* Admin Header */}
-        <div className="bg-gradient-to-r from-green-700 to-green-900 shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                <span className="text-white font-semibold text-sm">
-                  ⚡ Admin Dashboard
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-              <div className="w-32 h-32 rounded-2xl overflow-hidden bg-white shadow-xl ring-4 ring-white/30 shrink-0">
-                <img
-                  src={`http://localhost:5000${clubData?.icon}`}
-                  alt={clubData?.clubName}
-                  className="w-full h-full object-cover"
-                />
-              </div>
 
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">
-                  {clubData?.clubName}
-                </h1>
-                <p className="text-lg text-green-100 mb-6 max-w-2xl leading-relaxed">
-                  {clubData?.description}
-                </p>
+      {/* Hero */}
+      <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 text-white py-16 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary-400/20 rounded-full blur-3xl" />
 
-                <div className="flex flex-wrap justify-center md:justify-start gap-6">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-white">
-                      {clubData?.members}
-                    </p>
-                    <p className="text-sm text-green-100">Members</p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 rounded-3xl overflow-hidden ring-4 ring-white/30 shadow-2xl">
+                {clubData.icon ? (
+                  <img src={`http://localhost:5000${clubData.icon}`} className="w-full h-full object-cover" alt={clubData.clubName} />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center text-4xl font-bold">
+                    {clubData.clubName?.[0]}
                   </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-white">
-                      {clubData?.followers}
-                    </p>
-                    <p className="text-sm text-green-100">Followers</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-white">
-                      {clubData?.events}
-                    </p>
-                    <p className="text-sm text-green-100">Events</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-white">
-                      {clubData?.announcements}
-                    </p>
-                    <p className="text-sm text-green-100">Announcements</p>
-                  </div>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Shield className="w-5 h-5 text-primary-200" />
+                  <span className="text-primary-200 text-sm font-medium">Club Admin</span>
                 </div>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => setShowAnnouncementModal(true)}
-                  className="bg-white hover:bg-gray-100 text-green-700 px-6 py-3 rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                    />
-                  </svg>
-                  Announce
-                </button>
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white px-6 py-3 rounded-lg transition-all duration-200 font-semibold border border-white/30 flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Edit Club
-                </button>
+                <h1 className="text-3xl font-extrabold">{clubData.clubName}</h1>
+                <p className="text-primary-100 mt-1">{clubData.description}</p>
               </div>
             </div>
+            <Button variant="outline" className="border-white/50 text-white hover:bg-white/20" onClick={() => setShowEditModal(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Edit Club
+            </Button>
           </div>
         </div>
 
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 80L60 70C120 60 240 40 360 35C480 30 600 30 720 35C840 40 960 50 1080 55C1200 60 1320 60 1380 60L1440 60V80H1380C1320 80 1200 80 1080 80C960 80 840 80 720 80C600 80 480 80 360 80C240 80 120 80 60 80H0Z" className="fill-slate-50 dark:fill-slate-950" />
+          </svg>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         {/* Tabs */}
-        <div className="bg-white shadow-md sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-8 overflow-x-auto">
-              {[
-                "overview",
-                "members",
-                "announcements",
-                "events",
-                "analytics",
-                "settings",
-              ].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-2 border-b-2 font-semibold text-sm transition-all duration-200 whitespace-nowrap ${
-                    activeTab === tab
-                      ? "border-green-700 text-green-700"
-                      : "border-transparent text-gray-600 hover:text-green-700"
-                  }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-2 mb-6">
+          <div className="flex gap-2 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
+                  activeTab === tab.id
+                    ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/30"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 animate-fade-in-up">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-primary-100 dark:bg-primary-900/30 rounded-2xl">
+                  <Users className="w-6 h-6 text-primary-600" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{clubData.members}</p>
+                  <p className="text-sm text-slate-500">Members</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 animate-fade-in-up stagger-1">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-secondary-100 dark:bg-secondary-900/30 rounded-2xl">
+                  <Users className="w-6 h-6 text-secondary-600" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{clubData.followers}</p>
+                  <p className="text-sm text-slate-500">Followers</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 animate-fade-in-up stagger-2">
+              <div className="flex items-center gap-4">
+                <div className="p-4 bg-amber-100 dark:bg-amber-900/30 rounded-2xl">
+                  <Crown className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white capitalize">{currentUserRole}</p>
+                  <p className="text-sm text-slate-500">Your Role</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Members Tab */}
+        {activeTab === "members" && (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden animate-fade-in-up">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary-500" />
+                Club Members ({members.length})
+              </h2>
+              <Button size="sm" onClick={() => setShowAddMemberModal(true)}>
+                <UserPlus className="w-4 h-4 mr-1.5" />
+                Add Member
+              </Button>
+            </div>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {members.map((member) => (
+                <div key={member.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold">
+                      {member.name?.[0]}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900 dark:text-white">{member.name}</p>
+                      <p className="text-sm text-slate-500">{member.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant={member.role === "owner" ? "warning" : member.role === "moderator" ? "info" : "default"}>
+                      {member.role}
+                    </Badge>
+                    {member.role !== "owner" && (
+                      <button onClick={() => removeMember(member.id)} className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-xl transition-colors">
+                        <Trash2 className="w-4 h-4 text-danger-500" />
+                      </button>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Content Area */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeTab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-xl p-6 border border-gray-100">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <svg
-                          className="w-6 h-6 text-green-700"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-gray-900">+12</p>
-                        <p className="text-sm text-gray-600">
-                          New Followers This Week
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl p-6 border border-gray-100">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <svg
-                          className="w-6 h-6 text-blue-700"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-gray-900">1.2k</p>
-                        <p className="text-sm text-gray-600">Profile Views</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Events Tab */}
+        {activeTab === "events" && (
+          <div className="animate-fade-in-up">
+            <ClubAdminEventsManager />
+          </div>
+        )}
 
-                {/* Recent Activity */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">
-                    Recent Activity
-                  </h2>
-                  <div className="space-y-3">
-                    {[
-                      {
-                        action: "New member joined",
-                        user: "Sarah Williams",
-                        time: "2 hours ago",
-                        icon: "👤",
-                      },
-                      {
-                        action: "Event created",
-                        user: "You",
-                        time: "5 hours ago",
-                        icon: "📅",
-                      },
-                      {
-                        action: "Announcement sent",
-                        user: "You",
-                        time: "1 day ago",
-                        icon: "📢",
-                      },
-                    ].map((activity, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                      >
-                        <span className="text-2xl">{activity.icon}</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {activity.action}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {activity.user} • {activity.time}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin Actions */}
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Admin Actions
-                </h2>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setShowAnnouncementModal(true)}
-                    className="w-full text-left px-4 py-3 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-lg transition-all duration-200 border border-green-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <svg
-                        className="w-5 h-5 text-green-700"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                        />
-                      </svg>
-                      <span className="text-gray-900 font-semibold">
-                        Make Announcement
-                      </span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setShowAddMemberModal(true)}
-                    className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200"
-                  >
-                    <div className="flex items-center gap-3">
-                      <svg
-                        className="w-5 h-5 text-green-700"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                        />
-                      </svg>
-                      <span className="text-gray-900 font-semibold">
-                        Add Member
-                      </span>
-                    </div>
-                  </button>
-                  <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200">
-                    <div className="flex items-center gap-3">
-                      <svg
-                        className="w-5 h-5 text-green-700"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                      <span className="text-gray-900 font-semibold">
-                        Create Event
-                      </span>
-                    </div>
-                  </button>
-                  <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all duration-200">
-                    <div className="flex items-center gap-3">
-                      <svg
-                        className="w-5 h-5 text-green-700"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                      </svg>
-                      <span className="text-gray-900 font-semibold">
-                        View Analytics
-                      </span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "members" && (
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Manage Members
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {members.length} total members
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowAddMemberModal(true)}
-                  className="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Add Member
-                </button>
-              </div>
-
-              <div className="overflow-x-auto">
-                {console.log("ADMIN MEMBERS:", adminClub?.members)}
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Member
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Department
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Joined
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {members.map((member) => (
-                      <tr key={member.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-green-700 rounded-full flex items-center justify-center text-white font-semibold">
-                              {member.name.charAt(0)}
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {member.name}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {member.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {member.department}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {currentUserRole === "admin" ? (
-                            <select
-                              value={member.role}
-                              onChange={(e) =>
-                                handleChangeRole(member.id, e.target.value)
-                              }
-                              className="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-900 border-0 focus:ring-2 focus:ring-green-500"
-                            >
-                              <option value="member">Member</option>
-                              <option value="moderator">Moderator</option>
-                            </select>
-                          ) : (
-                            <span className="px-3 py-1 bg-gray-100 rounded-full text-sm capitalize">
-                              {member.role}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {member.joinedAt}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {(currentUserRole === "admin" ||
-                            currentUserRole === "moderator") &&
-                            member.role !== "admin" && (
-                              <button
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                Remove
-                              </button>
-                            )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "events" && (
-            <ClubAdminEventsManager
-              clubId={clubId}
-              onCreate={handleCreateEvent}
-            />
-          )}
-
-          {activeTab === "announcements" && (
-            <div className="space-y-6">
-              {/* Header */}
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Announcements
-                </h2>
-
-                <button
-                  onClick={() => setShowAnnouncementModal(true)}
-                  className="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-lg transition-all duration-200 text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                    />
-                  </svg>
-                  New Announcement
-                </button>
-              </div>
-
-              {/* Announcements List */}
-              <div className="space-y-4">
-                {adminClub?.announcements?.length === 0 && (
-                  <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-                    <p className="text-gray-500">No announcements yet</p>
-                  </div>
-                )}
-
-                {adminClub?.announcements?.map((a) => {
-                  const isExpired =
-                    a.expiresAt && new Date(a.expiresAt) < new Date();
-
-                  return (
-                    <div
-                      key={a._id}
-                      className={`bg-white rounded-xl p-6 border shadow-sm ${
-                        isExpired ? "opacity-50" : "border-gray-200"
-                      }`}
-                    >
-                      {/* Header */}
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {a.title}
-                        </h3>
-
-                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full capitalize">
-                          {a.audience}
-                        </span>
-                      </div>
-
-                      {/* Message */}
-                      <p className="text-gray-600 mb-3">{a.message}</p>
-
-                      {/* Dates */}
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs text-gray-400 space-y-1">
-                          <p>
-                            Created: {new Date(a.createdAt).toLocaleString()}
-                          </p>
-
-                          {a.expiresAt && (
-                            <p>
-                              Expires: {new Date(a.expiresAt).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Delete Button */}
-                        {!isExpired && (
-                          <button
-                            onClick={() => handleDeleteAnnouncement(a._id)}
-                            className="text-red-500 hover:text-red-700 text-sm font-medium"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Expired label */}
-                      {isExpired && (
-                        <p className="text-xs text-red-400 mt-2">Expired</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {activeTab === "analytics" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Member Growth
-                </h3>
-                <div className="h-64 flex items-center justify-center text-gray-400">
-                  <p>Chart visualization would go here</p>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
-                  Event Attendance
-                </h3>
-                <div className="h-64 flex items-center justify-center text-gray-400">
-                  <p>Chart visualization would go here</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "settings" && (
-            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Club Settings
+        {/* Announcements Tab */}
+        {activeTab === "announcements" && (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-primary-500" />
+                Announcements
               </h2>
-              <div className="space-y-6">
-                <div className="p-5 bg-gray-50 rounded-xl">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Club Information
-                  </h3>
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="text-green-700 hover:text-green-800 font-semibold hover:underline"
-                  >
-                    Edit Club Details
-                  </button>
-                </div>
-                <hr className="border-gray-200" />
-                <div className="p-5 bg-gray-50 rounded-xl">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Privacy Settings
-                  </h3>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-green-700 rounded focus:ring-green-500"
-                        defaultChecked
-                      />
-                      <span className="text-gray-900">
-                        Allow new member requests
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-green-700 rounded focus:ring-green-500"
-                        defaultChecked
-                      />
-                      <span className="text-gray-900">Public club profile</span>
-                    </label>
-                    <label className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4 text-green-700 rounded focus:ring-green-500"
-                      />
-                      <span className="text-gray-900">
-                        Require approval for events
-                      </span>
-                    </label>
-                  </div>
-                </div>
-                <hr className="border-gray-200" />
-                <div className="p-5 bg-red-50 rounded-xl border border-red-200">
-                  <h3 className="text-lg font-semibold text-red-900 mb-3">
-                    Danger Zone
-                  </h3>
-                  <button className="text-red-600 hover:text-red-700 font-semibold hover:underline">
-                    Delete Club
-                  </button>
-                </div>
-              </div>
+              <Button size="sm" onClick={() => setShowAnnouncementModal(true)}>
+                <Megaphone className="w-4 h-4 mr-1.5" />
+                New Announcement
+              </Button>
             </div>
-          )}
-        </div>
-
-        {/* Announcement Modal */}
-        {showAnnouncementModal && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowAnnouncementModal(false)}
-          >
-            <div
-              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    New Announcement
-                  </h2>
-                  <button
-                    onClick={() => setShowAnnouncementModal(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      value={announcementData.title}
-                      onChange={(e) =>
-                        setAnnouncementData({
-                          ...announcementData,
-                          title: e.target.value,
-                        })
-                      }
-                      placeholder="Announcement title"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Message
-                    </label>
-                    <textarea
-                      value={announcementData.message}
-                      onChange={(e) =>
-                        setAnnouncementData({
-                          ...announcementData,
-                          message: e.target.value,
-                        })
-                      }
-                      placeholder="Your announcement message..."
-                      rows={5}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Active for(Minutes)
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="Active for (minutes)"
-                      value={announcementData.duration}
-                      onChange={(e) =>
-                        setAnnouncementData({
-                          ...announcementData,
-                          duration: Number(e.target.value),
-                        })
-                      }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Send to
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          name="audience"
-                          value="members"
-                          checked={announcementData.audience === "members"}
-                          onChange={(e) =>
-                            setAnnouncementData({
-                              ...announcementData,
-                              audience: e.target.value,
-                            })
-                          }
-                          className="w-4 h-4 text-green-700"
-                        />
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            Members Only
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Send to {clubData?.members} members
-                          </p>
-                        </div>
-                      </label>
-                      <label className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          name="audience"
-                          value="all"
-                          checked={announcementData.audience === "all"}
-                          onChange={(e) =>
-                            setAnnouncementData({
-                              ...announcementData,
-                              audience: e.target.value,
-                            })
-                          }
-                          className="w-4 h-4 text-green-700"
-                        />
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            All Followers
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Send to {clubData?.followers} followers (including
-                            members)
-                          </p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={handleAnnouncementSubmit}
-                      disabled={sending}
-                      className="flex-1 bg-green-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg"
-                    >
-                      {sending ? "Sending..." : "Send Announcement"}
-                    </button>
-
-                    <button
-                      onClick={() => setShowAnnouncementModal(false)}
-                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="text-slate-500 text-center py-8">Create announcements to notify your club members.</p>
           </div>
         )}
-
-        {/* Add Member Modal */}
-        {showAddMemberModal && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            onClick={() => setShowAddMemberModal(false)}
-          >
-            <div
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Add Member
-                  </h2>
-                  <button
-                    onClick={() => setShowAddMemberModal(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={newMember.email}
-                      onChange={(e) =>
-                        setNewMember({ ...newMember, email: e.target.value })
-                      }
-                      placeholder="member@example.com"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
-                    </label>
-                    <select
-                      value={newMember.role}
-                      onChange={(e) =>
-                        setNewMember({ ...newMember, role: e.target.value })
-                      }
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
-                    >
-                      <option value="member">Member</option>
-                      <option value="moderator">Moderator</option>
-                    </select>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800">
-                      💡 An invitation will be sent to this email address
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={handleAddMember}
-                      className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-lg transition-colors"
-                    >
-                      Send Invitation
-                    </button>
-                    <button
-                      onClick={() => setShowAddMemberModal(false)}
-                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Edit Modal Component */}
-        <EditClubModal
-          show={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          clubData={clubData}
-          clubId={clubId}
-          onSave={handleSaveEdit}
-          onUpdated={() => fetchAdminClub(clubId)}
-        />
-
-        <style>
-          {`
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`}
-        </style>
       </div>
-    </>
+
+      {/* Edit Club Modal */}
+      {showEditModal && <EditClubModal club={adminClub} onClose={() => setShowEditModal(false)} />}
+
+      {/* Add Member Modal */}
+      <Modal isOpen={showAddMemberModal} onClose={() => setShowAddMemberModal(false)} title="Add Member" size="sm">
+        <div className="space-y-4">
+          <Input label="Email Address" type="email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} placeholder="member@email.com" />
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="ghost" onClick={() => setShowAddMemberModal(false)}>Cancel</Button>
+            <Button onClick={handleAddMember}>Add Member</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Announcement Modal */}
+      <Modal isOpen={showAnnouncementModal} onClose={() => setShowAnnouncementModal(false)} title="Create Announcement" size="md">
+        <div className="space-y-4">
+          <Input label="Title" value={announcementData.title} onChange={(e) => setAnnouncementData({ ...announcementData, title: e.target.value })} placeholder="Important update..." />
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Message</label>
+            <textarea rows={4} value={announcementData.message} onChange={(e) => setAnnouncementData({ ...announcementData, message: e.target.value })} placeholder="Write your announcement..." className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all resize-none" />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="ghost" onClick={() => setShowAnnouncementModal(false)}>Cancel</Button>
+            <Button onClick={handleAnnouncementSubmit} isLoading={sending}>Publish</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
   );
 }

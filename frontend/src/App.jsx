@@ -16,9 +16,12 @@ import ChatRequestsPage from "./pages/ChatRequestsPage";
 import ChatInboxPage from "./pages/ChatInboxPage";
 import PrivateChatPage from "./pages/PrivateChatPage";
 import ClubAdminDashboard from "./components/ClubAdminDashboard";
-import ClubGroupChatPage from "./pages/ClubGroupChatPage ";
+import ClubGroupChatPage from "./pages/ClubGroupChatPage";
 import EventsPage from "./components/EventsPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import ResourceBookingPage from "./pages/ResourceBookingPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 
 function App() {
@@ -30,14 +33,15 @@ function App() {
 
   if (isCheckingAuth && !authUser) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader className="size-17 animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900">
+        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+        <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading Campora...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
       <BrowserRouter>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
@@ -93,6 +97,24 @@ function App() {
                 <Navigate to="/" />
               )
             }
+          />
+          <Route
+            path="/analytics"
+            element={
+              authUser?.role === "superAdmin" || authUser?.userRole === "admin" ? (
+                <AnalyticsDashboard />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/resources"
+            element={authUser ? <ResourceBookingPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/notifications"
+            element={authUser ? <NotificationsPage /> : <Navigate to="/login" />}
           />
         </Routes>
       </BrowserRouter>

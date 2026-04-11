@@ -1,181 +1,230 @@
 import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { userAuthStore } from "../store/useAuthStore";
+import NotificationBell from "./NotificationBell";
+import DarkModeToggle from "./DarkModeToggle";
+import { Home, Users, Calendar, LayoutGrid, MessageCircle, BarChart3, Shield, Menu, X, LogOut, User, Settings, ChevronDown } from "lucide-react";
 
 export default function Navbar() {
   const { logout, authUser } = userAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
+    setIsDropdownOpen(false);
   };
 
+  const isAdminOrSuperAdmin = authUser?.role === "superAdmin" || authUser?.userRole === "admin";
+
+  const navItems = [
+    { name: "Home", href: "/home", icon: Home },
+    { name: "Clubs", href: "/clubs", icon: Users },
+    { name: "Events", href: "/events", icon: Calendar },
+    { name: "Resources", href: "/resources", icon: LayoutGrid },
+    { name: "Chat", href: "/chat", icon: MessageCircle },
+  ];
+
+  const isActive = (href) => location.pathname === href;
+
   return (
-    <nav className="bg-white shadow-md border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-700/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* ================= LOGO ================= */}
-          <a href="/home" className="text-2xl font-bold text-green-700">
-            Campora
-          </a>
+        <div className="flex justify-between items-center h-18 py-4">
+          {/* Logo */}
+          <Link to="/home" className="flex items-center gap-3 group">
+            <div className="w-11 h-11 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50 transition-all group-hover:scale-105">
+              <span className="text-white font-bold text-xl">C</span>
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent hidden sm:block">
+              Campora
+            </span>
+          </Link>
 
-          {/* ================= DESKTOP NAV ================= */}
-          <div className="hidden md:flex items-center space-x-8">
-            {["Clubs", "Events", "About", "Chat"].map((item) => (
-              <a
-                key={item}
-                href={item === "Chat" ? "/chat" : `/${item.toLowerCase()}`}
-                className="text-gray-800 hover:text-green-700 font-medium transition-colors"
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    isActive(item.href)
+                      ? "bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-600 dark:from-primary-500/20 dark:to-primary-600/20 dark:text-primary-400 shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.name}
+                </Link>
+              );
+            })}
+            {isAdminOrSuperAdmin && (
+              <Link
+                to="/analytics"
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  isActive("/analytics")
+                    ? "bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-600 dark:from-primary-500/20 dark:to-primary-600/20 dark:text-primary-400 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white"
+                }`}
               >
-                {item}
-              </a>
-            ))}
-
-            <a
-              href="/chat/requests"
-              className="text-gray-800 hover:text-green-700 font-medium transition-colors"
-            >
-              Requests
-            </a>
+                <BarChart3 className="w-4 h-4" />
+                Analytics
+              </Link>
+            )}
           </div>
-          {authUser.role === "superAdmin" && (
-             <a href="/admin/dashboard">
-            Admin Panel      
-             </a>
-          )}
-          {/* ================= USER DROPDOWN ================= */}
-          <div className="hidden md:flex items-center space-x-4">
+
+          {/* Right Side */}
+          <div className="hidden md:flex items-center gap-3">
+            <DarkModeToggle />
+            <NotificationBell />
+
+            {authUser.role === "superAdmin" && (
+              <Link
+                to="/admin/dashboard"
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transition-all hover:-translate-y-0.5"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
+
+            {/* User Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center space-x-3 focus:outline-none"
+                className="flex items-center gap-3 p-1.5 pr-4 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all"
               >
-                {/* AVATAR */}
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-green-700 flex items-center justify-center text-white font-semibold">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold shadow-lg">
                   {authUser?.profilePic ? (
-                    <img
-                      src={`http://localhost:5000${authUser.profilePic}`}
-                      alt={authUser.fullName}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={`http://localhost:5000${authUser.profilePic}`} alt={authUser.fullName} className="w-full h-full object-cover rounded-xl" />
                   ) : (
                     <span>{authUser?.fullName?.[0]}</span>
                   )}
                 </div>
-
-                {/* USER INFO */}
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-800">
-                    {authUser?.fullName || "User"}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {authUser?.dept || "Student"}
-                  </p>
+                <div className="text-left hidden lg:block">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{authUser?.fullName}</p>
+                  <p className="text-xs text-slate-500 capitalize">{authUser?.userRole || authUser?.role}</p>
                 </div>
-
-                {/* CHEVRON */}
-                <svg
-                  className={`w-4 h-4 text-gray-600 transition-transform ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
               </button>
 
-              {/* DROPDOWN */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <a
-                    href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    My Profile
-                  </a>
-                  <a
-                    href="/settings"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Settings
-                  </a>
-                  <hr />
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Logout
-                  </button>
-                </div>
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                  <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 z-50 animate-scale-in overflow-hidden">
+                    <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20">
+                      <p className="font-bold text-slate-900 dark:text-white">{authUser?.fullName}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">{authUser?.email}</p>
+                    </div>
+                    <div className="p-2">
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <User className="w-5 h-5 text-primary-500" />
+                        My Profile
+                      </Link>
+                      <Link
+                        to="/notifications"
+                        className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <Settings className="w-5 h-5 text-primary-500" />
+                        Notifications
+                      </Link>
+                    </div>
+                    <div className="p-2 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors font-medium"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>
 
-          {/* ================= MOBILE BUTTON ================= */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center gap-2">
+            <DarkModeToggle />
+            <NotificationBell />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-700"
+              className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {isMobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6 text-slate-900 dark:text-white" />
+              ) : (
+                <Menu className="w-6 h-6 text-slate-900 dark:text-white" />
+              )}
             </button>
           </div>
         </div>
 
-        {/* ================= MOBILE MENU ================= */}
+        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-2 pb-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-3 pt-4">
-              {["Home", "Clubs", "Events", "About", "Chat"].map((item) => (
-                <a
-                  key={item}
-                  href={item === "Chat" ? "/chat" : `/${item.toLowerCase()}`}
-                  className="text-gray-700 hover:text-green-700 font-medium"
+          <div className="md:hidden py-4 border-t border-slate-200 dark:border-slate-700 animate-fade-in">
+            <div className="flex flex-col gap-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium transition-colors ${
+                      isActive(item.href)
+                        ? "bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-600 dark:from-primary-500/20 dark:to-primary-600/20 dark:text-primary-400"
+                        : "text-slate-700 dark:text-slate-200"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+              {isAdminOrSuperAdmin && (
+                <Link
+                  to="/analytics"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200"
                 >
-                  {item}
-                </a>
-              ))}
-
-              <a
-                href="/chat/requests"
-                className="text-gray-700 hover:text-green-700 font-medium"
+                  <BarChart3 className="w-5 h-5" />
+                  Analytics
+                </Link>
+              )}
+              {authUser.role === "superAdmin" && (
+                <Link
+                  to="/admin/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-amber-600"
+                >
+                  <Shield className="w-5 h-5" />
+                  Admin Panel
+                </Link>
+              )}
+              <hr className="my-3 border-slate-100 dark:border-slate-700" />
+              <Link
+                to="/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-medium text-slate-700 dark:text-slate-200"
               >
-                Requests
-              </a>
-
-              <hr />
+                <User className="w-5 h-5" />
+                My Profile
+              </Link>
               <button
                 onClick={handleLogout}
-                className="text-left text-red-600 font-medium"
+                className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl text-sm font-medium text-danger-600"
               >
+                <LogOut className="w-5 h-5" />
                 Logout
               </button>
             </div>

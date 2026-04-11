@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "react-toastify";
 import { socket } from "../lib/socket";
+import { useNotificationStore } from "./useNotificationStore";
 
 export const userAuthStore = create((set, get) => ({
   authUser: null,
@@ -18,7 +19,13 @@ export const userAuthStore = create((set, get) => ({
     if (!socket.connected) {
       socket.connect();
       socket.emit("join", authUser._id);
+      socket.emit("joinNotifications", authUser._id);
       console.log("🟢 Socket connected & joined:", authUser._id);
+
+      socket.on("receiveNotification", (notification) => {
+        useNotificationStore.getState().addNotification(notification);
+        toast.info(notification.title);
+      });
     }
   },
 

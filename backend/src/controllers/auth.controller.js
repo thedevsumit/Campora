@@ -98,6 +98,8 @@ const signup = async (req, res) => {
       profilePic: newUser.profilePic,
       dept: newUser.dept,
       year: newUser.year,
+      role: newUser.role,
+      userRole: newUser.userRole,
     });
   } catch (error) {
     console.log("error in signing up : ", error);
@@ -134,6 +136,8 @@ const login = async (req, res) => {
       _id: user._id,
       year: user.year,
       dept: user.dept,
+      role: user.role,
+      userRole: user.userRole,
     });
   } catch (error) {
     console.log("Error :", error);

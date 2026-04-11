@@ -19,6 +19,11 @@ const userSchema = new mongoose.Schema(
       enum: ["student", "superAdmin"],
       default: "student",
     },
+    userRole: {
+      type: String,
+      enum: ["participant", "organizer", "admin"],
+      default: "participant",
+    },
     joinedClubs: [
       {
         type: mongoose.Schema.Types.ObjectId,
