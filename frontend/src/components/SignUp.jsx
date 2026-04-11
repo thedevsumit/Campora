@@ -12,9 +12,9 @@ export default function SignUpPage() {
     fullName: "",
     email: "",
     password: "",
-    dept: "",
-    year: "",
   });
+  const [dept, setDept] = useState("");
+  const [year, setYear] = useState("");
   const navigate = useNavigate();
   const { signupAuth } = userAuthStore();
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
@@ -57,6 +57,8 @@ export default function SignUpPage() {
       const payload = {
         ...formData,
         otp: otp,
+        dept,
+        year,
       };
       signupAuth(payload);
       setIsOtpVerified(true);
@@ -75,15 +77,6 @@ export default function SignUpPage() {
     }
     navigate("/");
   };
-
-  const departments = [
-    "Computer Science",
-    "Information Technology",
-    "Electronics",
-    "Mechanical",
-    "Civil",
-    "Electrical",
-  ];
 
   const years = ["1", "2", "3", "4"];
 
@@ -124,25 +117,18 @@ export default function SignUpPage() {
               placeholder="Enter your full name"
             />
 
-            {/* Email with OTP */}
-            <div className="space-y-2">
-              <Input
-                label="Email Address"
-                type="email"
-                icon={Mail}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="your@email.com"
-                disabled={isOtpVerified}
-              />
-              {!isOtpSent && !isOtpVerified && (
-                <Button onClick={handleGetOtp} isLoading={isLoadingOtp} size="sm" variant="outline" className="w-full">
-                  {isLoadingOtp ? "Sending..." : "Send OTP"}
-                </Button>
-              )}
-            </div>
+            {/* Email Address */}
+            <Input
+              label="Email Address"
+              type="email"
+              icon={Mail}
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="your@email.com"
+              disabled={isOtpVerified}
+            />
 
-            {/* OTP Verification */}
+            {/* OTP Verification - shows after OTP sent */}
             {isOtpSent && !isOtpVerified && (
               <div className="space-y-3 p-5 bg-primary-50 dark:bg-primary-900/20 rounded-2xl border border-primary-100 dark:border-primary-800">
                 <Input
@@ -169,6 +155,16 @@ export default function SignUpPage() {
               </div>
             )}
 
+            {/* Password */}
+            <Input
+              label="Password"
+              type="password"
+              icon={Lock}
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Create a strong password"
+            />
+
             {/* Department */}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -178,16 +174,17 @@ export default function SignUpPage() {
                 <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 <select
                   name="dept"
-                  value={formData.dept}
-                  onChange={(e) => setFormData({ ...formData, dept: e.target.value })}
+                  value={dept}
+                  onChange={(e) => setDept(e.target.value)}
                   className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Mechanical">Mechanical</option>
+                  <option value="Civil">Civil</option>
+                  <option value="Electrical">Electrical</option>
                 </select>
               </div>
             </div>
@@ -201,8 +198,8 @@ export default function SignUpPage() {
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 <select
                   name="year"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
                   className="w-full pl-12 pr-4 py-3.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">Select Year</option>
@@ -214,15 +211,6 @@ export default function SignUpPage() {
                 </select>
               </div>
             </div>
-
-            <Input
-              label="Password"
-              type="password"
-              icon={Lock}
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Create a strong password"
-            />
 
             {/* Terms */}
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -241,12 +229,12 @@ export default function SignUpPage() {
             </label>
 
             <Button
-              onClick={handleSubmit}
-              disabled={!isOtpVerified || !agreedToPolicy}
+              onClick={isOtpSent ? (isOtpVerified ? handleSubmit : handleVerifyOtp) : handleGetOtp}
+              disabled={!isOtpVerified && (!formData.email || (!isOtpSent && agreedToPolicy === false))}
               className="w-full"
               size="xl"
             >
-              {!isOtpVerified ? "Verify Email First" : "Create Account"}
+              {!isOtpSent ? "Send OTP" : isOtpVerified ? "Create Account" : "Verify Email"}
               <ArrowRight className="w-5 h-5" />
             </Button>
 
@@ -291,11 +279,11 @@ export default function SignUpPage() {
       </div>
 
       {/* Right side - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 p-12 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 p-12 items-start mt-30 justify-center relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-primary-400/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/10 rounded-full" />
+        <div className="absolute top-100 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/10 rounded-full" />
 
         <div className="max-w-md text-white relative z-10 animate-fade-in-up">
           <div className="flex items-center gap-2 mb-6">

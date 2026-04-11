@@ -105,79 +105,133 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Content - Visual */}
+            {/* Right Content - SVG Illustration */}
             <div className="hidden lg:flex justify-center animate-fade-in-up stagger-2">
-              <div className="relative">
-                {/* Main Card */}
-                <div className="w-80 h-[420px] bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
-                  {/* Header */}
-                  <div className="h-2/5 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 flex flex-col items-center justify-center px-6">
-                    <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-4 border border-white/30">
-                      <Globe className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="text-white font-bold text-lg">Campora</h3>
-                    <p className="text-white/70 text-sm">Your Campus Hub</p>
-                  </div>
-                  {/* Stats */}
-                  <div className="h-3/5 p-5 space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg">
-                        <Users className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-lg">50+</p>
-                        <p className="text-white/60 text-sm">Active Clubs</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-secondary-500 to-secondary-600 flex items-center justify-center shadow-lg">
-                        <Calendar className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-lg">Weekly</p>
-                        <p className="text-white/60 text-sm">Events</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
-                        <LayoutGrid className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-lg">10+</p>
-                        <p className="text-white/60 text-sm">Bookable Spaces</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <svg viewBox="0 0 500 450" className="w-[500px] h-[450px] drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
+                {/* Background Circle */}
+                <circle cx="250" cy="225" r="180" fill="url(#bgGrad)" opacity="0.15"/>
 
-                {/* Floating Cards */}
-                <div className="absolute -top-4 -right-12 w-48 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-2xl p-4 animate-float text-white" style={{ animationDelay: "1s" }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <TrendingUp className="w-5 h-5" />
-                    <span className="text-sm font-semibold">Growing Fast</span>
-                  </div>
-                  <p className="text-3xl font-bold">+120%</p>
-                  <p className="text-xs text-emerald-100 mt-1">Club Activity</p>
-                </div>
+                {/* Gradients */}
+                <defs>
+                  <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#7c3aed"/>
+                    <stop offset="100%" stop-color="#059669"/>
+                  </linearGradient>
+                  <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#7c3aed"/>
+                    <stop offset="100%" stop-color="#6d28d9"/>
+                  </linearGradient>
+                  <linearGradient id="secondaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#059669"/>
+                    <stop offset="100%" stop-color="#047857"/>
+                  </linearGradient>
+                  <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#d97706"/>
+                    <stop offset="100%" stop-color="#b45309"/>
+                  </linearGradient>
+                </defs>
 
-                <div className="absolute -bottom-4 -left-10 w-44 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl shadow-2xl p-4 animate-float text-white" style={{ animationDelay: "2s" }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star className="w-5 h-5 text-amber-400" />
-                    <span className="text-sm font-semibold">Top Rated</span>
-                  </div>
-                  <p className="text-base font-bold">Computer Society</p>
-                  <p className="text-xs text-violet-200 mt-1">Best Campus Club 2026</p>
-                </div>
+                {/* Main Building - Campus Center */}
+                <rect x="150" y="140" width="200" height="180" rx="12" fill="url(#primaryGrad)" opacity="0.9"/>
+                <rect x="160" y="150" width="60" height="50" rx="6" fill="white" opacity="0.3"/>
+                <rect x="230" y="150" width="60" height="50" rx="6" fill="white" opacity="0.3"/>
+                <rect x="300" y="150" width="40" height="50" rx="6" fill="white" opacity="0.3"/>
+                <rect x="160" y="210" width="60" height="50" rx="6" fill="white" opacity="0.2"/>
+                <rect x="230" y="210" width="60" height="50" rx="6" fill="white" opacity="0.2"/>
+                <rect x="300" y="210" width="40" height="50" rx="6" fill="white" opacity="0.2"/>
+                <rect x="190" y="280" width="120" height="40" rx="8" fill="white" opacity="0.4"/>
+                <text x="250" y="306" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">CAMPUS</text>
 
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-36 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-2xl p-3 animate-float text-white" style={{ animationDelay: "0.5s" }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="text-xs font-semibold">New</span>
-                  </div>
-                  <p className="text-sm font-bold">Resource Booking</p>
-                  <p className="text-[10px] text-amber-100">Now Available</p>
-                </div>
-              </div>
+                {/* Left Building - Lab */}
+                <rect x="60" y="200" width="100" height="120" rx="10" fill="url(#secondaryGrad)" opacity="0.85"/>
+                <rect x="70" y="215" width="35" height="30" rx="4" fill="white" opacity="0.25"/>
+                <rect x="115" y="215" width="35" height="30" rx="4" fill="white" opacity="0.25"/>
+                <rect x="70" y="255" width="35" height="30" rx="4" fill="white" opacity="0.2"/>
+                <rect x="115" y="255" width="35" height="30" rx="4" fill="white" opacity="0.2"/>
+                <rect x="85" y="295" width="50" height="25" rx="5" fill="white" opacity="0.35"/>
+
+                {/* Right Building - Event Hall */}
+                <rect x="340" y="180" width="110" height="140" rx="10" fill="url(#amberGrad)" opacity="0.85"/>
+                <path d="M340 180 Q395 140 450 180" fill="url(#amberGrad)" opacity="0.9"/>
+                <rect x="355" y="200" width="40" height="35" rx="4" fill="white" opacity="0.25"/>
+                <rect x="405" y="200" width="35" height="35" rx="4" fill="white" opacity="0.25"/>
+                <rect x="355" y="245" width="40" height="35" rx="4" fill="white" opacity="0.2"/>
+                <rect x="405" y="245" width="35" height="35" rx="4" fill="white" opacity="0.2"/>
+                <circle cx="395" cy="295" r="20" fill="white" opacity="0.35"/>
+
+                {/* People - Left Group */}
+                <circle cx="90" cy="350" r="18" fill="#7c3aed"/>
+                <circle cx="90" cy="335" r="10" fill="#fce7f3"/>
+                <rect x="75" y="365" width="30" height="35" rx="8" fill="#7c3aed"/>
+
+                <circle cx="130" cy="355" r="16" fill="#059669"/>
+                <circle cx="130" cy="342" r="9" fill="#fce7f3"/>
+                <rect x="117" y="368" width="26" height="30" rx="7" fill="#059669"/>
+
+                <circle cx="165" cy="358" r="15" fill="#d97706"/>
+                <circle cx="165" cy="346" r="8" fill="#fce7f3"/>
+                <rect x="153" y="370" width="24" height="28" rx="6" fill="#d97706"/>
+
+                {/* People - Right Group */}
+                <circle cx="420" cy="355" r="17" fill="#7c3aed"/>
+                <circle cx="420" cy="341" r="9" fill="#fce7f3"/>
+                <rect x="407" y="369" width="26" height="32" rx="7" fill="#7c3aed"/>
+
+                <circle cx="455" cy="362" r="15" fill="#059669"/>
+                <circle cx="455" cy="350" r="8" fill="#fce7f3"/>
+                <rect x="444" y="374" width="22" height="26" rx="6" fill="#059669"/>
+
+                {/* People - Center Bottom */}
+                <circle cx="220" cy="370" r="20" fill="#7c3aed"/>
+                <circle cx="220" cy="353" r="11" fill="#fce7f3"/>
+                <rect x="202" y="387" width="36" height="40" rx="10" fill="#7c3aed"/>
+
+                <circle cx="275" cy="375" r="18" fill="#059669"/>
+                <circle cx="275" cy="360" r="10" fill="#fce7f3"/>
+                <rect x="259" y="390" width="32" height="35" rx="8" fill="#059669"/>
+
+                {/* Connection Lines */}
+                <path d="M160 250 Q200 280 220 320" stroke="white" strokeWidth="2" strokeDasharray="6,4" fill="none" opacity="0.4"/>
+                <path d="M340 250 Q300 280 280 320" stroke="white" strokeWidth="2" strokeDasharray="6,4" fill="none" opacity="0.4"/>
+
+                {/* Floating Icons */}
+                {/* Calendar Icon */}
+                <rect x="40" y="80" width="50" height="45" rx="8" fill="white" opacity="0.9"/>
+                <rect x="40" y="80" width="50" height="15" rx="8" fill="#7c3aed"/>
+                <rect x="52" y="72" width="6" height="12" rx="2" fill="#7c3aed"/>
+                <rect x="62" y="72" width="6" height="12" rx="2" fill="#7c3aed"/>
+                <rect x="72" y="72" width="6" height="12" rx="2" fill="#7c3aed"/>
+                <circle cx="55" cy="108" r="4" fill="#7c3aed"/>
+                <circle cx="65" cy="108" r="4" fill="#7c3aed"/>
+                <circle cx="75" cy="108" r="4" fill="#7c3aed"/>
+
+                {/* Users Icon */}
+                <circle cx="420" cy="70" r="14" fill="white" opacity="0.9"/>
+                <circle cx="420" cy="62" r="8" fill="#059669"/>
+                <circle cx="440" cy="78" r="10" fill="white" opacity="0.7"/>
+                <circle cx="440" cy="72" r="6" fill="#059669"/>
+                <circle cx="400" cy="78" r="10" fill="white" opacity="0.7"/>
+                <circle cx="400" cy="72" r="6" fill="#059669"/>
+
+                {/* Rocket Icon */}
+                <ellipse cx="470" cy="130" rx="18" ry="25" fill="white" opacity="0.9"/>
+                <ellipse cx="470" cy="120" rx="10" ry="12" fill="#d97706"/>
+                <path d="M455 145 Q470 165 485 145" fill="#d97706"/>
+                <circle cx="470" cy="115" r="5" fill="white"/>
+
+                {/* Stars */}
+                <path d="M50 180 l3 6 7 1 -5 5 1 7 -6-3 -6 3 1-7 -5-5 7-1z" fill="#fbbf24"/>
+                <path d="M450 200 l2 5 6 1 -4 4 1 6 -5-3 -5 3 1-6 -4-4 6-1z" fill="#fbbf24"/>
+                <path d="M280 60 l2 4 5 1 -4 3 1 5 -4-2 -4 2 1-5 -4-3 5-1z" fill="#fbbf24"/>
+
+                {/* Dots Pattern */}
+                <circle cx="30" cy="150" r="3" fill="white" opacity="0.3"/>
+                <circle cx="50" cy="160" r="2" fill="white" opacity="0.3"/>
+                <circle cx="40" cy="180" r="2.5" fill="white" opacity="0.3"/>
+                <circle cx="470" cy="180" r="3" fill="white" opacity="0.3"/>
+                <circle cx="450" cy="170" r="2" fill="white" opacity="0.3"/>
+                <circle cx="460" cy="200" r="2.5" fill="white" opacity="0.3"/>
+              </svg>
             </div>
           </div>
         </div>
