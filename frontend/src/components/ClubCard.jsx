@@ -28,12 +28,13 @@ const ClubCard = ({ club, onClick }) => {
             <div className="relative flex-shrink-0">
               <div className={`absolute inset-0 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />
               <div className="relative w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-primary-500/30 transition-all duration-300 shadow-lg">
-                <img
-                  src={club.clubIcon ? `http://localhost:5000${club.clubIcon}` : "/placeholder.png"}
-                  alt={club.clubName}
-                  className="w-full h-full object-cover"
-                />
-                {!club.clubIcon && (
+                {club.clubIcon ? (
+                  <img
+                    src={`http://localhost:5000${club.clubIcon}`}
+                    alt={club.clubName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
                     <span className="text-white text-2xl font-bold">{club.clubName?.[0]}</span>
                   </div>

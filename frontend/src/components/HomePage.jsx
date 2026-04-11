@@ -56,7 +56,7 @@ export default function HomePage() {
               <div className="space-y-4">
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight animate-fade-in-up">
                   Connect.
-                  <span className="block bg-gradient-to-r from-primary-200 to-secondary-200 bg-clip-text text-transparent">
+                  <span style={{ background: 'linear-gradient(to right, #a78bfa, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }} className="block">
                     Collaborate.
                   </span>
                   <span className="block">Grow Together.</span>
@@ -247,22 +247,26 @@ export default function HomePage() {
       {/* Featured Clubs Section */}
       <section className="py-20 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-12">
             <div>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-5 h-5 text-primary-600" />
-                <span className="text-primary-600 font-semibold text-sm uppercase tracking-wider">Discover</span>
+                <span className="text-primary-600 font-semibold text-sm uppercase tracking-wider">Explore</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white">
-                Featured Clubs
+              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-3">
+                Discover Campus{" "}
+                <span style={{ background: 'linear-gradient(to right, #8b5cf6, #10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Communities</span>
               </h2>
+              <p className="text-slate-500 text-base max-w-xl">
+                From coding clubs to cultural societies, find the perfect community that matches your interests and passion. Each club is a gateway to new experiences and lifelong friendships.
+              </p>
             </div>
             <Button
               variant="ghost"
-              className="hidden sm:flex items-center gap-1 text-primary-600"
+              className="hidden sm:flex items-center gap-1 text-primary-600 font-semibold"
               onClick={() => navigate('/clubs')}
             >
-              View All <ChevronRight className="w-4 h-4" />
+              View All Clubs <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
 
@@ -271,13 +275,19 @@ export default function HomePage() {
               <div
                 key={club._id}
                 onClick={() => navigate(`/clubs/${club._id}`)}
-                className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500 hover:-translate-y-2 cursor-pointer animate-fade-in-up"
+                className="group relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500 hover:-translate-y-2 cursor-pointer animate-fade-in-up overflow-hidden"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
+                {/* Animated gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-50/0 to-secondary-50/0 group-hover:from-primary-50/50 group-hover:to-secondary-50/50 transition-all duration-500" />
+
+                {/* Top accent bar */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+
                 {/* Club Icon */}
                 <div className="relative mb-5">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity" />
-                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
                     {club.clubIcon ? (
                       <img src={`http://localhost:5000${club.clubIcon}`} className="w-full h-full object-cover" alt={club.clubName} />
                     ) : (
@@ -287,20 +297,22 @@ export default function HomePage() {
                 </div>
 
                 {/* Club Info */}
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 transition-colors">
-                  {club.clubName}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
-                  {club.description}
-                </p>
+                <div className="relative">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    {club.clubName}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
+                    {club.description || "A vibrant campus community waiting for you to join."}
+                  </p>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs text-slate-500">{club.members?.length || 0} members</span>
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-slate-400" />
+                      <span className="text-xs text-slate-500">{club.members?.length || 0} members</span>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-primary-500 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                   </div>
-                  <ArrowRight className="w-5 h-5 text-primary-500 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
                 </div>
               </div>
             ))}
@@ -317,24 +329,28 @@ export default function HomePage() {
       </section>
 
       {/* Upcoming Events Section */}
-      <section className="py-20 bg-white dark:bg-slate-900">
+      <section className="py-20 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-12">
             <div>
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <Calendar className="w-5 h-5 text-secondary-600" />
-                <span className="text-secondary-600 font-semibold text-sm uppercase tracking-wider">Happening Soon</span>
+                <span className="text-secondary-600 font-semibold text-sm uppercase tracking-wider">Don't Miss</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white">
-                Upcoming Events
+              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-3">
+                Happening{" "}
+                <span style={{ background: 'linear-gradient(to right, #10b981, #059669)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Now</span> & Upcoming
               </h2>
+              <p className="text-slate-500 text-base max-w-xl">
+                Mark your calendar! These upcoming events bring together students across campus for unforgettable experiences — workshops, competitions, cultural nights, and so much more.
+              </p>
             </div>
             <Button
               variant="ghost"
-              className="hidden sm:flex items-center gap-1 text-secondary-600"
+              className="hidden sm:flex items-center gap-1 text-secondary-600 font-semibold"
               onClick={() => navigate('/events')}
             >
-              View All <ChevronRight className="w-4 h-4" />
+              View All Events <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
 
@@ -342,40 +358,55 @@ export default function HomePage() {
             {upcomingEvents.map((event, idx) => (
               <div
                 key={event._id}
-                className="group bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-2xl hover:shadow-secondary-500/10 transition-all duration-500 animate-fade-in-up"
+                className="group relative bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-2xl hover:shadow-secondary-500/10 transition-all duration-500 hover:-translate-y-2 animate-fade-in-up"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
                 {/* Event Image */}
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-52 overflow-hidden">
                   <img
                     src={event.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800"}
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                  {/* Category Badge */}
                   <div className="absolute top-4 left-4">
-                    <Badge className="bg-white/20 backdrop-blur-xl text-white border border-white/30">
+                    <Badge className="bg-white/20 backdrop-blur-xl text-white border border-white/30 font-medium">
                       {event.category || "General"}
                     </Badge>
+                  </div>
+
+                  {/* Date overlay */}
+                  <div className="absolute top-4 right-4 bg-gradient-to-br from-secondary-500 to-secondary-600 text-white rounded-xl px-3 py-2 text-center shadow-lg">
+                    <p className="text-xs font-medium opacity-80">
+                      {event.date ? new Date(event.date).toLocaleDateString('en-US', { month: 'short' }) : 'TBA'}
+                    </p>
+                    <p className="text-lg font-bold leading-tight">
+                      {event.date ? new Date(event.date).getDate() : '-'}
+                    </p>
                   </div>
                 </div>
 
                 {/* Event Info */}
                 <div className="p-6">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 line-clamp-1">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 line-clamp-1 group-hover:text-secondary-600 transition-colors">
                     {event.title}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
-                    {event.description}
+                    {event.description || "An exciting event you don't want to miss!"}
                   </p>
 
-                  <div className="flex items-center gap-4 text-sm text-slate-500 mb-4">
+                  <div className="flex items-center gap-4 text-sm text-slate-500 mb-5">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-4 h-4 text-secondary-500" />
-                      <span>{event.date ? new Date(event.date).toLocaleDateString() : "TBA"}</span>
+                      <span>{event.date ? new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : "Date TBA"}</span>
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
                     {event.venue && (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 text-sm text-slate-500">
                         <LayoutGrid className="w-4 h-4 text-primary-500" />
                         <span className="truncate">{event.venue}</span>
                       </div>
@@ -385,15 +416,30 @@ export default function HomePage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full group/btn"
+                    className="w-full mt-4 group/btn border-secondary-200 text-secondary-600 hover:bg-secondary-50 dark:hover:bg-secondary-900/20"
                     onClick={() => navigate('/events')}
                   >
-                    Register
+                    Register Now
                     <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="mt-10 text-center">
+            <p className="text-slate-500 text-sm mb-3">
+              Want to explore more events happening on campus?
+            </p>
+            <Button
+              variant="outline"
+              className="font-semibold"
+              onClick={() => navigate('/events')}
+            >
+              Browse All Events
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </div>
       </section>
