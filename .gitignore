@@ -1,0 +1,59 @@
+# --------------------
+# ENV FILES (IMPORTANT)
+# --------------------
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# --------------------
+# NODE MODULES
+# --------------------
+node_modules/
+**/node_modules/
+
+# --------------------
+# NEXT.JS
+# --------------------
+.next/
+out/
+dist/
+
+# --------------------
+# BUILD FILES
+# --------------------
+build/
+coverage/
+
+# --------------------
+# LOG FILES
+# --------------------
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --------------------
+# OS FILES
+# --------------------
+.DS_Store
+Thumbs.db
+
+# --------------------
+# IDE FILES
+# --------------------
+.vscode/
+.idea/
+
+# --------------------
+# CACHE
+# --------------------
+.cache/
+*.tsbuildinfo
+
+# --------------------
+# UPLOADS (optional)
+# --------------------
+uploads/

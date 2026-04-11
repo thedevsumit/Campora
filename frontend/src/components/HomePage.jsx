@@ -109,60 +109,73 @@ export default function HomePage() {
             <div className="hidden lg:flex justify-center animate-fade-in-up stagger-2">
               <div className="relative">
                 {/* Main Card */}
-                <div className="w-80 h-96 bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
-                  <div className="h-1/2 bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center">
-                    <div className="text-center">
-                      <Globe className="w-16 h-16 text-white/80 mx-auto mb-2" />
-                      <span className="text-white/90 font-semibold">Your Campus</span>
+                <div className="w-80 h-[420px] bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+                  {/* Header */}
+                  <div className="h-2/5 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600 flex flex-col items-center justify-center px-6">
+                    <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-4 border border-white/30">
+                      <Globe className="w-10 h-10 text-white" />
                     </div>
+                    <h3 className="text-white font-bold text-lg">Campora</h3>
+                    <p className="text-white/70 text-sm">Your Campus Hub</p>
                   </div>
-                  <div className="h-1/2 p-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary-500/30 flex items-center justify-center">
-                        <Users className="w-5 h-5 text-white" />
+                  {/* Stats */}
+                  <div className="h-3/5 p-5 space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg">
+                        <Users className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-white font-medium">50+ Clubs</p>
-                        <p className="text-white/60 text-sm">Join any club</p>
+                        <p className="text-white font-bold text-lg">50+</p>
+                        <p className="text-white/60 text-sm">Active Clubs</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-secondary-500/30 flex items-center justify-center">
-                        <Calendar className="w-5 h-5 text-white" />
+                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-secondary-500 to-secondary-600 flex items-center justify-center shadow-lg">
+                        <Calendar className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-white font-medium">Weekly Events</p>
-                        <p className="text-white/60 text-sm">Never miss out</p>
+                        <p className="text-white font-bold text-lg">Weekly</p>
+                        <p className="text-white/60 text-sm">Events</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-500/30 flex items-center justify-center">
-                        <LayoutGrid className="w-5 h-5 text-white" />
+                    <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
+                        <LayoutGrid className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-white font-medium">Resources</p>
-                        <p className="text-white/60 text-sm">Book easily</p>
+                        <p className="text-white font-bold text-lg">10+</p>
+                        <p className="text-white/60 text-sm">Bookable Spaces</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Floating Cards */}
-                <div className="absolute -top-4 -right-8 w-44 h-26 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-2xl p-4 animate-float text-white" style={{ animationDelay: "1s" }}>
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="absolute -top-4 -right-12 w-48 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl shadow-2xl p-4 animate-float text-white" style={{ animationDelay: "1s" }}>
+                  <div className="flex items-center gap-2 mb-3">
                     <TrendingUp className="w-5 h-5" />
-                    <span className="text-sm font-semibold">Growing</span>
+                    <span className="text-sm font-semibold">Growing Fast</span>
                   </div>
-                  <p className="text-2xl font-bold">+120%</p>
-                  <p className="text-xs text-emerald-100">Club Activity</p>
+                  <p className="text-3xl font-bold">+120%</p>
+                  <p className="text-xs text-emerald-100 mt-1">Club Activity</p>
                 </div>
 
-                <div className="absolute -bottom-4 -left-8 w-40 h-24 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl shadow-2xl p-4 animate-float text-white" style={{ animationDelay: "2s" }}>
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="absolute -bottom-4 -left-10 w-44 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl shadow-2xl p-4 animate-float text-white" style={{ animationDelay: "2s" }}>
+                  <div className="flex items-center gap-2 mb-2">
                     <Star className="w-5 h-5 text-amber-400" />
                     <span className="text-sm font-semibold">Top Rated</span>
                   </div>
-                  <p className="text-base font-bold">Campus Club</p>
+                  <p className="text-base font-bold">Computer Society</p>
+                  <p className="text-xs text-violet-200 mt-1">Best Campus Club 2026</p>
+                </div>
+
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-36 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-2xl p-3 animate-float text-white" style={{ animationDelay: "0.5s" }}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-xs font-semibold">New</span>
+                  </div>
+                  <p className="text-sm font-bold">Resource Booking</p>
+                  <p className="text-[10px] text-amber-100">Now Available</p>
                 </div>
               </div>
             </div>
