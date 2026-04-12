@@ -12,11 +12,11 @@ export const useNotificationStore = create((set, get) => ({
   fetchNotifications: async (page = 1) => {
     set({ isLoading: true });
     try {
-      const { data } = await axios.get(`/notifications?page=${page}&limit=20`);
+      const { data } = await axiosInstance.get(`/notifications?page=${page}&limit=20`);
       set({
-        notifications: data.notifications,
-        total: data.total,
-        currentPage: data.page,
+        notifications: data.notifications || [],
+        total: data.total || 0,
+        currentPage: data.page || 1,
         isLoading: false
       });
     } catch (error) {
@@ -27,16 +27,16 @@ export const useNotificationStore = create((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      const { data } = await axios.get("/notifications/unread-count");
-      set({ unreadCount: data.count });
+      const { data } = await axiosInstance.get("/notifications/unread-count");
+      set({ unreadCount: data.count || 0 });
     } catch (error) {
-      console.error("Failed to fetch unread count");
+      // Silently fail - don't spam console on every poll
     }
   },
 
   markAsRead: async (notifId) => {
     try {
-      await axios.put(`/notifications/${notifId}/read`);
+      await axiosInstance.put(`/notifications/${notifId}/read`);
       set(state => ({
         notifications: state.notifications.map(n =>
           n._id === notifId ? { ...n, isRead: true } : n
@@ -50,7 +50,7 @@ export const useNotificationStore = create((set, get) => ({
 
   markAllAsRead: async () => {
     try {
-      await axios.put("/notifications/read-all");
+      await axiosInstance.put("/notifications/read-all");
       set(state => ({
         notifications: state.notifications.map(n => ({ ...n, isRead: true })),
         unreadCount: 0
@@ -63,13 +63,16 @@ export const useNotificationStore = create((set, get) => ({
 
   deleteNotification: async (notifId) => {
     try {
-      await axios.delete(`/notifications/${notifId}`);
-      set(state => ({
-        notifications: state.notifications.filter(n => n._id !== notifId),
-        unreadCount: state.notifications.find(n => n._id === notifId && !n.isRead)
-          ? state.unreadCount - 1
-          : state.unreadCount
-      }));
+      await axiosInstance.delete(`/notifications/${notifId}`);
+      set(state => {
+        const notification = state.notifications.find(n => n._id === notifId);
+        return {
+          notifications: state.notifications.filter(n => n._id !== notifId),
+          unreadCount: notification && !notification.isRead
+            ? Math.max(0, state.unreadCount - 1)
+            : state.unreadCount
+        };
+      });
     } catch (error) {
       toast.error("Failed to delete notification");
     }
@@ -77,7 +80,7 @@ export const useNotificationStore = create((set, get) => ({
 
   clearAll: async () => {
     try {
-      await axios.delete("/notifications/clear-all");
+      await axiosInstance.delete("/notifications/clear-all");
       set({ notifications: [], unreadCount: 0 });
       toast.success("All notifications cleared");
     } catch (error) {

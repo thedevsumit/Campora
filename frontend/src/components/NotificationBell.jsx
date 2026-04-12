@@ -1,18 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotificationStore } from "../store/useNotificationStore";
-import { Bell, Check, CheckCheck, BellRing, Calendar, CreditCard, X } from "lucide-react";
+import { Bell, CheckCheck, BellRing, Calendar, CreditCard, X } from "lucide-react";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, unreadCount, fetchUnreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
+  const fetchCount = useCallback(async () => {
+    try {
+      await fetchUnreadCount();
+    } catch {
+      // Silently fail - notification count is not critical
+    }
   }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    fetchCount();
+    // Poll every 60 seconds instead of 30 to reduce API spam
+    const interval = setInterval(fetchCount, 60000);
+    return () => clearInterval(interval);
+  }, [fetchCount]);
 
   const handleOpen = () => {
     setIsOpen(!isOpen);

@@ -13,8 +13,8 @@ export const useResourceStore = create((set, get) => ({
     set({ isLoading: true });
     try {
       const params = new URLSearchParams(filters).toString();
-      const { data } = await axios.get(`/resources${params ? `?${params}` : ""}`);
-      set({ resources: data.resources, isLoading: false });
+      const { data } = await axiosInstance.get(`/resources${params ? `?${params}` : ""}`);
+      set({ resources: data.resources || [], isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch resources");
       set({ isLoading: false });
@@ -24,7 +24,7 @@ export const useResourceStore = create((set, get) => ({
   getResourceById: async (resourceId) => {
     set({ isLoading: true });
     try {
-      const { data } = await axios.get(`/resources/${resourceId}`);
+      const { data } = await axiosInstance.get(`/resources/${resourceId}`);
       set({ selectedResource: data.resource, isLoading: false });
       return data.resource;
     } catch (error) {
@@ -35,7 +35,7 @@ export const useResourceStore = create((set, get) => ({
 
   createResource: async (resourceData) => {
     try {
-      const { data } = await axios.post("/resources", resourceData);
+      const { data } = await axiosInstance.post("/resources", resourceData);
       set(state => ({ resources: [...state.resources, data.resource] }));
       toast.success("Resource created successfully");
       return data.resource;
@@ -48,8 +48,8 @@ export const useResourceStore = create((set, get) => ({
   fetchBookings: async () => {
     set({ isLoading: true });
     try {
-      const { data } = await axios.get("/bookings");
-      set({ bookings: data.bookings, isLoading: false });
+      const { data } = await axiosInstance.get("/bookings");
+      set({ bookings: data.bookings || [], isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch bookings");
       set({ isLoading: false });
@@ -59,8 +59,8 @@ export const useResourceStore = create((set, get) => ({
   createBooking: async (bookingData) => {
     set({ isBooking: true });
     try {
-      const { data } = await axios.post("/bookings", bookingData);
-      toast.success(data.booking.status === "approved" ? "Booking confirmed!" : "Booking request submitted!");
+      const { data } = await axiosInstance.post("/bookings", bookingData);
+      toast.success(data.booking?.status === "approved" ? "Booking confirmed!" : "Booking request submitted!");
       set(state => ({ bookings: [data.booking, ...state.bookings], isBooking: false }));
       return data.booking;
     } catch (error) {
@@ -72,7 +72,7 @@ export const useResourceStore = create((set, get) => ({
 
   cancelBooking: async (bookingId) => {
     try {
-      await axios.delete(`/bookings/${bookingId}`);
+      await axiosInstance.delete(`/bookings/${bookingId}`);
       set(state => ({
         bookings: state.bookings.map(b =>
           b._id === bookingId ? { ...b, status: "cancelled" } : b
@@ -86,7 +86,7 @@ export const useResourceStore = create((set, get) => ({
 
   approveBooking: async (bookingId) => {
     try {
-      const { data } = await axios.put(`/bookings/${bookingId}/approve`);
+      const { data } = await axiosInstance.put(`/bookings/${bookingId}/approve`);
       set(state => ({
         bookings: state.bookings.map(b =>
           b._id === bookingId ? { ...b, status: "approved" } : b
@@ -102,7 +102,7 @@ export const useResourceStore = create((set, get) => ({
 
   rejectBooking: async (bookingId, reason) => {
     try {
-      const { data } = await axios.put(`/bookings/${bookingId}/reject`, { rejectionReason: reason });
+      const { data } = await axiosInstance.put(`/bookings/${bookingId}/reject`, { rejectionReason: reason });
       set(state => ({
         bookings: state.bookings.map(b =>
           b._id === bookingId ? { ...b, status: "rejected" } : b

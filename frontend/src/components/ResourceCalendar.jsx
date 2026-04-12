@@ -3,19 +3,20 @@ import Modal from "./ui/Modal";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import { useResourceStore } from "../store/useResourceStore";
-import { Calendar, Clock, MapPin, User, ArrowRight } from "lucide-react";
+import { Calendar, Clock, MapPin, User, ArrowRight, CheckCircle, Sparkles, AlertCircle } from "lucide-react";
 import Badge from "./ui/Badge";
 
 const ResourceCalendar = ({ resource, onClose }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [bookingForm, setBookingForm] = useState({ purpose: "", startTime: "", endTime: "" });
+  const [step, setStep] = useState(1); // 1 = form, 2 = confirmation
   const { createBooking, isBooking } = useResourceStore();
 
   const generateTimeSlots = () => {
     if (!resource) return [];
     const times = [];
-    const [startH] = resource.availableStartTime.split(":").map(Number);
-    const [endH] = resource.availableEndTime.split(":").map(Number);
+    const [startH] = (resource.availableStartTime || "09:00").split(":").map(Number);
+    const [endH] = (resource.availableEndTime || "18:00").split(":").map(Number);
     for (let h = startH; h < endH; h++) {
       times.push(`${h.toString().padStart(2, "0")}:00`);
       times.push(`${h.toString().padStart(2, "0")}:30`);
@@ -35,110 +36,221 @@ const ResourceCalendar = ({ resource, onClose }) => {
     } catch (error) {}
   };
 
+  const calculateCost = () => {
+    if (!resource?.hourlyRate || !bookingForm.startTime || !bookingForm.endTime) return 0;
+    const start = parseInt(bookingForm.startTime.replace(":", ""));
+    const end = parseInt(bookingForm.endTime.replace(":", ""));
+    const hours = (end - start) / 100;
+    return Math.max(0, hours * resource.hourlyRate);
+  };
+
   const timeSlots = generateTimeSlots();
+  const cost = calculateCost();
+  const isFormValid = bookingForm.purpose && bookingForm.startTime && bookingForm.endTime;
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={`Book ${resource?.name}`} size="lg">
+    <Modal isOpen={true} onClose={onClose} title={step === 1 ? `Book ${resource?.name}` : "Confirm Booking"} size="lg">
       <div className="space-y-6">
-        {/* Resource Info */}
-        <div className="flex items-center gap-4 text-sm">
-          <Badge variant="primary">{resource?.type}</Badge>
-          {resource?.location && (
-            <span className="flex items-center gap-1.5 text-slate-500">
-              <MapPin className="w-4 h-4 text-primary-500" />
-              {resource.location}
-            </span>
-          )}
-          {resource?.hourlyRate > 0 && (
-            <span className="font-bold text-primary-600 dark:text-primary-400">
-              ₹{resource.hourlyRate}/hr
-            </span>
-          )}
-        </div>
+        {step === 1 ? (
+          <>
+            {/* Resource Info Banner */}
+            <div className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-2xl p-5 border border-primary-100 dark:border-primary-800">
+              <div className="flex items-center gap-4 flex-wrap">
+                <Badge variant="primary" size="lg">{resource?.type}</Badge>
+                {resource?.location && (
+                  <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                    <MapPin className="w-4 h-4 text-primary-500" />
+                    {resource.location}
+                  </span>
+                )}
+                <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                  <Clock className="w-4 h-4 text-primary-500" />
+                  {resource?.availableStartTime} - {resource?.availableEndTime}
+                </span>
+                {resource?.hourlyRate > 0 && (
+                  <span className="font-bold text-primary-600 dark:text-primary-400 text-lg">
+                    ₹{resource.hourlyRate}/hr
+                  </span>
+                )}
+              </div>
+            </div>
 
-        {/* Date Selection */}
-        <Input
-          label="Select Date"
-          type="date"
-          icon={Calendar}
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          min={new Date().toISOString().split("T")[0]}
-        />
+            {/* Date Selection */}
+            <Input
+              label="Select Date"
+              type="date"
+              icon={Calendar}
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+            />
 
-        {/* Time Selection */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              Start Time
-            </label>
-            <div className="relative">
-              <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-              <select
-                value={bookingForm.startTime}
-                onChange={(e) => setBookingForm({ ...bookingForm, startTime: e.target.value })}
-                className="w-full pl-12 pr-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+            {/* Time Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Clock className="w-4 h-4 text-primary-500" />
+                  Start Time
+                </label>
+                <select
+                  value={bookingForm.startTime}
+                  onChange={(e) => setBookingForm({ ...bookingForm, startTime: e.target.value, endTime: "" })}
+                  className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Select start time</option>
+                  {timeSlots.map(slot => (
+                    <option key={slot} value={slot}>{slot}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <Clock className="w-4 h-4 text-secondary-500" />
+                  End Time
+                </label>
+                <select
+                  value={bookingForm.endTime}
+                  onChange={(e) => setBookingForm({ ...bookingForm, endTime: e.target.value })}
+                  className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">Select end time</option>
+                  {timeSlots.filter(slot => slot > bookingForm.startTime).map(slot => (
+                    <option key={slot} value={slot}>{slot}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Purpose */}
+            <Input
+              label="Purpose of Booking"
+              icon={User}
+              value={bookingForm.purpose}
+              onChange={(e) => setBookingForm({ ...bookingForm, purpose: e.target.value })}
+              placeholder="e.g., Team meeting, Study session, Event"
+            />
+
+            {/* Amenities */}
+            {resource?.amenities?.length > 0 && (
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  Available Amenities
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {resource.amenities.map((a, i) => (
+                    <Badge key={i} variant="default" size="sm" className="bg-slate-100 dark:bg-slate-800">
+                      {a}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cost Preview */}
+            {cost > 0 && (
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-amber-700 dark:text-amber-400">Estimated Cost</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-300 text-lg">₹{cost}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <Button variant="ghost" onClick={onClose}>Cancel</Button>
+              <Button
+                onClick={() => setStep(2)}
+                disabled={!isFormValid}
               >
-                <option value="">Select start</option>
-                {timeSlots.map(slot => (
-                  <option key={slot} value={slot}>{slot}</option>
-                ))}
-              </select>
+                Review Booking
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-              End Time
-            </label>
-            <div className="relative">
-              <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-              <select
-                value={bookingForm.endTime}
-                onChange={(e) => setBookingForm({ ...bookingForm, endTime: e.target.value })}
-                className="w-full pl-12 pr-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+          </>
+        ) : (
+          <>
+            {/* Confirmation Step */}
+            <div className="bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900/20 dark:to-primary-900/20 rounded-2xl p-6 border border-secondary-100 dark:border-secondary-800 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-secondary-500/30">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Confirm Your Booking</h3>
+              <p className="text-slate-500 text-sm">Please review your booking details</p>
+            </div>
+
+            {/* Booking Summary */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-lg">
+                  {resource?.name?.[0]}
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white text-lg">{resource?.name}</p>
+                  <p className="text-sm text-slate-500">{resource?.code} • {resource?.type}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-primary-500" />
+                  <span className="text-slate-600 dark:text-slate-400">Date:</span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="w-4 h-4 text-primary-500" />
+                  <span className="text-slate-600 dark:text-slate-400">Time:</span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {bookingForm.startTime} - {bookingForm.endTime}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-500 mb-1">Purpose</p>
+                <p className="font-medium text-slate-900 dark:text-white">{bookingForm.purpose}</p>
+              </div>
+
+              {cost > 0 && (
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Estimated Cost</span>
+                    <span className="text-xl font-bold text-primary-600 dark:text-primary-400">₹{cost}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Notice */}
+            <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800">
+              <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                {resource?.requiresApproval
+                  ? "This resource requires admin approval. You'll be notified once your booking is confirmed."
+                  : "You'll receive an instant confirmation. Present this booking at the resource location."}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <Button variant="ghost" onClick={() => setStep(1)}>
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+              <Button
+                onClick={handleBook}
+                isLoading={isBooking}
+                className="bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700"
               >
-                <option value="">Select end</option>
-                {timeSlots.map(slot => (
-                  <option key={slot} value={slot}>{slot}</option>
-                ))}
-              </select>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Confirm Booking
+              </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Purpose */}
-        <Input
-          label="Purpose"
-          icon={User}
-          value={bookingForm.purpose}
-          onChange={(e) => setBookingForm({ ...bookingForm, purpose: e.target.value })}
-          placeholder="Describe the purpose of your booking"
-        />
-
-        {/* Amenities */}
-        {resource?.amenities?.length > 0 && (
-          <div>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Amenities</p>
-            <div className="flex flex-wrap gap-2">
-              {resource.amenities.map((a, i) => (
-                <Badge key={i} variant="info" size="sm">{a}</Badge>
-              ))}
-            </div>
-          </div>
+          </>
         )}
-
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button
-            onClick={handleBook}
-            isLoading={isBooking}
-            disabled={!bookingForm.purpose || !bookingForm.startTime || !bookingForm.endTime}
-          >
-            Book Now
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
       </div>
     </Modal>
   );
