@@ -10,15 +10,17 @@ import ResourceCalendar from "../components/ResourceCalendar";
 import {
   Search, Plus, MapPin, Clock, DollarSign, Users, Wrench, Car, Microscope,
   LayoutGrid, Sparkles, ArrowRight, Calendar, CheckCircle, X, Building, Monitor,
-  Projector, Volume2, Wifi, Power, ChevronRight, Filter
+  Projector, Volume2, Wifi, Power, ChevronRight, Filter, BookOpen, Edit3,
+  Trash2, Star, Crown, Shield, Gem
 } from "lucide-react";
 
 const resourceTypeIcons = {
-  room: LayoutGrid,
-  hall: Building,
+  room: Building,
+  hall: LayoutGrid,
   lab: Microscope,
   equipment: Monitor,
   vehicle: Car,
+  book: BookOpen,
   other: Wrench,
 };
 
@@ -50,7 +52,8 @@ const whyBookItems = [
   },
 ];
 
-const resourceTypes = ["room", "hall", "lab", "equipment", "vehicle", "other"];
+const resourceTypes = ["room", "hall", "lab", "equipment", "vehicle", "book", "other"];
+const bookResourceTypes = ["book", "other"];
 
 const ResourceBookingPage = () => {
   const { resources, bookings, isLoading, fetchResources, fetchBookings, createResource } = useResourceStore();
@@ -62,15 +65,19 @@ const ResourceBookingPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [newResource, setNewResource] = useState({
     name: "",
-    type: "room",
+    type: "book",
     code: "",
     location: "",
+    campus: "",
     capacity: "",
     hourlyRate: 0,
     amenities: [],
     availableStartTime: "09:00",
     availableEndTime: "18:00",
     requiresApproval: false,
+    author: "",
+    publisher: "",
+    isbn: "",
   });
   const [amenityInput, setAmenityInput] = useState("");
 
@@ -79,7 +86,7 @@ const ResourceBookingPage = () => {
     fetchBookings();
   }, [fetchResources, fetchBookings]);
 
-  const isAdmin = authUser?.userRole === "admin";
+  const isAdmin = authUser?.userRole === "admin" || authUser?.role === "superAdmin";
 
   const filteredResources = resources.filter(r => {
     if (filter.type && r.type !== filter.type) return false;
@@ -112,15 +119,19 @@ const ResourceBookingPage = () => {
       setShowCreateModal(false);
       setNewResource({
         name: "",
-        type: "room",
+        type: "book",
         code: "",
         location: "",
+        campus: "",
         capacity: "",
         hourlyRate: 0,
         amenities: [],
         availableStartTime: "09:00",
         availableEndTime: "18:00",
         requiresApproval: false,
+        author: "",
+        publisher: "",
+        isbn: "",
       });
     } catch (error) {
     } finally {
@@ -130,8 +141,34 @@ const ResourceBookingPage = () => {
 
   const getTypeIcon = (type) => resourceTypeIcons[type] || Wrench;
 
+  const getTypeGradient = (type) => {
+    const gradients = {
+      room: "from-blue-500 to-blue-600",
+      hall: "from-purple-500 to-purple-600",
+      lab: "from-emerald-500 to-emerald-600",
+      equipment: "from-orange-500 to-orange-600",
+      vehicle: "from-red-500 to-red-600",
+      book: "from-amber-500 to-amber-600",
+      other: "from-slate-500 to-slate-600",
+    };
+    return gradients[type] || "from-slate-500 to-slate-600";
+  };
+
+  const getTypeBadgeVariant = (type) => {
+    const variants = {
+      room: "info",
+      hall: "secondary",
+      lab: "success",
+      equipment: "warning",
+      vehicle: "danger",
+      book: "primary",
+      other: "default",
+    };
+    return variants[type] || "default";
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-primary-50 dark:from-slate-950 dark:via-slate-900 dark:to-primary-950">
       <Navbar />
 
       {/* Hero Section */}
@@ -145,14 +182,23 @@ const ResourceBookingPage = () => {
         <div className="absolute top-1/2 left-8 w-4 h-4 bg-amber-400 rounded-full" />
         <div className="absolute top-20 right-20 w-3 h-3 bg-white/60 rounded-full" />
 
+        {/* Floating icons */}
+        <div className="absolute top-32 right-60 opacity-20 animate-pulse">
+          <BookOpen className="w-16 h-16 text-white" />
+        </div>
+        <div className="absolute bottom-40 right-80 opacity-20 animate-bounce">
+          <Building className="w-12 h-12 text-white" />
+        </div>
+        <div className="absolute top-40 left-40 opacity-20 animate-pulse">
+          <Microscope className="w-14 h-14 text-white" />
+        </div>
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
             <div className="text-center lg:text-left max-w-2xl">
-              <div className="flex items-center justify-center lg:justify-start gap-2 mb-5">
-                <LayoutGrid className="w-5 h-5 text-primary-200" />
-                <span className="text-primary-200 text-sm font-medium uppercase tracking-wider">
-                  Campus Resources
-                </span>
+              <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-xl rounded-full text-sm font-medium uppercase tracking-wider mb-6 border border-white/20">
+                <Gem className="w-4 h-4 text-amber-300" />
+                <span className="text-primary-200">Campus Resources</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 animate-fade-in-up leading-tight">
                 Book{" "}
@@ -162,12 +208,12 @@ const ResourceBookingPage = () => {
                 Resources
               </h1>
               <p className="text-primary-100 text-lg md:text-xl animate-fade-in-up stagger-1 max-w-xl leading-relaxed">
-                From seminar halls to lab equipment — find and book the resources you need for your campus activities.
+                From seminar halls to lab equipment and books — find and book the resources you need for your campus activities.
               </p>
 
               <div className="flex flex-wrap justify-center lg:justify-start gap-5 mt-8 animate-fade-in-up stagger-2">
-                <div className="flex items-center gap-4 bg-white/15 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/20 shadow-xl">
-                  <div className="p-3 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl shadow-lg">
+                <div className="group flex items-center gap-4 bg-white/10 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/20 shadow-xl hover:bg-white/15 transition-all duration-300">
+                  <div className="p-3 bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                     <LayoutGrid className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -175,8 +221,8 @@ const ResourceBookingPage = () => {
                     <p className="text-primary-200 text-sm font-medium">Resources</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 bg-white/15 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/20 shadow-xl">
-                  <div className="p-3 bg-gradient-to-br from-secondary-400 to-secondary-500 rounded-xl shadow-lg">
+                <div className="group flex items-center gap-4 bg-white/10 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/20 shadow-xl hover:bg-white/15 transition-all duration-300">
+                  <div className="p-3 bg-gradient-to-br from-secondary-400 to-secondary-500 rounded-xl shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                     <Calendar className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -187,28 +233,42 @@ const ResourceBookingPage = () => {
               </div>
             </div>
 
-            {/* CTA Card */}
-            {isAdmin && (
-              <div className="flex flex-col items-center gap-4 animate-fade-in-up stagger-3">
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center max-w-sm">
-                  <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Plus className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Add New Resource</h3>
-                  <p className="text-primary-100 text-sm leading-relaxed mb-4">
-                    Add rooms, halls, equipment, or vehicles to the campus resource pool.
-                  </p>
+            {/* CTA Card - Show for ALL users */}
+            <div className="flex flex-col items-center gap-4 animate-fade-in-up stagger-3">
+              <div className="bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center max-w-sm shadow-2xl">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <Plus className="w-8 h-8 text-white" />
                 </div>
-                <Button
-                  onClick={() => setShowCreateModal(true)}
-                  className="border-white/80 text-white hover:bg-white/20 w-full justify-center"
-                  variant="outline"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Add Resource
-                </Button>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {isAdmin ? "Add New Resource" : "Contribute a Resource"}
+                </h3>
+                <p className="text-primary-100 text-sm leading-relaxed mb-4">
+                  {isAdmin
+                    ? "Add rooms, halls, equipment, or vehicles to the campus resource pool."
+                    : "Share books or materials with the campus community."}
+                </p>
+                <div className="flex items-center justify-center gap-2 text-xs text-primary-200">
+                  {isAdmin ? (
+                    <>
+                      <Shield className="w-3 h-3" />
+                      <span>Admin Access</span>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="w-3 h-3" />
+                      <span>Community Contribution</span>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-bold shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 w-full justify-center border-0"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                {isAdmin ? "Add Resource" : "Add Book/Material"}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -345,7 +405,10 @@ const ResourceBookingPage = () => {
               {filter.search ? `Showing results for "${filter.search}"` : "Browse and book available resources"}
             </p>
           </div>
-          <Filter className="w-5 h-5 text-slate-400" />
+          <div className="flex items-center gap-2 text-slate-400">
+            <Filter className="w-5 h-5" />
+            <span className="text-sm hidden sm:inline">Filter</span>
+          </div>
         </div>
 
         {isLoading ? (
@@ -373,24 +436,30 @@ const ResourceBookingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredResources.map((resource, idx) => {
               const TypeIcon = getTypeIcon(resource.type);
+              const gradient = getTypeGradient(resource.type);
               return (
                 <div
                   key={resource._id}
                   className="group relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500 hover:-translate-y-2 overflow-hidden animate-fade-in-up"
                   style={{ animationDelay: `${idx * 75}ms` }}
                 >
-                  {/* Top accent bar */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-secondary-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                  {/* Top accent bar with gradient */}
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`} />
 
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-5">
                       <div className="flex items-center gap-3">
-                        <div className={`w-14 h-14 rounded-2xl ${resource.maintenanceMode ? "bg-danger-500/10" : "bg-gradient-to-br from-primary-500 to-primary-600"} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                          <TypeIcon className={`w-7 h-7 ${resource.maintenanceMode ? "text-danger-500" : "text-white"}`} />
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                          <TypeIcon className="w-7 h-7 text-white" />
                         </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{resource.name}</h3>
-                          <p className="text-sm text-slate-500">{resource.code}</p>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors truncate">{resource.name}</h3>
+                          <p className="text-sm text-slate-500 flex items-center gap-1">
+                            <span className="truncate">{resource.code}</span>
+                            {resource.author && (
+                              <span className="text-slate-400 truncate">• {resource.author}</span>
+                            )}
+                          </p>
                         </div>
                       </div>
                       <Badge variant={resource.maintenanceMode ? "danger" : "success"} size="sm">
@@ -401,12 +470,15 @@ const ResourceBookingPage = () => {
                     <div className="space-y-3 text-sm mb-5">
                       {resource.location && (
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                          <MapPin className="w-4 h-4 text-primary-500" />
+                          <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
                           <span className="truncate">{resource.location}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-3">
-                        <Badge variant="primary" size="sm">{resource.type}</Badge>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <Badge variant={getTypeBadgeVariant(resource.type)} size="sm">
+                          <TypeIcon className="w-3 h-3 mr-1" />
+                          {resource.type}
+                        </Badge>
                         {resource.capacity && (
                           <span className="flex items-center gap-1 text-slate-500">
                             <Users className="w-4 h-4 text-secondary-500" />
@@ -420,6 +492,13 @@ const ResourceBookingPage = () => {
                           ₹{resource.hourlyRate}/hour
                         </div>
                       )}
+                      {resource.type === "book" && resource.isbn && (
+                        <div className="flex items-center gap-2 text-slate-500 text-xs">
+                          <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                            ISBN: {resource.isbn}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 text-slate-500">
                         <Clock className="w-4 h-4 text-slate-400" />
                         <span>{resource.availableStartTime} - {resource.availableEndTime}</span>
@@ -428,14 +507,14 @@ const ResourceBookingPage = () => {
 
                     {resource.amenities?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-5">
-                        {resource.amenities.slice(0, 4).map((a, i) => (
+                        {resource.amenities.slice(0, 3).map((a, i) => (
                           <Badge key={i} variant="default" size="sm" className="bg-slate-100 dark:bg-slate-800">
                             {a}
                           </Badge>
                         ))}
-                        {resource.amenities.length > 4 && (
+                        {resource.amenities.length > 3 && (
                           <Badge variant="default" size="sm" className="bg-slate-100 dark:bg-slate-800">
-                            +{resource.amenities.length - 4}
+                            +{resource.amenities.length - 3}
                           </Badge>
                         )}
                       </div>
@@ -471,141 +550,227 @@ const ResourceBookingPage = () => {
         <ResourceCalendar resource={selectedResource} onClose={() => { setShowCalendar(false); setSelectedResource(null); }} />
       )}
 
-      {/* Create Resource Modal (Admin Only) */}
-      {isAdmin && (
-        <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Add New Resource" size="lg">
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-2xl p-4 border border-primary-100 dark:border-primary-800">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Add a new resource to the campus pool. Fill in the details below.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Resource Name"
-                value={newResource.name}
-                onChange={(e) => setNewResource({ ...newResource, name: e.target.value })}
-                placeholder="Seminar Hall A"
-              />
-              <Input
-                label="Code"
-                value={newResource.code}
-                onChange={(e) => setNewResource({ ...newResource, code: e.target.value })}
-                placeholder="HALL-A"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Type
-                </label>
-                <select
-                  value={newResource.type}
-                  onChange={(e) => setNewResource({ ...newResource, type: e.target.value })}
-                  className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
-                >
-                  {resourceTypes.map(t => (
-                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-                  ))}
-                </select>
+      {/* Create Resource Modal - Available for ALL users */}
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={isAdmin ? "Add New Resource" : "Add Book/Material"} size="lg">
+        <div className="space-y-6">
+          {/* Info Banner */}
+          <div className="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 rounded-2xl p-4 border border-primary-100 dark:border-primary-800">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-xl">
+                {isAdmin ? <Shield className="w-5 h-5 text-primary-600 dark:text-primary-400" /> : <Star className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
               </div>
-              <Input
-                label="Location"
-                value={newResource.location}
-                onChange={(e) => setNewResource({ ...newResource, location: e.target.value })}
-                placeholder="Block A, 2nd Floor"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                label="Capacity"
-                type="number"
-                value={newResource.capacity}
-                onChange={(e) => setNewResource({ ...newResource, capacity: e.target.value })}
-                placeholder="100"
-              />
-              <Input
-                label="Hourly Rate (₹)"
-                type="number"
-                value={newResource.hourlyRate}
-                onChange={(e) => setNewResource({ ...newResource, hourlyRate: e.target.value })}
-                placeholder="0"
-              />
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Requires Approval
-                </label>
-                <select
-                  value={newResource.requiresApproval ? "true" : "false"}
-                  onChange={(e) => setNewResource({ ...newResource, requiresApproval: e.target.value === "true" })}
-                  className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
-                >
-                  <option value="false">No - Auto approve</option>
-                  <option value="true">Yes - Manual approval</option>
-                </select>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {isAdmin
+                    ? "Add a new resource to the campus pool. Fill in the details below."
+                    : "Share a book or material with the campus community. Your contribution helps others learn and grow."}
+                </p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Available From"
-                type="time"
-                value={newResource.availableStartTime}
-                onChange={(e) => setNewResource({ ...newResource, availableStartTime: e.target.value })}
-              />
-              <Input
-                label="Available Until"
-                type="time"
-                value={newResource.availableEndTime}
-                onChange={(e) => setNewResource({ ...newResource, availableEndTime: e.target.value })}
-              />
-            </div>
-
-            {/* Amenities */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Amenities
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={amenityInput}
-                  onChange={(e) => setAmenityInput(e.target.value)}
-                  placeholder="e.g., WiFi, Projector"
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddAmenity())}
-                />
-                <Button variant="outline" onClick={handleAddAmenity}>Add</Button>
-              </div>
-              {newResource.amenities.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {newResource.amenities.map((a, i) => (
-                    <Badge key={i} variant="default" size="sm" className="pr-2 pl-3 flex items-center gap-1 bg-slate-100 dark:bg-slate-800">
-                      {a}
-                      <button onClick={() => handleRemoveAmenity(a)} className="hover:text-danger-500">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-              <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-              <Button
-                onClick={handleCreateResource}
-                isLoading={isCreating}
-                disabled={!newResource.name || !newResource.code}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Resource
-              </Button>
             </div>
           </div>
-        </Modal>
-      )}
+
+          {/* Type Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Resource Type
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {resourceTypes.map(type => {
+                const Icon = getTypeIcon(type);
+                const isBookType = bookResourceTypes.includes(type);
+                const disabled = !isAdmin && !isBookType;
+
+                return (
+                  <button
+                    key={type}
+                    disabled={disabled}
+                    onClick={() => setNewResource({ ...newResource, type })}
+                    className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-300 ${
+                      newResource.type === type
+                        ? `border-primary-500 bg-primary-50 dark:bg-primary-900/30`
+                        : disabled
+                        ? "border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed"
+                        : "border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-700"
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getTypeGradient(type)} flex items-center justify-center`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300 capitalize">{type}</span>
+                    {disabled && (
+                      <div className="absolute -top-1 -right-1">
+                        <Crown className="w-4 h-4 text-amber-500" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {!isAdmin && (
+              <p className="text-xs text-slate-500 flex items-center gap-1 mt-2">
+                <Crown className="w-3 h-3 text-amber-500" />
+                Only admins can create facility resources (rooms, halls, labs, equipment, vehicles)
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Resource Name"
+              value={newResource.name}
+              onChange={(e) => setNewResource({ ...newResource, name: e.target.value })}
+              placeholder={newResource.type === "book" ? "The Pragmatic Programmer" : "Seminar Hall A"}
+            />
+            <Input
+              label="Code"
+              value={newResource.code}
+              onChange={(e) => setNewResource({ ...newResource, code: e.target.value })}
+              placeholder={newResource.type === "book" ? "BK-001" : "HALL-A"}
+            />
+          </div>
+
+          {/* Book-specific fields */}
+          {newResource.type === "book" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                label="Author"
+                value={newResource.author}
+                onChange={(e) => setNewResource({ ...newResource, author: e.target.value })}
+                placeholder="David Thomas"
+              />
+              <Input
+                label="Publisher"
+                value={newResource.publisher}
+                onChange={(e) => setNewResource({ ...newResource, publisher: e.target.value })}
+                placeholder="Addison-Wesley"
+              />
+              <Input
+                label="ISBN"
+                value={newResource.isbn}
+                onChange={(e) => setNewResource({ ...newResource, isbn: e.target.value })}
+                placeholder="978-0135957059"
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label={newResource.type === "book" ? "Library/Shelf Location" : "Location"}
+              value={newResource.location}
+              onChange={(e) => setNewResource({ ...newResource, location: e.target.value })}
+              placeholder={newResource.type === "book" ? "Main Library, Shelf A-12" : "Block A, 2nd Floor"}
+            />
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                Campus Area
+              </label>
+              <select
+                value={newResource.campus}
+                onChange={(e) => setNewResource({ ...newResource, campus: e.target.value })}
+                className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+              >
+                <option value="">Select campus</option>
+                <option value="Main Campus">Main Campus</option>
+                <option value="North Campus">North Campus</option>
+                <option value="South Campus">South Campus</option>
+                <option value="East Campus">East Campus</option>
+                <option value="West Campus">West Campus</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Only show facility-specific fields for admins */}
+          {isAdmin && !bookResourceTypes.includes(newResource.type) && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  label="Capacity"
+                  type="number"
+                  value={newResource.capacity}
+                  onChange={(e) => setNewResource({ ...newResource, capacity: e.target.value })}
+                  placeholder="100"
+                />
+                <Input
+                  label="Hourly Rate (₹)"
+                  type="number"
+                  value={newResource.hourlyRate}
+                  onChange={(e) => setNewResource({ ...newResource, hourlyRate: e.target.value })}
+                  placeholder="0"
+                />
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Requires Approval
+                  </label>
+                  <select
+                    value={newResource.requiresApproval ? "true" : "false"}
+                    onChange={(e) => setNewResource({ ...newResource, requiresApproval: e.target.value === "true" })}
+                    className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="false">No - Auto approve</option>
+                    <option value="true">Yes - Manual approval</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Available From"
+                  type="time"
+                  value={newResource.availableStartTime}
+                  onChange={(e) => setNewResource({ ...newResource, availableStartTime: e.target.value })}
+                />
+                <Input
+                  label="Available Until"
+                  type="time"
+                  value={newResource.availableEndTime}
+                  onChange={(e) => setNewResource({ ...newResource, availableEndTime: e.target.value })}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Amenities */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Amenities / Features
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={amenityInput}
+                onChange={(e) => setAmenityInput(e.target.value)}
+                placeholder="e.g., WiFi, Projector, AC"
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddAmenity())}
+              />
+              <Button variant="outline" onClick={handleAddAmenity}>Add</Button>
+            </div>
+            {newResource.amenities.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {newResource.amenities.map((a, i) => (
+                  <Badge key={i} variant="default" size="sm" className="pr-2 pl-3 flex items-center gap-1 bg-slate-100 dark:bg-slate-800">
+                    {a}
+                    <button onClick={() => handleRemoveAmenity(a)} className="hover:text-danger-500">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateResource}
+              isLoading={isCreating}
+              disabled={!newResource.name || !newResource.code}
+              className="bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create {newResource.type === "book" ? "Book" : "Resource"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

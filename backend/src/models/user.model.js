@@ -7,13 +7,12 @@ const userSchema = new mongoose.Schema(
     about: {
       type: String,
       required: false,
-      default:
-        "This user hasn’t added a about yet. Clubs are better when people know who you are!",
+      default: "This user hasn't added a about yet. Clubs are better when people know who you are!",
     },
     password: { type: String, required: true },
     profilePic: { type: String, default: "" },
-    dept: { type: String, required: true },
-    year: { type: String, required: true },
+    dept: { type: String, default: "" },
+    year: { type: String, default: "" },
     role: {
       type: String,
       enum: ["student", "superAdmin"],
@@ -24,19 +23,9 @@ const userSchema = new mongoose.Schema(
       enum: ["participant", "organizer", "admin"],
       default: "participant",
     },
-    joinedClubs: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Club",
-      },
-    ],
-
-    followedClubs: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Club",
-      },
-    ],
+    joinedClubs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Club" }],
+    followedClubs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Club" }],
+    googleId: { type: String, unique: true, sparse: true },
   },
   { timestamps: true },
 );

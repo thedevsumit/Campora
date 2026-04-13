@@ -4,7 +4,7 @@ const resourceSchema = new mongoose.Schema({
   name: { type: String, required: true },
   type: {
     type: String,
-    enum: ["room", "hall", "lab", "equipment", "vehicle", "other"],
+    enum: ["room", "hall", "lab", "equipment", "vehicle", "book", "other"],
     required: true
   },
   code: { type: String, required: true, unique: true },
@@ -28,6 +28,10 @@ const resourceSchema = new mongoose.Schema({
   managedByDepartment: { type: String },
   images: [{ type: String }],
   amenities: [{ type: String }],
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  author: { type: String },
+  publisher: { type: String },
+  isbn: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Resource", resourceSchema);

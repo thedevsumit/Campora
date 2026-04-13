@@ -14,7 +14,9 @@ router.get("/", protectRoute, checkPermission("resource:view"), async (req, res)
     if (type) filter.type = type;
     if (location) filter.location = { $regex: location, $options: "i" };
     if (available === "true") filter.maintenanceMode = false;
-    const resources = await Resource.find(filter).populate("managedBy", "clubName");
+    const resources = await Resource.find(filter)
+      .populate("managedBy", "clubName")
+      .populate("createdBy", "fullName email");
     return res.status(200).json({ resources });
   } catch (error) {
     console.error("getResources error:", error);
@@ -22,9 +24,24 @@ router.get("/", protectRoute, checkPermission("resource:view"), async (req, res)
   }
 });
 
-// Create resource
-router.post("/", protectRoute, isAdmin, async (req, res) => {
+// Create resource - any user can create materials, only admins can create facilities
+router.post("/", protectRoute, async (req, res) => {
   try {
+    const { type } = req.body;
+    const facilityTypes = ["room", "hall", "lab", "equipment", "vehicle"];
+
+    // Only admins can create facility types (rooms, halls, labs, equipment, vehicles)
+    if (facilityTypes.includes(type)) {
+      if (req.user.userRole !== "admin" && req.user.role !== "superAdmin") {
+        return res.status(403).json({ message: "Only admins can create facility resources" });
+      }
+    }
+
+    // Add creator info for materials
+    if (!facilityTypes.includes(type)) {
+      req.body.createdBy = req.user._id;
+    }
+
     const resource = await Resource.create(req.body);
     return res.status(201).json({ message: "Resource created", resource });
   } catch (error) {
@@ -36,7 +53,9 @@ router.post("/", protectRoute, isAdmin, async (req, res) => {
 // Get resource by ID
 router.get("/:resourceId", protectRoute, checkPermission("resource:view"), async (req, res) => {
   try {
-    const resource = await Resource.findById(req.params.resourceId).populate("managedBy", "clubName");
+    const resource = await Resource.findById(req.params.resourceId)
+      .populate("managedBy", "clubName")
+      .populate("createdBy", "fullName email");
     if (!resource) return res.status(404).json({ message: "Resource not found" });
     return res.status(200).json({ resource });
   } catch (error) {

@@ -2,10 +2,12 @@ const express = require("express");
 const dotenv = require("dotenv");
 const connectDB = require("./lib/db");
 const { authRoutes } = require("./routes/auth.route");
-const  clubRoutes  = require("./routes/club.route");
+const clubRoutes = require("./routes/club.route");
 const userRoutes = require("./routes/user.route");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const passport = require("passport");
+const { initializePassport } = require("./lib/passport");
 
 const chatRouter = require("./routes/chatRequest.route");
 const privateRouter = require("./routes/privateChat.route");
@@ -24,17 +26,21 @@ const { Server } = require("socket.io");
 const adminRouter = require("./routes/admin.route");
 const clubManageRoutes = require("./routes/club.manage.routes");
 
-
-
 dotenv.config();
+
+const isProd = process.env.NODE_ENV === "production";
+const FRONTEND_URL = isProd
+  ? (process.env.FRONTEND_URL_PRODUCTION || "https://campora-8kb0.onrender.com")
+  : "http://localhost:5173";
 
 const app = express();
 
-/* ================= MIDDLEWARE ================= */
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+    origin: isProd
+      ? FRONTEND_URL
+      : ["http://localhost:5173", "http://localhost:5174", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -43,7 +49,9 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-/* ================= ROUTES ================= */
+initializePassport(passport);
+app.use(passport.initialize());
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRouter);
@@ -58,47 +66,31 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/chatrooms", chatRoomRouter);
-app.use("/api/admin",adminRouter)
+app.use("/api/admin", adminRouter);
 app.use("/api/clubs", clubManageRoutes);
 
-app.get("/", (req, res) => {
-  res.send({ msg: "Server is Live!" });
-});
+app.get("/", (req, res) => { res.send({ msg: "Server is Live!" }); });
 
-/* ================= SOCKET.IO SETUP ================= */
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: isProd ? FRONTEND_URL : ["http://localhost:5173", "http://127.0.0.1:5173"],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
-
-  socket.on("join", (userId) => {
-    socket.join(userId);
-    console.log(`👤 User joined room: ${userId}`);
-  });
-  socket.on("joinClub", (clubId) => {
-    socket.join(`club_${clubId}`);
-  });
-  socket.on("leaveClub", (clubId) => {
-    socket.leave(`club_${clubId}`);
-  });
-  socket.on("joinNotifications", (userId) => {
-    socket.join(`notifications_${userId}`);
-  });
-  socket.on("disconnect", () => {
-    console.log("🔴 Socket disconnected:", socket.id);
-  });
+  socket.on("join", (userId) => { socket.join(userId); });
+  socket.on("joinClub", (clubId) => { socket.join("club_" + clubId); });
+  socket.on("leaveClub", (clubId) => { socket.leave("club_" + clubId); });
+  socket.on("joinNotifications", (userId) => { socket.join("notifications_" + userId); });
+  socket.on("disconnect", () => { console.log("🔴 Socket disconnected:", socket.id); });
 });
 
-/* Allow routes to access io */
 app.set("io", io);
 
-/* ================= START SERVER ================= */
 server.listen(process.env.PORT, "0.0.0.0", () => {
   console.log("🚀 Server running on port:", process.env.PORT);
   connectDB();
