@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useClubAdminStore } from "../store/useClubAdminStore";
+import { getImageUrl } from "../lib/utils";
 import Navbar from "./Navbar";
 import EditClubModal from "./EditClubModal";
 import ClubAdminEventsManager from "./ClubAdminEventsManager";
@@ -116,7 +117,7 @@ export default function ClubAdminDashboard() {
             <div className="flex items-center gap-5">
               <div className="w-20 h-20 rounded-3xl overflow-hidden ring-4 ring-white/30 shadow-2xl">
                 {clubData.icon ? (
-                  <img src={`http://localhost:5000${clubData.icon}`} className="w-full h-full object-cover" alt={clubData.clubName} />
+                  <img src={getImageUrl(clubData.icon)} className="w-full h-full object-cover" alt={clubData.clubName} />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-primary-400 to-secondary-400 flex items-center justify-center text-4xl font-bold">
                     {clubData.clubName?.[0]}

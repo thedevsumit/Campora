@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
+import { getImageUrl } from "../lib/utils";
 import { axiosInstance } from "../lib/axios";
 import { userAuthStore } from "../store/useAuthStore";
 import Button from "./ui/Button";
@@ -129,7 +130,7 @@ const UserProfilePage = () => {
                   >
                     {club.clubIcon ? (
                       <img
-                        src={`http://localhost:5000${club.clubIcon}`}
+                        src={getImageUrl(club.clubIcon)}
                         className="w-full h-full object-cover"
                         alt={club.clubName}
                       />
@@ -180,7 +181,7 @@ const UserProfilePage = () => {
                 <div className="w-36 h-36 rounded-3xl overflow-hidden ring-4 ring-white/30 shadow-2xl">
                   {user.profilePic ? (
                     <img
-                      src={`http://localhost:5000${user.profilePic}`}
+                      src={getImageUrl(user.profilePic)}
                       alt={user.fullName}
                       className="w-full h-full object-cover"
                     />
@@ -377,7 +378,7 @@ const UserProfilePage = () => {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg overflow-hidden">
                   {user.profilePic ? (
                     <img
-                      src={`http://localhost:5000${user.profilePic}`}
+                      src={getImageUrl(user.profilePic)}
                       className="w-full h-full object-cover"
                       alt={user.fullName}
                     />

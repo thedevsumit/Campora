@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ArrowRight, Users, Star, Calendar, Zap } from "lucide-react";
+import { getImageUrl } from "../lib/utils";
 
 const ClubCard = ({ club, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -30,7 +31,7 @@ const ClubCard = ({ club, onClick }) => {
               <div className="relative w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-slate-100 dark:ring-slate-800 group-hover:ring-primary-500/30 transition-all duration-300 shadow-lg">
                 {club.clubIcon ? (
                   <img
-                    src={`http://localhost:5000${club.clubIcon}`}
+                    src={getImageUrl(club.clubIcon)}
                     alt={club.clubName}
                     className="w-full h-full object-cover"
                   />

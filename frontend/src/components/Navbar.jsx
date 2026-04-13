@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { userAuthStore } from "../store/useAuthStore";
 import NotificationBell from "./NotificationBell";
 import DarkModeToggle from "./DarkModeToggle";
@@ -10,10 +10,12 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     setIsDropdownOpen(false);
+    navigate("/login");
   };
 
   const isAdminOrSuperAdmin = authUser?.role === "superAdmin" || authUser?.userRole === "admin";
@@ -99,7 +101,7 @@ export default function Navbar() {
               >
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold shadow-lg">
                   {authUser?.profilePic ? (
-                    <img src={`http://localhost:5000${authUser.profilePic}`} alt={authUser.fullName} className="w-full h-full object-cover rounded-xl" />
+                    <img src={`${import.meta.env.VITE_API_URL?.replace("/api", "")}${authUser.profilePic}`} alt={authUser.fullName} className="w-full h-full object-cover rounded-xl" />
                   ) : (
                     <span>{authUser?.fullName?.[0]}</span>
                   )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import { getImageUrl } from "../lib/utils";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import { axiosInstance } from "../lib/axios";
@@ -155,7 +156,7 @@ const AdminDashboard = () => {
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
                         {club.clubIcon ? (
-                          <img src={`http://localhost:5000${club.clubIcon}`} className="w-full h-full object-cover" alt={club.clubName} />
+                          <img src={getImageUrl(club.clubIcon)} className="w-full h-full object-cover" alt={club.clubName} />
                         ) : (
                           <span className="text-white text-2xl font-bold">{club.clubName?.[0]}</span>
                         )}

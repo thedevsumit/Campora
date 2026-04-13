@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useChatRequestStore } from "../store/useChatRequestStore";
+import { getImageUrl } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
 import { MessageCircle, UserCheck, X } from "lucide-react";
@@ -50,7 +51,7 @@ const ChatRequestsPanel = () => {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold shadow-lg">
                 {req.sender.profilePic ? (
-                  <img src={`http://localhost:5000${req.sender.profilePic}`} className="w-full h-full object-cover rounded-2xl" alt={req.sender.fullName} />
+                  <img src={getImageUrl(req.sender.profilePic)} className="w-full h-full object-cover rounded-2xl" alt={req.sender.fullName} />
                 ) : (
                   req.sender.fullName?.[0]
                 )}

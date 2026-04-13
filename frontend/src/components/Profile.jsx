@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EditProfileModal from "../components/EditProfile";
+import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import { useClubStore } from "../store/useClubStore";
 import Navbar from "./Navbar";
@@ -138,7 +139,7 @@ const ClubSection = ({ title, clubs, color, icon: Icon, colorClass, onClubClick 
                 >
                   {club.clubIcon ? (
                     <img
-                      src={`http://localhost:5000${club.clubIcon}`}
+                      src={getImageUrl(club.clubIcon)}
                       className="w-full h-full object-cover"
                       alt={club.clubName}
                     />
@@ -216,7 +217,7 @@ const ProfilePage = () => {
               <div className="w-36 h-36 rounded-3xl overflow-hidden ring-4 ring-white/30 shadow-2xl relative group">
                 {authUser.profilePic ? (
                   <img
-                    src={`http://localhost:5000${authUser.profilePic}`}
+                    src={getImageUrl(authUser.profilePic)}
                     alt={authUser.fullName}
                     className="w-full h-full object-cover"
                   />

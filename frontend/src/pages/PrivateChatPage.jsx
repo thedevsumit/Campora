@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { axiosInstance } from "../lib/axios";
+import { getImageUrl } from "../lib/utils";
 import { socket } from "../lib/socket";
 import { userAuthStore } from "../store/useAuthStore";
 import Navbar from "../components/Navbar";
@@ -34,9 +35,6 @@ const formatDate = (d) => {
     day: "numeric",
   });
 };
-
-const getImageUrl = (path) =>
-  path?.startsWith("http") ? path : path ? `http://localhost:5000${path}` : null;
 
 const Avatar = ({ src, name, size = "md" }) => {
   const sizeClasses =

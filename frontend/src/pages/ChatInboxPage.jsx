@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../lib/axios";
+import { getImageUrl } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
@@ -248,7 +249,7 @@ const ChatInboxPage = () => {
                       <div className="relative">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                           {req.sender?.profilePic ? (
-                            <img src={`http://localhost:5000${req.sender.profilePic}`} className="w-full h-full object-cover" alt={req.sender.fullName} />
+                            <img src={getImageUrl(req.sender.profilePic)} className="w-full h-full object-cover" alt={req.sender.fullName} />
                           ) : (
                             req.sender?.fullName?.[0]
                           )}
@@ -354,7 +355,7 @@ const ChatInboxPage = () => {
                   <div className="relative flex-shrink-0">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                       {user.profilePic ? (
-                        <img src={`http://localhost:5000${user.profilePic}`} className="w-full h-full object-cover" alt={user.fullName} />
+                        <img src={getImageUrl(user.profilePic)} className="w-full h-full object-cover" alt={user.fullName} />
                       ) : (
                         user.fullName?.charAt(0).toUpperCase()
                       )}
@@ -419,7 +420,7 @@ const ChatInboxPage = () => {
                   <div className="relative flex-shrink-0">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                       {user.profilePic ? (
-                        <img src={`http://localhost:5000${user.profilePic}`} className="w-full h-full object-cover" alt={user.fullName} />
+                        <img src={getImageUrl(user.profilePic)} className="w-full h-full object-cover" alt={user.fullName} />
                       ) : (
                         user.fullName?.[0]
                       )}
@@ -477,7 +478,7 @@ const ChatInboxPage = () => {
             <div className="flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-3xl shadow-xl overflow-hidden mb-4">
                 {viewingProfile.profilePic ? (
-                  <img src={`http://localhost:5000${viewingProfile.profilePic}`} className="w-full h-full object-cover" alt={viewingProfile.fullName} />
+                  <img src={getImageUrl(viewingProfile.profilePic)} className="w-full h-full object-cover" alt={viewingProfile.fullName} />
                 ) : (
                   viewingProfile.fullName?.[0]
                 )}

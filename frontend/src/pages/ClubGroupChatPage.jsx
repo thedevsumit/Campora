@@ -2,15 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useClubChatStore } from "../store/useClubChatStore";
+import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import Button from "../components/ui/Button";
 import { Send, ArrowLeft, MessageCircle, Sparkles } from "lucide-react";
 
 const formatTime = (d) =>
   new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-const getImageUrl = (path) =>
-  path?.startsWith("http") ? path : path ? `http://localhost:5000${path}` : null;
 
 const Avatar = ({ src, name }) =>
   src ? (

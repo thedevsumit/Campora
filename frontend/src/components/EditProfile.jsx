@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import Button from "./ui/Button";
 import { Camera, X, Sparkles, User, Save, Image } from "lucide-react";
@@ -81,7 +82,7 @@ const EditProfileModal = ({ show, onClose }) => {
                     preview
                       ? preview.startsWith("data")
                         ? preview
-                        : `http://localhost:5000${preview}`
+                        : getImageUrl(preview)
                       : "/placeholder.png"
                   }
                   className="w-full h-full object-cover"

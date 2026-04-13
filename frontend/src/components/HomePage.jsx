@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
+import { getImageUrl } from "../lib/utils";
 import Button from "./ui/Button";
 import Badge from "./ui/Badge";
 import StatCard from "./ui/StatCard";
@@ -289,7 +290,7 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity" />
                   <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
                     {club.clubIcon ? (
-                      <img src={`http://localhost:5000${club.clubIcon}`} className="w-full h-full object-cover" alt={club.clubName} />
+                      <img src={getImageUrl(club.clubIcon)} className="w-full h-full object-cover" alt={club.clubName} />
                     ) : (
                       club.clubName?.[0]
                     )}

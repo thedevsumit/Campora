@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
+import { getImageUrl } from "../lib/utils";
 import { useEventStore } from "../store/useEventStore";
 import { userAuthStore } from "../store/useAuthStore";
 import { useNavigate } from "react-router-dom";
@@ -472,7 +473,7 @@ export default function EventsPage() {
                       <div className="flex items-center gap-2">
                         {event.club?.clubIcon ? (
                           <img
-                            src={`http://localhost:5000${event.club.clubIcon}`}
+                            src={getImageUrl(event.club.clubIcon)}
                             className="w-8 h-8 rounded-full ring-2 ring-white dark:ring-slate-900"
                             alt="club"
                           />

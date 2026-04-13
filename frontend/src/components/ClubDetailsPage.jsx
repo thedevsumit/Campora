@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useClubStore } from "../store/useClubStore";
+import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import Navbar from "./Navbar";
 import Button from "./ui/Button";
@@ -61,7 +62,7 @@ const ClubDetailsPage = () => {
               <div className="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-white/30 shadow-2xl">
                 {selectedClub.clubIcon ? (
                   <img
-                    src={`http://localhost:5000${selectedClub.clubIcon}`}
+                    src={getImageUrl(selectedClub.clubIcon)}
                     alt={selectedClub.clubName}
                     className="w-full h-full object-cover"
                   />
@@ -194,7 +195,7 @@ const ClubDetailsPage = () => {
                 >
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold overflow-hidden">
                     {m.user.profilePic ? (
-                      <img src={`http://localhost:5000${m.user.profilePic}`} className="w-full h-full object-cover" alt={m.user.fullName} />
+                      <img src={getImageUrl(m.user.profilePic)} className="w-full h-full object-cover" alt={m.user.fullName} />
                     ) : (
                       <span className="text-xl">{m.user.fullName?.[0]}</span>
                     )}
@@ -231,7 +232,7 @@ const ClubDetailsPage = () => {
                 >
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-danger-500 to-amber-500 flex items-center justify-center text-white font-bold overflow-hidden">
                     {user.profilePic ? (
-                      <img src={`http://localhost:5000${user.profilePic}`} className="w-full h-full object-cover" alt={user.fullName} />
+                      <img src={getImageUrl(user.profilePic)} className="w-full h-full object-cover" alt={user.fullName} />
                     ) : (
                       <span className="text-xl">{user.fullName?.[0]}</span>
                     )}
