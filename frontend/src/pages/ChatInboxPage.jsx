@@ -3,6 +3,8 @@ import { axiosInstance } from "../lib/axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
+import Input from "../components/ui/Input";
 import {
   MessageCircle,
   Users,
@@ -16,12 +18,24 @@ import {
   MessageSquare,
   Heart,
   Zap,
+  Search,
+  User,
+  Check,
+  Loader2,
+  Eye,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 const ChatInboxPage = () => {
   const [users, setUsers] = useState([]);
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
+  const [browseUsers, setBrowseUsers] = useState([]);
+  const [browseLoading, setBrowseLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sentRequests, setSentRequests] = useState({});
+  const [viewingProfile, setViewingProfile] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,6 +54,43 @@ const ChatInboxPage = () => {
       .finally(() => setIsLoading(false));
   }, []);
 
+  const fetchBrowseUsers = async (search = "") => {
+    setBrowseLoading(true);
+    try {
+      const { data } = await axiosInstance.get(`/auth/browse-users${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+      setBrowseUsers(data.users || []);
+    } catch (err) {
+      toast.error("Failed to load users");
+    } finally {
+      setBrowseLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showBrowseModal && browseUsers.length === 0) {
+      fetchBrowseUsers();
+    }
+  }, [showBrowseModal]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (showBrowseModal) {
+        fetchBrowseUsers(searchQuery);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, showBrowseModal]);
+
+  const sendChatRequest = async (receiverId) => {
+    try {
+      await axiosInstance.post(`/chat/request/${receiverId}`);
+      setSentRequests(prev => ({ ...prev, [receiverId]: "sent" }));
+      toast.success("Chat request sent!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send request");
+    }
+  };
+
   const acceptRequest = async (req) => {
     await axiosInstance.post(`/chat/accept/${req._id}`);
     setRequests((prev) => prev.filter((r) => r._id !== req._id));
@@ -52,17 +103,18 @@ const ChatInboxPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-primary-50 dark:from-slate-950 dark:via-slate-900 dark:to-primary-950">
       <Navbar />
 
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-700 text-white py-24 overflow-hidden">
-        {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary-400/20 rounded-full blur-3xl" />
         <div className="absolute top-20 left-20 w-72 h-72 border border-white/10 rounded-full" />
         <div className="absolute top-40 right-40 w-32 h-32 border border-white/10 rounded-full" />
         <div className="absolute bottom-40 left-60 w-20 h-20 bg-amber-400/20 rounded-full blur-2xl" />
+        <div className="absolute top-1/2 left-8 w-4 h-4 bg-amber-400 rounded-full" />
+        <div className="absolute top-20 right-20 w-3 h-3 bg-white/60 rounded-full" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-10">
@@ -145,8 +197,8 @@ const ChatInboxPage = () => {
                 </p>
               </div>
               <Button
-                variant="outline"
-                className="border-white/80 text-white w-full hover:bg-white/20 hover:border-white"
+                onClick={() => setShowBrowseModal(true)}
+                className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-bold shadow-lg shadow-amber-500/30 w-full"
               >
                 <Users className="w-5 h-5 mr-2" />
                 Browse Members
@@ -157,15 +209,8 @@ const ChatInboxPage = () => {
 
         {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg
-            viewBox="0 0 1440 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M0 50L48 45.8C96 41.7 192 33.3 288 30C384 26.7 480 28.3 576 33.3C672 38.3 768 46.7 864 48.3C960 50 1056 45 1152 40C1248 35 1344 30 1392 27.5L1440 25V100H1392C1344 100 1248 100 1152 100C1056 100 960 100 864 100C768 100 672 100 576 100C480 100 384 100 288 100C192 100 96 100 48 100H0V50Z"
-              className="fill-slate-50 dark:fill-slate-950"
-            />
+          <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 50L48 45.8C96 41.7 192 33.3 288 30C384 26.7 480 28.3 576 33.3C672 38.3 768 46.7 864 48.3C960 50 1056 45 1152 40C1248 35 1344 30 1392 27.5L1440 25V100H1392C1344 100 1248 100 1152 100C1056 100 960 100 864 100C768 100 672 100 576 100C480 100 384 100 288 100C192 100 96 100 48 100H0V50Z" className="fill-slate-50 dark:fill-slate-950" />
           </svg>
         </div>
       </div>
@@ -192,17 +237,13 @@ const ChatInboxPage = () => {
               {requests.map((req, idx) => (
                 <div
                   key={req._id}
-                  className="group relative bg-white dark:bg-slate-900 rounded-3xl p-6 border border-amber-200 dark:border-amber-800/50 shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-2 transition-all duration-500 overflow-hidden"
+                  className="group relative bg-white dark:bg-slate-900 rounded-3xl p-6 border border-amber-200 dark:border-amber-800/50 shadow-sm hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-2 transition-all duration-500 overflow-hidden animate-fade-in-up"
                   style={{ animationDelay: `${idx * 75}ms` }}
                 >
-                  {/* Animated gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-transparent to-orange-50 dark:from-amber-900/20 dark:via-transparent dark:to-orange-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  {/* Top accent bar */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
 
                   <div className="relative">
-                    {/* Avatar */}
                     <div className="flex items-center gap-4 mb-4">
                       <div className="relative">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
@@ -227,7 +268,6 @@ const ChatInboxPage = () => {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-3">
                       <button
                         onClick={() => acceptRequest(req)}
@@ -245,7 +285,6 @@ const ChatInboxPage = () => {
                     </div>
                   </div>
 
-                  {/* Decorative corner */}
                   <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-amber-400/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               ))}
@@ -255,20 +294,27 @@ const ChatInboxPage = () => {
 
         {/* Active Conversations Section */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-          {/* Header */}
           <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl shadow-lg">
-                <MessageSquare className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl shadow-lg">
+                  <MessageSquare className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Conversations</h2>
+                  <p className="text-sm text-slate-500">Click on a conversation to start chatting</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Conversations</h2>
-                <p className="text-sm text-slate-500">Click on a conversation to start chatting</p>
-              </div>
+              <Button
+                onClick={() => setShowBrowseModal(true)}
+                className="bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white shadow-lg"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Find People
+              </Button>
             </div>
           </div>
 
-          {/* Chat list */}
           <div>
             {isLoading && (
               <div className="flex items-center justify-center py-24">
@@ -290,7 +336,7 @@ const ChatInboxPage = () => {
                 <p className="text-slate-500 mb-8 max-w-md mx-auto leading-relaxed">
                   You haven't started any conversations yet. Accept chat requests or browse members to start connecting!
                 </p>
-                <Button>
+                <Button onClick={() => setShowBrowseModal(true)}>
                   <Users className="w-4 h-4 mr-2" />
                   Browse Members
                 </Button>
@@ -305,7 +351,6 @@ const ChatInboxPage = () => {
                   className="group flex items-center gap-4 p-5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   style={{ animationDelay: `${idx * 50}ms` }}
                 >
-                  {/* Avatar */}
                   <div className="relative flex-shrink-0">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                       {user.profilePic ? (
@@ -314,11 +359,9 @@ const ChatInboxPage = () => {
                         user.fullName?.charAt(0).toUpperCase()
                       )}
                     </div>
-                    {/* Online indicator */}
                     <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 rounded-full border-2 border-white dark:border-slate-900" />
                   </div>
 
-                  {/* Name */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-900 dark:text-white text-lg truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {user.fullName}
@@ -338,6 +381,135 @@ const ChatInboxPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Browse Members Modal */}
+      <Modal isOpen={showBrowseModal} onClose={() => setShowBrowseModal(false)} title="Browse Campus Members" size="lg">
+        <div className="space-y-5">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-2 border-transparent dark:border-transparent text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500 transition-all text-base"
+            />
+          </div>
+
+          {browseLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+            </div>
+          ) : browseUsers.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-4 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
+                <Users className="w-10 h-10 text-slate-300 dark:text-slate-600" />
+              </div>
+              <p className="text-slate-500">
+                {searchQuery ? "No users match your search" : "No users found"}
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto space-y-3 pr-1">
+              {browseUsers.map((user) => (
+                <div
+                  key={user._id}
+                  className="group flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 border border-transparent hover:border-primary-200 dark:hover:border-primary-800 transition-all duration-300"
+                >
+                  <div className="relative flex-shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
+                      {user.profilePic ? (
+                        <img src={`http://localhost:5000${user.profilePic}`} className="w-full h-full object-cover" alt={user.fullName} />
+                      ) : (
+                        user.fullName?.[0]
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-slate-900 dark:text-white text-lg truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                      {user.fullName}
+                    </p>
+                    <p className="text-sm text-slate-500 truncate">
+                      {user.email}
+                    </p>
+                    {user.dept && (
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {user.dept} {user.year && `• Year ${user.year}`}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <button
+                      onClick={() => setViewingProfile(user)}
+                      className="p-3 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-primary-100 dark:hover:bg-primary-900/50 text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300"
+                      title="View Profile"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                    {sentRequests[user._id] === "sent" ? (
+                      <div className="flex items-center gap-2 px-4 py-3 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl">
+                        <Check className="w-5 h-5" />
+                        <span className="font-semibold text-sm">Sent</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => sendChatRequest(user._id)}
+                        className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white rounded-xl shadow-lg shadow-primary-500/20 transition-all duration-300"
+                      >
+                        <Send className="w-4 h-4" />
+                        <span className="font-semibold text-sm">Request</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Quick Profile View Modal */}
+      {viewingProfile && (
+        <Modal isOpen={true} onClose={() => setViewingProfile(null)} title="User Profile" size="sm">
+          <div className="space-y-5">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-3xl shadow-xl overflow-hidden mb-4">
+                {viewingProfile.profilePic ? (
+                  <img src={`http://localhost:5000${viewingProfile.profilePic}`} className="w-full h-full object-cover" alt={viewingProfile.fullName} />
+                ) : (
+                  viewingProfile.fullName?.[0]
+                )}
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{viewingProfile.fullName}</h3>
+              <p className="text-slate-500">{viewingProfile.email}</p>
+              {viewingProfile.dept && (
+                <p className="text-sm text-slate-400 mt-1">
+                  {viewingProfile.dept} {viewingProfile.year && `• Year ${viewingProfile.year}`}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              {sentRequests[viewingProfile._id] === "sent" ? (
+                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl">
+                  <Check className="w-5 h-5" />
+                  <span className="font-semibold">Request Sent</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { sendChatRequest(viewingProfile._id); setViewingProfile(null); }}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white rounded-xl shadow-lg transition-all duration-300"
+                >
+                  <Send className="w-4 h-4" />
+                  <span className="font-semibold">Send Chat Request</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

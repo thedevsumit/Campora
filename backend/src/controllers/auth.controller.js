@@ -197,4 +197,29 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, sendOtp, checkAuth, getUserProfile };
+const getBrowseUsers = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const currentUserId = req.user._id;
+
+    const filter = { _id: { $ne: currentUserId } };
+
+    if (search && search.trim()) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const users = await User.find(filter)
+      .select("fullName email profilePic dept year")
+      .limit(20);
+
+    return res.status(200).json({ users });
+  } catch (err) {
+    console.error("getBrowseUsers error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { signup, login, logout, sendOtp, checkAuth, getUserProfile, getBrowseUsers };

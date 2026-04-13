@@ -1,7 +1,7 @@
 const express = require("express");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
-const { signup, login, logout, sendOtp, checkAuth } = require("../controllers/auth.controller");
+const { signup, login, logout, sendOtp, checkAuth, getBrowseUsers } = require("../controllers/auth.controller");
 const protectRoute = require("../middleware/auth.middleware");
 const authRoutes = express.Router();
 
@@ -45,5 +45,6 @@ authRoutes.post("/signup", signup);
 authRoutes.post("/login", login);
 authRoutes.post("/logout", logout);
 authRoutes.get("/check", protectRoute, checkAuth);
+authRoutes.get("/browse-users", protectRoute, getBrowseUsers);
 
 module.exports = { authRoutes };
