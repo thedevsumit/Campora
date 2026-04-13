@@ -1,0 +1,8 @@
+includes:
+  - frontend
+strips:
+  - frontend
+routes:
+  - type: rewrite
+    source: /*
+    destination: /frontend/index.html

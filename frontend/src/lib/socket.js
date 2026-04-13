@@ -4,4 +4,5 @@ const socketURL = import.meta.env.VITE_API_URL?.replace("/api", "") || "http://l
 
 export const socket = io(socketURL, {
   autoConnect: false,
+  withCredentials: true,
 });

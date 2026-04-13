@@ -123,7 +123,7 @@ export default function PrivateChatPage() {
 
   useEffect(() => {
     axiosInstance
-      .get(`/users/${userId}`)
+      .get(`/users/${userId}/profile`)
       .then((res) => {
         setOtherUser(res.data.user);
       })
@@ -146,21 +146,38 @@ export default function PrivateChatPage() {
       setMessages((prev) => [...prev, msg]);
     };
 
-    socket.on("private-message", handler);
-    return () => socket.off("private-message", handler);
+    socket.on("receiveMessage", handler);
+    return () => socket.off("receiveMessage", handler);
   }, [authUser._id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!text.trim()) return;
-    socket.emit("private-message", { to: userId, content: text });
-    setMessages((prev) => [
-      ...prev,
-      { content: text, sender: authUser, createdAt: new Date() },
-    ]);
+
+    // Optimistic update
+    const tempMessage = {
+      content: text,
+      sender: authUser,
+      createdAt: new Date(),
+      _id: "temp_" + Date.now(),
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+
+    try {
+      const res = await axiosInstance.post(`/chats/messages/${userId}`, { content: text });
+      // Replace temp message with actual message
+      setMessages((prev) =>
+        prev.map((m) => (m._id === tempMessage._id ? res.data.message : m))
+      );
+    } catch (err) {
+      // Remove temp message on error
+      setMessages((prev) => prev.filter((m) => m._id !== tempMessage._id));
+      console.error("Failed to send message:", err);
+    }
+
     setText("");
   };
 
