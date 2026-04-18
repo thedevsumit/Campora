@@ -15,7 +15,7 @@ export const useAnalyticsStore = create((set) => ({
   fetchDashboard: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await axios.get("/analytics/dashboard");
+      const { data } = await axiosInstance.get("/analytics/dashboard");
       set({ dashboard: data, isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch analytics dashboard");
@@ -26,7 +26,7 @@ export const useAnalyticsStore = create((set) => ({
   fetchEventAnalytics: async (period = "30") => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await axios.get(`/analytics/events?period=${period}`);
+      const { data } = await axiosInstance.get(`/analytics/events?period=${period}`);
       set({ eventAnalytics: data, isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch event analytics");
@@ -37,7 +37,7 @@ export const useAnalyticsStore = create((set) => ({
   fetchClubAnalytics: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await axios.get("/analytics/clubs");
+      const { data } = await axiosInstance.get("/analytics/clubs");
       set({ clubAnalytics: data, isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch club analytics");
@@ -48,7 +48,7 @@ export const useAnalyticsStore = create((set) => ({
   fetchResourceAnalytics: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await axios.get("/analytics/resources");
+      const { data } = await axiosInstance.get("/analytics/resources");
       set({ resourceAnalytics: data, isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch resource analytics");
@@ -59,7 +59,7 @@ export const useAnalyticsStore = create((set) => ({
   fetchBudgetAnalytics: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await axios.get("/analytics/budget");
+      const { data } = await axiosInstance.get("/analytics/budget");
       set({ budgetAnalytics: data, isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch budget analytics");
@@ -70,7 +70,7 @@ export const useAnalyticsStore = create((set) => ({
   fetchUserAnalytics: async () => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await axios.get("/analytics/users");
+      const { data } = await axiosInstance.get("/analytics/users");
       set({ userAnalytics: data, isLoading: false });
     } catch (error) {
       toast.error("Failed to fetch user analytics");

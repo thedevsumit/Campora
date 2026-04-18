@@ -118,7 +118,7 @@ export default function PrivateChatPage() {
   const [otherUser, setOtherUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [isOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(false);
   const bottomRef = useRef();
 
   useEffect(() => {
@@ -130,6 +130,15 @@ export default function PrivateChatPage() {
       .catch(() => {
         setOtherUser({ fullName: "User" });
       });
+
+    // Check initial online status
+    axiosInstance
+      .post("/users/online-status", { userIds: [userId] })
+      .then((res) => {
+        const status = res.data.result?.find((r) => r.userId === userId);
+        if (status) setIsOnline(status.isOnline);
+      })
+      .catch(() => {});
   }, [userId]);
 
   useEffect(() => {
@@ -141,14 +150,24 @@ export default function PrivateChatPage() {
   useEffect(() => {
     socket.emit("join", authUser._id);
 
-    const handler = (msg) => {
+    const messageHandler = (msg) => {
       if (msg.sender._id === authUser._id) return;
       setMessages((prev) => [...prev, msg]);
     };
 
-    socket.on("receiveMessage", handler);
-    return () => socket.off("receiveMessage", handler);
-  }, [authUser._id]);
+    const statusHandler = ({ userId: uid, status }) => {
+      if (uid === userId) {
+        setIsOnline(status === "online");
+      }
+    };
+
+    socket.on("receiveMessage", messageHandler);
+    socket.on("userStatus", statusHandler);
+    return () => {
+      socket.off("receiveMessage", messageHandler);
+      socket.off("userStatus", statusHandler);
+    };
+  }, [authUser._id, userId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -157,28 +176,28 @@ export default function PrivateChatPage() {
   const handleSend = async () => {
     if (!text.trim()) return;
 
-    // Optimistic update
+    const content = text.trim();
     const tempMessage = {
-      content: text,
+      content,
       sender: authUser,
       createdAt: new Date(),
       _id: "temp_" + Date.now(),
     };
+
+    // Clear text immediately for responsive feel
+    setText("");
     setMessages((prev) => [...prev, tempMessage]);
 
     try {
-      const res = await axiosInstance.post(`/chats/messages/${userId}`, { content: text });
-      // Replace temp message with actual message
+      const res = await axiosInstance.post(`/chats/messages/${userId}`, { content });
       setMessages((prev) =>
         prev.map((m) => (m._id === tempMessage._id ? res.data.message : m))
       );
     } catch (err) {
-      // Remove temp message on error
       setMessages((prev) => prev.filter((m) => m._id !== tempMessage._id));
+      setText(content);
       console.error("Failed to send message:", err);
     }
-
-    setText("");
   };
 
   // Group messages by date

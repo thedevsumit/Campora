@@ -1,6 +1,7 @@
 const PrivateMessage = require("../models/privateMessage.model");
 const ChatRequest = require("../models/chatRequest.model");
 const mongoose = require("mongoose");
+const sendNotification = require("../lib/sendNotification");
 
 // 🔑 utility: consistent chatId
 const getChatId = (a, b) => [a.toString(), b.toString()].sort().join("_");
@@ -83,6 +84,19 @@ const sendMessage = async (req, res) => {
     // 🔥 SOCKET.IO EMIT
     const io = req.app.get("io");
     io.to(receiverId.toString()).emit("receiveMessage", message);
+
+    // 🔔 IN-APP NOTIFICATION
+    const preview = content.length > 50 ? content.substring(0, 50) + "..." : content;
+    await sendNotification({
+      app: req.app,
+      recipient: receiverId,
+      sender: senderId,
+      type: "dm_received",
+      title: `New message from ${req.user.fullName}`,
+      message: preview,
+      actionUrl: `/chat/${senderId.toString()}`,
+      actionLabel: "Reply",
+    });
 
     res.status(201).json({ message });
   } catch (err) {

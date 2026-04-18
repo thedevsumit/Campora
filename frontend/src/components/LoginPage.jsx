@@ -70,7 +70,7 @@ export default function LoginPage() {
                 />
                 <span className="text-sm text-slate-600 dark:text-slate-400">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-semibold">Forgot Password?</a>
+              <Link to="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 font-semibold">Forgot Password?</Link>
             </div>
 
             <Button onClick={handleSubmit} isLoading={isLoggingIn} className="w-full" size="xl">

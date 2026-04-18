@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotificationStore } from "../store/useNotificationStore";
-import { Bell, CheckCheck, BellRing, Calendar, CreditCard, X } from "lucide-react";
+import { Bell, CheckCheck, BellRing, Calendar, CreditCard, X, MessageCircle, Users, CheckCircle2, XCircle, Mail } from "lucide-react";
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,10 +42,16 @@ const NotificationBell = () => {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case "event_approval": return Calendar;
-      case "event_rejection": return Calendar;
+      case "event_approval": return CheckCircle2;
+      case "event_rejection": return XCircle;
       case "booking_approved": return CreditCard;
       case "booking_rejected": return CreditCard;
+      case "club_approved": return Users;
+      case "club_rejected": return XCircle;
+      case "dm_request": return Mail;
+      case "dm_received": return MessageCircle;
+      case "chat_request_accepted": return CheckCircle2;
+      case "chat_request_rejected": return XCircle;
       case "announcement": return BellRing;
       default: return Bell;
     }

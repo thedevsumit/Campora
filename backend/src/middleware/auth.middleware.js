@@ -3,21 +3,25 @@ const User = require("../models/user.model")
 
 const protectRoute = async (req, res, next) => {
     try {
-        const cookie = req.cookies.jwt
-        if (!cookie) {
-            return res.status(400).json({
+        // Support both cookie and URL query param (for OAuth redirect flow)
+        const cookie = req.cookies.token
+        const queryToken = req.query.token
+        const token = cookie || queryToken
+
+        if (!token) {
+            return res.status(401).json({
                 msg: "Unauthorized -> No token found"
             })
         }
-        const decoded = jwt.verify(cookie, process.env.JWT_SECRET)
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
         if (!decoded) {
-            return res.status(400).json({
+            return res.status(401).json({
                 msg: "Unauthorized -> Invalid token"
             })
         }
         const user = await User.findById(decoded.userId).select("-password")
         if (!user) {
-            return res.status(400).json({
+            return res.status(401).json({
                 msg: "User not found"
             })
 

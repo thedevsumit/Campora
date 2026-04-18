@@ -281,11 +281,11 @@ export default function CreateClubPage() {
                   {isSubmitting ? (
                     <>
                       <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
-                      Creating Your Club...
+                      Sending Request...
                     </>
                   ) : (
                     <>
-                      Launch Your Club
+                      Submit Club Request
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </>
                   )}
@@ -361,7 +361,7 @@ export default function CreateClubPage() {
 
               <div className="mt-6 pt-6 border-t border-white/20">
                 <p className="text-primary-100 text-sm text-center leading-relaxed">
-                  Your club will be visible to all students on campus immediately after creation. Start building your community today!
+                  Your club will be reviewed by an admin and visible to all students on campus once approved. Start building your community today!
                 </p>
               </div>
             </div>

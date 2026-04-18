@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useNotificationStore } from "../store/useNotificationStore";
-import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
-import { Bell, Check, Trash2, CheckCheck, BellRing, Calendar, CreditCard, Sparkles, ArrowRight } from "lucide-react";
+import { Bell, Check, Trash2, CheckCheck, BellRing, Calendar, CreditCard, MessageCircle, Users, CheckCircle2, XCircle, Mail } from "lucide-react";
 
 const NotificationsPage = () => {
   const { notifications, unreadCount, isLoading, fetchNotifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotificationStore();
@@ -23,6 +22,12 @@ const NotificationsPage = () => {
       case "event_rejection": return "danger";
       case "booking_approved": return "success";
       case "booking_rejected": return "danger";
+      case "club_approved": return "success";
+      case "club_rejected": return "danger";
+      case "dm_request": return "info";
+      case "dm_received": return "info";
+      case "chat_request_accepted": return "success";
+      case "chat_request_rejected": return "danger";
       case "announcement": return "info";
       default: return "default";
     }
@@ -30,10 +35,16 @@ const NotificationsPage = () => {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case "event_approval": return Calendar;
-      case "event_rejection": return Calendar;
+      case "event_approval": return CheckCircle2;
+      case "event_rejection": return XCircle;
       case "booking_approved": return CreditCard;
       case "booking_rejected": return CreditCard;
+      case "club_approved": return Users;
+      case "club_rejected": return XCircle;
+      case "dm_request": return Mail;
+      case "dm_received": return MessageCircle;
+      case "chat_request_accepted": return CheckCircle2;
+      case "chat_request_rejected": return XCircle;
       case "announcement": return BellRing;
       default: return Bell;
     }

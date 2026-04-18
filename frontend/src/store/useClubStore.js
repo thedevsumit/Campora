@@ -66,11 +66,8 @@ export const useClubStore = create((set, get) => ({
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      set((state) => ({
-        clubs: [resp.data.club, ...state.clubs],
-      }));
-
-      toast.success("Club created");
+      // Don't add to clubs list — it's pending approval and won't show publicly
+      toast.success("Club request sent to admin for approval!");
     } catch (error) {
       console.error(error);
       toast.error("Failed to create club");

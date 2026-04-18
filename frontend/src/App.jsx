@@ -8,6 +8,7 @@ import { ToastContainer } from "react-toastify";
 import { Loader } from "lucide-react";
 import HomePage from "./components/HomePage";
 import LoginPage from "./components/LoginPage";
+import ForgotPassword from "./components/ForgotPassword";
 import ClubsPage from "./components/ClubPage";
 import ClubDetailsPage from "./components/ClubDetailsPage";
 import ProfilePage from "./components/Profile";
@@ -23,6 +24,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ResourceBookingPage from "./pages/ResourceBookingPage";
 import NotificationsPage from "./pages/NotificationsPage";
+import FeedPage from "./pages/FeedPage";
 
 
 function App() {
@@ -65,6 +67,10 @@ function App() {
           <Route
             path="/signup"
             element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
           />
           <Route
             path="/clubs"
@@ -120,6 +126,10 @@ function App() {
           <Route
             path="/notifications"
             element={authUser ? <NotificationsPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/feed"
+            element={authUser ? <FeedPage /> : <Navigate to="/login" />}
           />
         </Routes>
       </BrowserRouter>

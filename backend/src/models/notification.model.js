@@ -8,8 +8,10 @@ const notificationSchema = new mongoose.Schema({
     enum: [
       "event_approval", "event_rejection", "event_reminder",
       "booking_approved", "booking_rejected", "booking_reminder",
-      "chat_invite", "club_invite", "announcement",
-      "role_change", "system"
+      "club_approved", "club_rejected", "club_invite",
+      "dm_request", "dm_received",
+      "chat_request_accepted", "chat_request_rejected",
+      "announcement", "role_change", "system"
     ],
     required: true
   },

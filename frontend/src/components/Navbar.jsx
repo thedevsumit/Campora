@@ -1,16 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { userAuthStore } from "../store/useAuthStore";
+import { axiosInstance } from "../lib/axios";
 import NotificationBell from "./NotificationBell";
 import DarkModeToggle from "./DarkModeToggle";
-import { Home, Users, Calendar, LayoutGrid, MessageCircle, BarChart3, Shield, Menu, X, LogOut, User, Settings, ChevronDown } from "lucide-react";
+import { getImageUrl } from "../lib/utils";
+import { Home, Users, Calendar, LayoutGrid, MessageCircle, BarChart3, Shield, Menu, X, LogOut, User, Settings, ChevronDown, Rss, ArrowRight } from "lucide-react";
 
 export default function Navbar() {
   const { logout, authUser } = userAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMyClubsOpen, setIsMyClubsOpen] = useState(false);
+  const [myClubs, setMyClubs] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMyClubs = async () => {
+      try {
+        const res = await axiosInstance.get("/feed");
+        setMyClubs(res.data.myClubs || []);
+      } catch {}
+    };
+    if (authUser) fetchMyClubs();
+  }, [authUser]);
 
   const handleLogout = () => {
     logout();
@@ -75,6 +89,80 @@ export default function Navbar() {
                 <BarChart3 className="w-4 h-4" />
                 Analytics
               </Link>
+            )}
+
+            {/* My Clubs Dropdown */}
+            {authUser && (
+              <div className="relative">
+                <button
+                  onClick={() => setIsMyClubsOpen(!isMyClubsOpen)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    isActive("/feed")
+                      ? "bg-gradient-to-r from-primary-500/10 to-primary-600/10 text-primary-600 dark:from-primary-500/20 dark:to-primary-600/20 dark:text-primary-400 shadow-sm"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Rss className="w-4 h-4" />
+                  My Clubs
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isMyClubsOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isMyClubsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsMyClubsOpen(false)} />
+                    <div className="absolute left-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 z-50 animate-scale-in overflow-hidden">
+                      <Link
+                        to="/feed"
+                        onClick={() => setIsMyClubsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
+                          <Rss className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">Club Feed</p>
+                          <p className="text-xs text-slate-500">Events & announcements</p>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-400" />
+                      </Link>
+                      <div className="p-2 max-h-64 overflow-y-auto">
+                        {myClubs.length === 0 ? (
+                          <div className="text-center py-6 px-4">
+                            <p className="text-xs text-slate-500 mb-2">No clubs joined yet</p>
+                            <Link
+                              to="/clubs"
+                              onClick={() => setIsMyClubsOpen(false)}
+                              className="text-xs text-primary-600 font-semibold hover:underline"
+                            >
+                              Explore Clubs →
+                            </Link>
+                          </div>
+                        ) : (
+                          myClubs.map(club => (
+                            <div
+                              key={club._id}
+                              onClick={() => { navigate(`/clubs/${club._id}`); setIsMyClubsOpen(false); }}
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                            >
+                              {club.clubIcon ? (
+                                <img src={getImageUrl(club.clubIcon)} className="w-8 h-8 rounded-lg object-cover" alt={club.clubName} />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white text-xs font-bold">
+                                  {club.clubName?.[0]}
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{club.clubName}</p>
+                                <p className="text-xs text-slate-400">{club.members?.length || 0} members</p>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
 

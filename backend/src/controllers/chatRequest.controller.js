@@ -1,4 +1,5 @@
 const ChatRequest = require("../models/chatRequest.model");
+const sendNotification = require("../lib/sendNotification");
 
 // ================= SEND CHAT REQUEST =================
 const sendChatRequest = async (req, res) => {
@@ -34,6 +35,18 @@ const sendChatRequest = async (req, res) => {
         profilePic: req.user.profilePic,
       },
       status: "pending",
+    });
+
+    // 🔔 IN-APP NOTIFICATION
+    await sendNotification({
+      app: req.app,
+      recipient: receiverId,
+      sender: senderId,
+      type: "dm_request",
+      title: "New message request",
+      message: `${req.user.fullName} wants to send you a direct message. Accept their request to start chatting.`,
+      actionUrl: "/chat/requests",
+      actionLabel: "View Request",
     });
 
     res.status(201).json({ request });
@@ -77,6 +90,18 @@ const acceptRequest = async (req, res) => {
       fullName: req.user.fullName,
     });
 
+    // 🔔 IN-APP NOTIFICATION
+    await sendNotification({
+      app: req.app,
+      recipient: request.sender,
+      sender: req.user._id,
+      type: "chat_request_accepted",
+      title: "Chat request accepted",
+      message: `${req.user.fullName} accepted your message request. You can now chat with them!`,
+      actionUrl: `/chat/${req.user._id}`,
+      actionLabel: "Start Chat",
+    });
+
     res.json({ message: "Chat request accepted" });
   } catch (err) {
     console.error("❌ acceptRequest error:", err);
@@ -93,13 +118,28 @@ const rejectRequest = async (req, res) => {
       return res.status(403).json({ message: "Not allowed" });
     }
 
+    const senderId = request.sender;
+    const rejecterName = req.user.fullName;
+
     request.status = "rejected";
     await request.save();
 
-    // 🔔 SOCKET (optional): notify sender about rejection
+    // 🔔 SOCKET: notify sender about rejection
     const io = req.app.get("io");
-    io.to(request.sender.toString()).emit("chatRequestRejected", {
+    io.to(senderId.toString()).emit("chatRequestRejected", {
       by: req.user._id,
+    });
+
+    // 🔔 IN-APP NOTIFICATION
+    await sendNotification({
+      app: req.app,
+      recipient: senderId,
+      sender: req.user._id,
+      type: "chat_request_rejected",
+      title: "Chat request declined",
+      message: `${rejecterName} declined your message request.`,
+      actionUrl: "/chat/requests",
+      actionLabel: "View Requests",
     });
 
     res.json({ message: "Chat request rejected" });

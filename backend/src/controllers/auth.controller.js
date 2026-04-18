@@ -30,6 +30,76 @@ const sendOtp = async (req, res) => {
       .json({ message: "OTP sending failed", error: err.message });
   }
 };
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ message: "Email required" });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "No account found with this email" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    await Otp.deleteMany({ email });
+
+    await Otp.create({ email, otp, expiresAt });
+
+    await sendOtpMail(email, otp, "reset");
+
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Failed to send OTP", error: err.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "Email, OTP, and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const otpData = await Otp.findOne({ email });
+
+    if (!otpData) {
+      return res.status(400).json({ message: "OTP not found or expired" });
+    }
+
+    if (otpData.expiresAt < new Date()) {
+      await Otp.deleteMany({ email });
+      return res.status(400).json({ message: "OTP expired, please request a new one" });
+    }
+
+    if (otpData.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    const salt = await bcrpyt.genSalt(10);
+    const hashPass = await bcrpyt.hash(newPassword, salt);
+
+    await User.findOneAndUpdate({ email }, { password: hashPass });
+
+    await Otp.deleteMany({ email });
+
+    return res.status(200).json({ message: "Password reset successfully" });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Failed to reset password", error: err.message });
+  }
+};
 const signup = async (req, res) => {
   const { fullName, password, email, profilePic, dept, year, otp } = req.body;
 
@@ -86,7 +156,7 @@ const signup = async (req, res) => {
       year,
     });
 
-    generateToken(newUser._id, res);
+    const token = generateToken(newUser._id, res);
     await newUser.save();
 
     await Otp.deleteMany({ email });
@@ -100,6 +170,7 @@ const signup = async (req, res) => {
       year: newUser.year,
       role: newUser.role,
       userRole: newUser.userRole,
+      token,
     });
   } catch (error) {
     console.log("error in signing up : ", error);
@@ -128,7 +199,7 @@ const login = async (req, res) => {
         msg: "Invalid password",
       });
     }
-    generateToken(user._id, res);
+    const token = generateToken(user._id, res);
     res.status(200).json({
       fullName: user.fullName,
       email: user.email,
@@ -138,6 +209,7 @@ const login = async (req, res) => {
       dept: user.dept,
       role: user.role,
       userRole: user.userRole,
+      token,
     });
   } catch (error) {
     console.log("Error :", error);
@@ -149,10 +221,10 @@ const login = async (req, res) => {
 
 const logout = (req, res) => {
   try {
-    res.cookie("jwt", "", {
+    res.cookie("token", "", {
       maxAge: 0,
       httpOnly: true,
-      sameSite: "None",
+      sameSite: "none",
       secure: true,
     });
     res.status(200).json({
@@ -222,4 +294,4 @@ const getBrowseUsers = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logout, sendOtp, checkAuth, getUserProfile, getBrowseUsers };
+module.exports = { signup, login, logout, sendOtp, checkAuth, getUserProfile, getBrowseUsers, forgotPassword, resetPassword };

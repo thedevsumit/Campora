@@ -28,6 +28,9 @@ const clubManageRoutes = require("./routes/club.manage.routes");
 
 dotenv.config();
 
+// Check online status for given user IDs
+
+
 const isProd = process.env.NODE_ENV === "production";
 const FRONTEND_URL = isProd
   ? (process.env.FRONTEND_URL_PRODUCTION || "https://campora-8kb0.onrender.com")
@@ -51,7 +54,16 @@ app.use("/uploads", express.static("uploads"));
 
 initializePassport(passport);
 app.use(passport.initialize());
-
+app.post("/api/users/online-status", (req, res) => {
+  const { userIds } = req.body;
+  if (!Array.isArray(userIds))
+    return res.status(400).json({ message: "userIds array required" });
+  const result = userIds.map((id) => ({
+    userId: id,
+    isOnline: onlineUsers.has(id) && onlineUsers.get(id).size > 0,
+  }));
+  res.json({ result });
+});
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRouter);
@@ -68,6 +80,13 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/chatrooms", chatRoomRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/clubs", clubManageRoutes);
+app.use("/api/feed", require("./routes/feed.route"));
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("❌ Server Error:", err);
+  res.status(500).json({ message: err.message || "Internal server error" });
+});
 
 app.get("/", (req, res) => { res.send({ msg: "Server is Live!" }); });
 
@@ -80,13 +99,38 @@ const io = new Server(server, {
   },
 });
 
+// Track online users: Map<userId, Set<socketId>>
+const onlineUsers = new Map();
+
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
-  socket.on("join", (userId) => { socket.join(userId); });
+
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    // Mark user online and notify their contacts
+    if (!onlineUsers.has(userId)) {
+      onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId).add(socket.id);
+    // Broadcast online status to everyone in this user's room (通知他们的聊天联系人)
+    io.emit("userStatus", { userId, status: "online" });
+  });
+
   socket.on("joinClub", (clubId) => { socket.join("club_" + clubId); });
   socket.on("leaveClub", (clubId) => { socket.leave("club_" + clubId); });
   socket.on("joinNotifications", (userId) => { socket.join("notifications_" + userId); });
-  socket.on("disconnect", () => { console.log("🔴 Socket disconnected:", socket.id); });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Socket disconnected:", socket.id);
+    // Remove this socket from all user sessions
+    for (const [userId, sockets] of onlineUsers.entries()) {
+      sockets.delete(socket.id);
+      if (sockets.size === 0) {
+        onlineUsers.delete(userId);
+        io.emit("userStatus", { userId, status: "offline" });
+      }
+    }
+  });
 });
 
 app.set("io", io);

@@ -80,18 +80,35 @@ export const useNotificationStore = create((set, get) => ({
 
   clearAll: async () => {
     try {
+      // Try DELETE first
       await axiosInstance.delete("/notifications/clear-all");
       set({ notifications: [], unreadCount: 0 });
       toast.success("All notifications cleared");
     } catch (error) {
-      toast.error("Failed to clear notifications");
+      // Fallback: mark all as read if delete fails (e.g. Safari CORS restrictions)
+      try {
+        await axiosInstance.put("/notifications/read-all");
+        set(state => ({
+          notifications: state.notifications.map(n => ({ ...n, isRead: true })),
+          unreadCount: 0,
+        }));
+        toast.success("All notifications marked as read");
+      } catch {
+        toast.error("Failed to clear notifications");
+      }
     }
   },
 
   addNotification: (notification) => {
-    set(state => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount: state.unreadCount + 1
-    }));
+    set(state => {
+      // Prevent duplicate notifications (same ID already exists)
+      if (state.notifications.some(n => n._id === notification._id)) {
+        return state;
+      }
+      return {
+        notifications: [notification, ...state.notifications],
+        unreadCount: state.unreadCount + 1,
+      };
+    });
   }
 }));

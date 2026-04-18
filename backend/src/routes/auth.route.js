@@ -1,7 +1,7 @@
 const express = require("express");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
-const { signup, login, logout, sendOtp, checkAuth, getBrowseUsers } = require("../controllers/auth.controller");
+const { signup, login, logout, sendOtp, checkAuth, getBrowseUsers, forgotPassword, resetPassword } = require("../controllers/auth.controller");
 const protectRoute = require("../middleware/auth.middleware");
 const authRoutes = express.Router();
 
@@ -21,8 +21,8 @@ const signAndSendToken = (user, res) => {
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
   res.cookie("token", token, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   const dest = `${FRONTEND_URL}/home`;
@@ -31,19 +31,27 @@ const signAndSendToken = (user, res) => {
 
 authRoutes.get("/google", passport.authenticate("google", { session: false }));
 
-authRoutes.get(
-  "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${FRONTEND_URL}/login?error=oauth_failed`,
-  }),
-  (req, res) => { signAndSendToken(req.user, res); }
+authRoutes.get("/google/callback",
+  (req, res, next) => {
+    passport.authenticate("google", {
+      session: false,
+      failureRedirect: `${FRONTEND_URL}/login?error=oauth_failed`,
+    }, (err, user) => {
+      if (err || !user) {
+        console.error("Google OAuth Error:", err);
+        return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+      }
+      signAndSendToken(user, res);
+    })(req, res, next);
+  }
 );
 
 authRoutes.post("/sendOtp", sendOtp);
 authRoutes.post("/signup", signup);
 authRoutes.post("/login", login);
 authRoutes.post("/logout", logout);
+authRoutes.post("/forgot-password", forgotPassword);
+authRoutes.post("/reset-password", resetPassword);
 authRoutes.get("/check", protectRoute, checkAuth);
 authRoutes.get("/browse-users", protectRoute, getBrowseUsers);
 
