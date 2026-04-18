@@ -13,8 +13,15 @@ export const useResourceStore = create((set, get) => ({
     set({ isLoading: true });
     try {
       const params = new URLSearchParams(filters).toString();
-      const { data } = await axiosInstance.get(`/resources${params ? `?${params}` : ""}`);
-      set({ resources: data.resources || [], isLoading: false });
+      const [resourcesRes, bookingsRes] = await Promise.all([
+        axiosInstance.get(`/resources${params ? `?${params}` : ""}`),
+        axiosInstance.get("/bookings"),
+      ]);
+      set({
+        resources: resourcesRes.data.resources || [],
+        bookings: bookingsRes.data.bookings || [],
+        isLoading: false,
+      });
     } catch (error) {
       toast.error("Failed to fetch resources");
       set({ isLoading: false });
@@ -60,7 +67,6 @@ export const useResourceStore = create((set, get) => ({
     set({ isBooking: true });
     try {
       const { data } = await axiosInstance.post("/bookings", bookingData);
-      toast.success(data.booking?.status === "approved" ? "Booking confirmed!" : "Booking request submitted!");
       set(state => ({ bookings: [data.booking, ...state.bookings], isBooking: false }));
       return data.booking;
     } catch (error) {

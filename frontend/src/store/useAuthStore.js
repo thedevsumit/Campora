@@ -3,6 +3,7 @@ import { axiosInstance } from "../lib/axios";
 import { toast } from "react-toastify";
 import { socket } from "../lib/socket";
 import { useNotificationStore } from "./useNotificationStore";
+import playBellSound from "../lib/notificationSound";
 
 const TOKEN_KEY = "campora_token";
 
@@ -49,20 +50,53 @@ export const userAuthStore = create((set, get) => ({
     });
 
     socket.on("receiveNotification", (notification) => {
-      useNotificationStore.getState().addNotification(notification);
-      toast.info(notification.title);
+      // Only add notification if the bell dropdown is NOT currently open
+      const { isBellOpen, addNotification } = useNotificationStore.getState();
+      if (!isBellOpen) {
+        addNotification(notification);
+        playBellSound();
+      }
     });
 
-    socket.on("newChatRequest", (request) => {
-      toast.info(`New message request from ${request.sender.fullName}`);
+    socket.on("receiveMessage", (message) => {
+      // Show DM as notification if bell is not open
+      const { isBellOpen, addNotification } = useNotificationStore.getState();
+      if (!isBellOpen) {
+        const dmNotification = {
+          _id: `dm_${message._id}`,
+          type: "dm_received",
+          title: `New message from ${message.sender?.fullName || "Someone"}`,
+          message: message.content,
+          createdAt: new Date(),
+          isRead: false,
+        };
+        addNotification(dmNotification);
+        playBellSound();
+      }
     });
 
-    socket.on("chatRequestAccepted", ({ fullName }) => {
-      toast.success(`${fullName} accepted your chat request!`);
+    socket.on("newChatRequest", (notification) => {
+      const { isBellOpen, addNotification } = useNotificationStore.getState();
+      if (!isBellOpen) {
+        addNotification(notification);
+        playBellSound();
+      }
     });
 
-    socket.on("chatRequestRejected", () => {
-      toast.info("Your chat request was declined");
+    socket.on("chatRequestAccepted", (notification) => {
+      const { isBellOpen, addNotification } = useNotificationStore.getState();
+      if (!isBellOpen) {
+        addNotification(notification);
+        playBellSound();
+      }
+    });
+
+    socket.on("chatRequestRejected", (notification) => {
+      const { isBellOpen, addNotification } = useNotificationStore.getState();
+      if (!isBellOpen) {
+        addNotification(notification);
+        playBellSound();
+      }
     });
 
     console.log("🟢 Socket connected & joined:", authUser._id);

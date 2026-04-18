@@ -18,6 +18,24 @@ const isChatAccepted = async (userA, userB) => {
   return !!request;
 };
 
+// 🆕 Ensure an accepted chat exists between two users (auto-creates if not)
+// Used for booking-confirmed → direct-DM flow where no chat request permission is needed
+const ensureAcceptedChat = async (userA, userB) => {
+  const existing = await ChatRequest.findOne({
+    $or: [
+      { sender: userA, receiver: userB, status: "accepted" },
+      { sender: userB, receiver: userA, status: "accepted" },
+    ],
+  });
+  if (existing) return existing;
+
+  return await ChatRequest.create({
+    sender: userA,
+    receiver: userB,
+    status: "accepted",
+  });
+};
+
 // ================== GET MESSAGES ==================
 const getMessages = async (req, res) => {
   try {
@@ -131,4 +149,4 @@ const getConversations = async (req, res) => {
   }
 };
 
-module.exports = { getMessages, sendMessage, getConversations };
+module.exports = { getMessages, sendMessage, getConversations, ensureAcceptedChat };

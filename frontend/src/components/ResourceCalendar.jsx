@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "./ui/Modal";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import { useResourceStore } from "../store/useResourceStore";
-import { Calendar, Clock, MapPin, User, ArrowRight, CheckCircle, Sparkles, AlertCircle } from "lucide-react";
+import {
+  Calendar, Clock, MapPin, User, ArrowRight, CheckCircle, Sparkles, AlertCircle,
+  PartyPopper, Loader
+} from "lucide-react";
 import Badge from "./ui/Badge";
 
 const ResourceCalendar = ({ resource, onClose }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [bookingForm, setBookingForm] = useState({ purpose: "", startTime: "", endTime: "" });
-  const [step, setStep] = useState(1); // 1 = form, 2 = confirmation
+  const [step, setStep] = useState(1); // 1 = form, 2 = confirmation, 3 = success
+  const [bookingResult, setBookingResult] = useState(null); // "approved" | "pending"
   const { createBooking, isBooking } = useResourceStore();
 
   const generateTimeSlots = () => {
@@ -27,12 +31,15 @@ const ResourceCalendar = ({ resource, onClose }) => {
   const handleBook = async () => {
     if (!bookingForm.purpose || !bookingForm.startTime || !bookingForm.endTime) return;
     try {
-      await createBooking({
+      const booking = await createBooking({
         resource: resource._id,
         slots: [{ date: selectedDate, startTime: bookingForm.startTime, endTime: bookingForm.endTime }],
         purpose: bookingForm.purpose
       });
-      onClose();
+      // Determine result — if community resource, always approved
+      const result = booking.status === "approved" ? "approved" : "pending";
+      setBookingResult(result);
+      setStep(3);
     } catch (error) {}
   };
 
@@ -49,7 +56,7 @@ const ResourceCalendar = ({ resource, onClose }) => {
   const isFormValid = bookingForm.purpose && bookingForm.startTime && bookingForm.endTime;
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={step === 1 ? `Book ${resource?.name}` : "Confirm Booking"} size="lg">
+    <Modal isOpen={true} onClose={onClose} title={step === 3 ? "" : step === 1 ? `Book ${resource?.name}` : "Confirm Booking"} size="lg" hideTitle={step === 3}>
       <div className="space-y-6">
         {step === 1 ? (
           <>
@@ -169,7 +176,7 @@ const ResourceCalendar = ({ resource, onClose }) => {
               </Button>
             </div>
           </>
-        ) : (
+        ) : step === 2 ? (
           <>
             {/* Confirmation Step */}
             <div className="bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900/20 dark:to-primary-900/20 rounded-2xl p-6 border border-secondary-100 dark:border-secondary-800 text-center">
@@ -249,6 +256,95 @@ const ResourceCalendar = ({ resource, onClose }) => {
                 Confirm Booking
               </Button>
             </div>
+          </>
+        ) : (
+          <>
+            {/* Success Step */}
+            {bookingResult === "approved" ? (
+              <div className="text-center py-8 animate-fade-in">
+                {/* Celebration animation */}
+                <div className="relative">
+                  <div className="w-24 h-24 mx-auto bg-gradient-to-br from-secondary-400 to-secondary-600 rounded-full flex items-center justify-center shadow-2xl shadow-secondary-500/40 animate-bounce-in">
+                    <CheckCircle className="w-12 h-12 text-white" />
+                  </div>
+                  {/* Pulsing ring */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-full border-4 border-secondary-400/30 animate-ping" />
+                  </div>
+                  {/* Glow */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-32 h-32 rounded-full bg-secondary-400/10 animate-pulse" />
+                  </div>
+                </div>
+
+                <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-secondary-100 dark:bg-secondary-900/30 rounded-full text-secondary-600 dark:text-secondary-400 text-sm font-semibold mb-4 animate-fade-in-up">
+                  <PartyPopper className="w-4 h-4" />
+                  Booked Successfully!
+                </div>
+
+                <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 animate-fade-in-up stagger-1">
+                  You're all set!
+                </h3>
+                <p className="text-slate-500 animate-fade-in-up stagger-2">
+                  Your booking for <span className="font-semibold text-slate-700 dark:text-slate-300">{resource?.name}</span> has been confirmed.
+                  The resource owner has been notified.
+                </p>
+
+                <div className="mt-6 bg-gradient-to-br from-secondary-50 to-primary-50 dark:from-secondary-900/20 dark:to-primary-900/20 rounded-2xl p-5 border border-secondary-100 dark:border-secondary-800 animate-fade-in-up stagger-3">
+                  <div className="grid grid-cols-2 gap-4 text-left">
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">Date</p>
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">Time</p>
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                        {bookingForm.startTime} - {bookingForm.endTime}
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-xs text-slate-400 mb-1">Purpose</p>
+                      <p className="font-semibold text-slate-900 dark:text-white text-sm">{bookingForm.purpose}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={onClose}
+                  className="mt-6 bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 animate-fade-in-up stagger-4"
+                >
+                  Done
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            ) : (
+              /* Pending approval state */
+              <div className="text-center py-8 animate-fade-in">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center shadow-2xl shadow-amber-500/40 animate-pulse">
+                  <Clock className="w-12 h-12 text-white" />
+                </div>
+                <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-600 dark:text-amber-400 text-sm font-semibold mb-4 animate-fade-in-up">
+                  <Clock className="w-4 h-4" />
+                  Awaiting Approval
+                </div>
+                <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 animate-fade-in-up stagger-1">
+                  Request Submitted!
+                </h3>
+                <p className="text-slate-500 animate-fade-in-up stagger-2">
+                  Your booking for <span className="font-semibold text-slate-700 dark:text-slate-300">{resource?.name}</span> has been sent to admins for approval.
+                  You'll be notified when it's reviewed.
+                </p>
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  className="mt-6 animate-fade-in-up stagger-4"
+                >
+                  Got it
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>

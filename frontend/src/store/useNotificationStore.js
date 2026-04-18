@@ -8,6 +8,9 @@ export const useNotificationStore = create((set, get) => ({
   isLoading: false,
   total: 0,
   currentPage: 1,
+  isBellOpen: false,
+
+  setBellOpen: (open) => set({ isBellOpen: open }),
 
   fetchNotifications: async (page = 1) => {
     set({ isLoading: true });
@@ -79,23 +82,22 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   clearAll: async () => {
+    // Optimistic clear — clear UI immediately, then sync with server
+    set({ notifications: [], unreadCount: 0 });
     try {
-      // Try DELETE first
-      await axiosInstance.delete("/notifications/clear-all");
-      set({ notifications: [], unreadCount: 0 });
+      const baseURL = axiosInstance.defaults.baseURL;
+      const token = localStorage.getItem("campora_token");
+      await fetch(`${baseURL}/notifications/clear-all`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
       toast.success("All notifications cleared");
     } catch (error) {
-      // Fallback: mark all as read if delete fails (e.g. Safari CORS restrictions)
-      try {
-        await axiosInstance.put("/notifications/read-all");
-        set(state => ({
-          notifications: state.notifications.map(n => ({ ...n, isRead: true })),
-          unreadCount: 0,
-        }));
-        toast.success("All notifications marked as read");
-      } catch {
-        toast.error("Failed to clear notifications");
-      }
+      // Silently fail — UI is already cleared
     }
   },
 

@@ -56,7 +56,7 @@ const resourceTypes = ["room", "hall", "lab", "equipment", "vehicle", "book", "o
 const bookResourceTypes = ["book", "other"];
 
 const ResourceBookingPage = () => {
-  const { resources, bookings, isLoading, fetchResources, fetchBookings, createResource } = useResourceStore();
+  const { resources, bookings, isLoading, fetchResources, createResource } = useResourceStore();
   const { authUser } = userAuthStore();
   const [selectedResource, setSelectedResource] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -83,8 +83,7 @@ const ResourceBookingPage = () => {
 
   useEffect(() => {
     fetchResources();
-    fetchBookings();
-  }, [fetchResources, fetchBookings]);
+  }, [fetchResources]);
 
   const isAdmin = authUser?.userRole === "admin" || authUser?.role === "superAdmin";
 
@@ -437,6 +436,11 @@ const ResourceBookingPage = () => {
             {filteredResources.map((resource, idx) => {
               const TypeIcon = getTypeIcon(resource.type);
               const gradient = getTypeGradient(resource.type);
+              const resourceCreatorId = resource.createdBy?._id || resource.createdBy;
+              const isResourceCreator = !!resourceCreatorId && resourceCreatorId === authUser?._id;
+              const hasExistingBooking = bookings.some(
+                b => b.resource?._id === resource._id && ["pending", "approved"].includes(b.status)
+              );
               return (
                 <div
                   key={resource._id}
@@ -503,6 +507,21 @@ const ResourceBookingPage = () => {
                         <Clock className="w-4 h-4 text-slate-400" />
                         <span>{resource.availableStartTime} - {resource.availableEndTime}</span>
                       </div>
+                      {resource.createdBy ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="warning" size="sm">
+                            <Users className="w-3 h-3 mr-1" />
+                            Community Resource
+                          </Badge>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="info" size="sm">
+                            <Shield className="w-3 h-3 mr-1" />
+                            Admin Resource
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
                     {resource.amenities?.length > 0 && (
@@ -529,6 +548,16 @@ const ResourceBookingPage = () => {
                       >
                         {resource.maintenanceMode ? (
                           "Unavailable"
+                        ) : isResourceCreator ? (
+                          <>
+                            <Shield className="w-4 h-4 mr-2" />
+                            Your Resource
+                          </>
+                        ) : hasExistingBooking ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Already Booked
+                          </>
                         ) : (
                           <>
                             Book Now

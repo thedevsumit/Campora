@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     enum: [
       "event_approval", "event_rejection", "event_reminder",
-      "booking_approved", "booking_rejected", "booking_reminder",
+      "booking_request", "booking_approved", "booking_rejected", "booking_reminder",
       "club_approved", "club_rejected", "club_invite",
       "dm_request", "dm_received",
       "chat_request_accepted", "chat_request_rejected",

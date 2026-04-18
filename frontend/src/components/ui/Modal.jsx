@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-const Modal = ({ isOpen, onClose, title, size = "md", children }) => {
+const Modal = ({ isOpen, onClose, title, size = "md", children, hideTitle }) => {
   if (!isOpen) return null;
 
   const sizes = {
@@ -31,7 +31,7 @@ const Modal = ({ isOpen, onClose, title, size = "md", children }) => {
           `}
         >
           {/* Header */}
-          {title && (
+          {title && !hideTitle && (
             <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white gradient-text">
                 {title}

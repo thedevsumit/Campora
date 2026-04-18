@@ -1,12 +1,47 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useNotificationStore } from "../store/useNotificationStore";
+import { userAuthStore } from "../store/useAuthStore";
+import { axiosInstance } from "../lib/axios";
+import { toast } from "react-toastify";
 import Button from "../components/ui/Button";
-import { Bell, Check, Trash2, CheckCheck, BellRing, Calendar, CreditCard, MessageCircle, Users, CheckCircle2, XCircle, Mail } from "lucide-react";
+import { Bell, Check, Trash2, CheckCheck, BellRing, Calendar, CreditCard, MessageCircle, Users, CheckCircle2, XCircle, Mail, ThumbsUp, ThumbsDown } from "lucide-react";
 
 const NotificationsPage = () => {
   const { notifications, unreadCount, isLoading, fetchNotifications, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotificationStore();
+  const { authUser } = userAuthStore();
   const [filter, setFilter] = useState("all");
+  const [processingId, setProcessingId] = useState(null);
+
+  const isAdmin = authUser?.userRole === "admin" || authUser?.role === "superAdmin";
+
+  const handleApprove = async (notif) => {
+    if (!notif.relatedBooking) return;
+    setProcessingId(notif._id);
+    try {
+      await axiosInstance.put(`/bookings/${notif.relatedBooking}/approve`);
+      await deleteNotification(notif._id);
+      toast.success("Booking approved!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to approve booking");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (notif) => {
+    if (!notif.relatedBooking) return;
+    setProcessingId(notif._id);
+    try {
+      await axiosInstance.put(`/bookings/${notif.relatedBooking}/reject`, { rejectionReason: "Declined via notification" });
+      await deleteNotification(notif._id);
+      toast.success("Booking rejected");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to reject booking");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchNotifications(1);
@@ -20,6 +55,7 @@ const NotificationsPage = () => {
     switch (type) {
       case "event_approval": return "success";
       case "event_rejection": return "danger";
+      case "booking_request": return "warning";
       case "booking_approved": return "success";
       case "booking_rejected": return "danger";
       case "club_approved": return "success";
@@ -37,8 +73,9 @@ const NotificationsPage = () => {
     switch (type) {
       case "event_approval": return CheckCircle2;
       case "event_rejection": return XCircle;
-      case "booking_approved": return CreditCard;
-      case "booking_rejected": return CreditCard;
+      case "booking_request": return Calendar;
+      case "booking_approved": return CheckCircle2;
+      case "booking_rejected": return XCircle;
       case "club_approved": return Users;
       case "club_rejected": return XCircle;
       case "dm_request": return Mail;
@@ -185,6 +222,26 @@ const NotificationsPage = () => {
 
                     {/* Actions */}
                     <div className="flex gap-2 flex-shrink-0">
+                      {notif.type === "booking_request" && (isAdmin || notif.recipient === authUser?._id) && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(notif)}
+                            disabled={processingId === notif._id}
+                            className="p-2.5 hover:bg-secondary-50 dark:hover:bg-secondary-900/20 rounded-xl transition-colors disabled:opacity-50"
+                            title="Approve"
+                          >
+                            <ThumbsUp className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
+                          </button>
+                          <button
+                            onClick={() => handleReject(notif)}
+                            disabled={processingId === notif._id}
+                            className="p-2.5 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-xl transition-colors disabled:opacity-50"
+                            title="Reject"
+                          >
+                            <ThumbsDown className="w-4 h-4 text-danger-600 dark:text-danger-400" />
+                          </button>
+                        </>
+                      )}
                       {!notif.isRead && (
                         <button
                           onClick={() => markAsRead(notif._id)}

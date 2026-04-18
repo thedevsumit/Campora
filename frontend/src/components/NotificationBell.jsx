@@ -5,7 +5,7 @@ import { Bell, CheckCheck, BellRing, Calendar, CreditCard, X, MessageCircle, Use
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { notifications, unreadCount, fetchUnreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const { notifications, unreadCount, fetchUnreadCount, fetchNotifications, markAsRead, markAllAsRead, setBellOpen } = useNotificationStore();
   const navigate = useNavigate();
 
   const fetchCount = useCallback(async () => {
@@ -25,6 +25,7 @@ const NotificationBell = () => {
 
   const handleOpen = () => {
     setIsOpen(!isOpen);
+    setBellOpen(!isOpen);
     if (!isOpen) {
       fetchNotifications(1);
     }
@@ -44,8 +45,9 @@ const NotificationBell = () => {
     switch (type) {
       case "event_approval": return CheckCircle2;
       case "event_rejection": return XCircle;
-      case "booking_approved": return CreditCard;
-      case "booking_rejected": return CreditCard;
+      case "booking_request": return Calendar;
+      case "booking_approved": return CheckCircle2;
+      case "booking_rejected": return XCircle;
       case "club_approved": return Users;
       case "club_rejected": return XCircle;
       case "dm_request": return Mail;
