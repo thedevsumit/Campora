@@ -1,6 +1,7 @@
 const express = require("express");
 const protectRoute = require("../middleware/auth.middleware");
 const { checkPermission, isAdmin } = require("../middleware/rbac.middleware");
+const upload = require("../middleware/multer.middleware");
 const {
   createEvent,
   getAllEvents,
@@ -29,11 +30,11 @@ router.get("/my-events", protectRoute, getMyEvents);
 router.get("/collaborative", protectRoute, getCollaborativeEvents);
 
 /* ORGANIZER */
-router.post("/club/:clubId", protectRoute, checkPermission("event:create"), createEvent);
-router.put("/:eventId/submit", protectRoute, checkPermission("event:create"), submitForApproval);
-router.put("/:eventId/budget", protectRoute, checkPermission("event:create"), updateBudget);
-router.post("/:eventId/collaborate/:clubId", protectRoute, checkPermission("event:create"), addCollaboratingClub);
-router.put("/:eventId/collaborate/:clubId/respond", protectRoute, checkPermission("event:create"), respondToCollaboration);
+router.post("/club/:clubId", protectRoute, upload.single("coverImage"), createEvent);
+router.put("/:eventId/submit", protectRoute, submitForApproval);
+router.put("/:eventId/budget", protectRoute, updateBudget);
+router.post("/:eventId/collaborate/:clubId", protectRoute, addCollaboratingClub);
+router.put("/:eventId/collaborate/:clubId/respond", protectRoute, respondToCollaboration);
 
 /* ADMIN */
 router.put("/:eventId/approve", protectRoute, isAdmin, approveEvent);

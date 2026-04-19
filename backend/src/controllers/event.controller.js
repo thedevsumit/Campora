@@ -1,3 +1,4 @@
+const path = require("path");
 const Event = require("../models/event.model");
 const Club = require("../models/club.model");
 const Notification = require("../models/notification.model");
@@ -9,15 +10,41 @@ const createEvent = async (req, res) => {
     const club = await Club.findById(clubId);
     if (!club) return res.status(404).json({ message: "Club not found" });
 
+    // Check if user is the club creator (owner) - always allowed
+    const isClubCreator = club.createdBy.toString() === req.user._id.toString();
+
+    // Check if user is a member with admin/moderator role
     const member = club.members.find(m => m.user.toString() === req.user._id.toString());
-    if (!member || !["admin", "moderator"].includes(member.role)) {
+    const hasClubRole = member && ["admin", "moderator"].includes(member.role);
+
+    if (!isClubCreator && !hasClubRole) {
       return res.status(403).json({ message: "Not allowed - must be club admin or moderator" });
+    }
+
+    // Handle cover image
+    let coverImageUrl = "";
+    if (req.file) {
+      coverImageUrl = `/uploads/${req.file.filename}`;
+    } else if (req.body.coverImage && req.body.coverImage.startsWith("data:")) {
+      // Handle base64 images
+      try {
+        const base64Data = req.body.coverImage.split(",")[1];
+        const buffer = Buffer.from(base64Data, "base64");
+        const filename = `event_${Date.now()}.jpg`;
+        const filepath = path.join(__dirname, "../../uploads", filename);
+        require("fs").writeFileSync(filepath, buffer);
+        coverImageUrl = `/uploads/${filename}`;
+      } catch (imgErr) {
+        console.error("Image processing error:", imgErr);
+      }
     }
 
     const event = await Event.create({
       ...req.body,
       club: clubId,
       leadClub: clubId,
+      coverImage: coverImageUrl,
+      status: "approved", // Auto-approve for now for club events
     });
 
     const populated = await Event.findById(event._id).populate("club", "clubName clubIcon");
@@ -33,7 +60,8 @@ const getAllEvents = async (req, res) => {
   try {
     const { status, category, clubId } = req.query;
     const filter = { isActive: true };
-    if (status) filter.status = status;
+    // Default to approved status if not specified
+    filter.status = status || "approved";
     if (category) filter.category = category;
     if (clubId) filter.club = clubId;
 
@@ -42,7 +70,19 @@ const getAllEvents = async (req, res) => {
       .populate("collaboratingClubs.club", "clubName clubIcon")
       .sort({ startDate: 1 });
 
-    res.json({ events });
+    // Check registration status for each event
+    const userId = req.user._id;
+    const eventsWithStatus = events.map(event => {
+      const isRegistered = event.registrations?.some(
+        reg => reg.user?._id?.toString() === userId.toString()
+      );
+      return {
+        ...event.toObject(),
+        isRegistered,
+      };
+    });
+
+    res.json({ events: eventsWithStatus });
   } catch (err) {
     console.error("getAllEvents:", err);
     res.status(500).json({ message: "Failed to fetch events" });
@@ -56,29 +96,43 @@ const registerForEvent = async (req, res) => {
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ message: "Event not found" });
 
+    // Check if registration is open
+    if (event.registrationType === "closed") {
+      return res.status(400).json({ message: "Event is not open for registration" });
+    }
+
     if (event.status !== "approved") {
       return res.status(400).json({ message: "Event is not open for registration" });
     }
 
-    if (event.registrations.length >= event.maxParticipants) {
-      event.registrations.push({
-        user: req.user._id,
-        ...req.body,
-        status: "waitlisted"
-      });
-    } else {
-      event.registrations.push({
-        user: req.user._id,
-        ...req.body,
-        status: "registered"
-      });
+    // Check if user already registered
+    const existingRegistration = event.registrations.find(
+      (r) => r.user?.toString() === req.user._id.toString()
+    );
+    if (existingRegistration) {
+      return res.status(400).json({ message: "You are already registered for this event" });
     }
+
+    // For group events, check max teams (maxParticipants = max teams)
+    // For solo events, check max participants (maxParticipants = max individuals)
+    const currentCount = event.registrations.length;
+    if (currentCount >= event.maxParticipants) {
+      return res.status(400).json({ message: "Event is full. You have been added to the waitlist." });
+    }
+
+    // Add registration
+    event.registrations.push({
+      user: req.user._id,
+      ...req.body,
+      registeredAt: new Date(),
+      status: "registered"
+    });
 
     await event.save();
     res.json({ message: "Registered successfully" });
   } catch (err) {
     console.error("registerForEvent:", err);
-    res.status(500).json({ message: "Registration failed" });
+    res.status(500).json({ message: "Registration failee" });
   }
 };
 

@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useEventStore } from "../store/useEventStore";
+import { getImageUrl } from "../lib/utils";
+import Button from "./ui/Button";
+import Badge from "./ui/Badge";
+import Modal from "./ui/Modal";
+import Input from "./ui/Input";
+import { Calendar, Clock, MapPin, Users, Image, X, Upload, Plus, ChevronRight, Edit3, Trash2, Eye, Shield } from "lucide-react";
 
-export default function ClubAdminEventsManager({ clubId }) {
+const categories = ["Technical", "Cultural", "Sports", "Arts", "Business", "Social", "Other"];
+
+export default function ClubAdminEventsManager({ clubId, canCreateEvents = true }) {
   const [showModal, setShowModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [eventImagePreview, setEventImagePreview] = useState(null);
+  const eventImageRef = useRef(null);
 
-  /* ================= ZUSTAND ================= */
-  const { clubEvents, fetchClubEvents, createEvent, loading } = useEventStore();
+  const { clubEvents, fetchClubEvents, createEvent, updateEvent, deleteEvent, loading } = useEventStore();
 
-  /* ================= FETCH CLUB EVENTS ================= */
   useEffect(() => {
     if (!clubId) return;
     fetchClubEvents(clubId);
   }, [clubId, fetchClubEvents]);
 
-  /* ================= FORM STATE ================= */
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -22,6 +30,9 @@ export default function ClubAdminEventsManager({ clubId }) {
     time: "",
     venue: "",
     maxParticipants: 50,
+    coverImage: "",
+    registrationType: "open",
+    maxTeamSize: 1,
   });
 
   const handleChange = (e) => {
@@ -29,19 +40,32 @@ export default function ClubAdminEventsManager({ clubId }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= CREATE EVENT ================= */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleRegistrationTypeChange = (e) => {
+    const val = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      registrationType: val,
+      maxTeamSize: val === "solo" ? 1 : val === "group" ? 5 : 1,
+    }));
+  };
 
-    if (!form.title || !form.date || !form.time) {
-      alert("Please fill required fields");
-      return;
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm((prev) => ({ ...prev, coverImage: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => setEventImagePreview(reader.result);
+      reader.readAsDataURL(file);
     }
+  };
 
-    await createEvent(clubId, form);
+  const removeImage = () => {
+    setForm((prev) => ({ ...prev, coverImage: "" }));
+    setEventImagePreview(null);
+    if (eventImageRef.current) eventImageRef.current.value = "";
+  };
 
-    setShowModal(false);
-
+  const resetForm = () => {
     setForm({
       title: "",
       description: "",
@@ -50,142 +74,357 @@ export default function ClubAdminEventsManager({ clubId }) {
       time: "",
       venue: "",
       maxParticipants: 50,
+      coverImage: "",
+      registrationType: "open",
+      maxTeamSize: 1,
+    });
+    setEventImagePreview(null);
+    setEditingEvent(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.date || !form.time) return;
+
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("description", form.description);
+    formData.append("category", form.category);
+    formData.append("startDate", form.date);
+    formData.append("time", form.time);
+    formData.append("venue", form.venue);
+    formData.append("maxParticipants", form.maxParticipants);
+    formData.append("registrationType", form.registrationType);
+    if (form.registrationType === "group") {
+      formData.append("maxTeamSize", form.maxTeamSize);
+    }
+    if (form.coverImage) {
+      formData.append("coverImage", form.coverImage);
+    }
+
+    if (editingEvent) {
+      // Handle update if needed
+    } else {
+      await createEvent(clubId, formData);
+    }
+
+    setShowModal(false);
+    resetForm();
+  };
+
+  const handleEditEvent = (event) => {
+    setEditingEvent(event);
+    setForm({
+      title: event.title,
+      description: event.description,
+      category: event.category,
+      date: event.startDate ? event.startDate.split("T")[0] : "",
+      time: event.time || "",
+      venue: event.venue || "",
+      maxParticipants: event.maxParticipants,
+      coverImage: "",
+      registrationType: event.registrationType || "open",
+      maxTeamSize: event.maxTeamSize || 1,
+    });
+    if (event.coverImage) {
+      setEventImagePreview(getImageUrl(event.coverImage));
+    }
+    setShowModal(true);
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      await deleteEvent(eventId);
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "";
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Club Events</h2>
-
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg font-semibold"
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary-500" />
+            Club Events
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">Create and manage your club events</p>
+        </div>
+        {canCreateEvents && (
+        <Button
+          onClick={() => { resetForm(); setShowModal(true); }}
+          className="bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600"
         >
-          + Create Event
-        </button>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Event
+        </Button>
+        )}
       </div>
 
       {/* Loading */}
-      {loading && <p className="text-gray-500">Loading events...</p>}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+        </div>
+      )}
 
       {/* Empty state */}
       {!loading && clubEvents.length === 0 && (
-        <p className="text-gray-500 text-sm">
-          No events yet. Create your first club event 🚀
-        </p>
-      )}
-
-      {/* Events List */}
-      <div className="space-y-3 mt-4">
-        {clubEvents.map((event) => (
-          <div
-            key={event._id}
-            className="border rounded-lg p-4 flex justify-between items-center"
-          >
-            <div>
-              <h3 className="font-semibold text-gray-900">{event.title}</h3>
-              <p className="text-sm text-gray-500">
-                {event.date} • {event.time} • {event.venue}
-              </p>
-              <p className="text-xs text-gray-400">
-                {event.registeredCount || 0}/{event.maxParticipants} registered
-              </p>
-            </div>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-12 text-center">
+          <div className="w-20 h-20 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
+            <Calendar className="w-10 h-10 text-slate-400" />
           </div>
-        ))}
-      </div>
-
-      {/* ================= CREATE EVENT MODAL ================= */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 border-b">
-              <h3 className="text-2xl font-bold">Create Event</h3>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <input
-                name="title"
-                placeholder="Event title"
-                value={form.title}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
-                required
-              />
-
-              <textarea
-                name="description"
-                placeholder="Description"
-                value={form.description}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="date"
-                  name="date"
-                  value={form.date}
-                  onChange={handleChange}
-                  className="border rounded-lg px-3 py-2"
-                  required
-                />
-
-                <input
-                  type="time"
-                  name="time"
-                  value={form.time}
-                  onChange={handleChange}
-                  className="border rounded-lg px-3 py-2"
-                  required
-                />
-              </div>
-
-              <input
-                name="venue"
-                placeholder="Venue"
-                value={form.venue}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
-              />
-
-              <input
-                type="number"
-                name="maxParticipants"
-                placeholder="Max participants"
-                value={form.maxParticipants}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
-              />
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-green-700 text-white rounded-lg font-semibold"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No events yet</h3>
+          <p className="text-slate-500 mb-6 max-w-md mx-auto">Create your first event to engage your club members and followers.</p>
+          <Button onClick={() => setShowModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Your First Event
+          </Button>
         </div>
       )}
+
+      {/* Events Grid */}
+      {!loading && clubEvents.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {clubEvents.map((event) => (
+            <div
+              key={event._id}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-primary-500/10 transition-all duration-300 group"
+            >
+              {event.coverImage && (
+                <div className="relative h-40 overflow-hidden">
+                  <img src={getImageUrl(event.coverImage)} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <Badge
+                    className="absolute top-3 left-3 bg-white/20 backdrop-blur-xl text-white border border-white/30"
+                  >
+                    {event.category}
+                  </Badge>
+                </div>
+              )}
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-lg truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                      {event.title}
+                    </h3>
+                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{event.description}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 text-sm text-slate-500 mb-4">
+                  {event.startDate && (
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-primary-500" />
+                      {formatDate(event.startDate)}
+                    </span>
+                  )}
+                  {event.time && (
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-secondary-500" />
+                      {event.time}
+                    </span>
+                  )}
+                  {event.venue && (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-amber-500" />
+                      {event.venue}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <span className="flex items-center gap-1.5 text-sm text-slate-500">
+                    <Users className="w-4 h-4" />
+                    {event.registrations?.length || 0}/{event.maxParticipants} registered
+                  </span>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleEditEvent(event)}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4 text-slate-500" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEvent(event._id)}
+                      className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-danger-500" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create Event Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => { setShowModal(false); resetForm(); }}
+        title={editingEvent ? "Edit Event" : "Create New Event"}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Cover Image</label>
+            {eventImagePreview ? (
+              <div className="relative rounded-xl overflow-hidden">
+                <img src={eventImagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => eventImageRef.current?.click()}
+                className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                  <Image className="w-6 h-6 text-slate-400" />
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Click to upload cover image</p>
+                <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</p>
+                <input
+                  ref={eventImageRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </div>
+            )}
+          </div>
+
+          <Input
+            label="Event Title"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Hackathon 2026, Cultural Night..."
+            required
+          />
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Describe your event..."
+              rows={3}
+              className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Registration Type</label>
+              <select
+                name="registrationType"
+                value={form.registrationType}
+                onChange={handleRegistrationTypeChange}
+                className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500"
+              >
+                <option value="open">Open (Anyone can join)</option>
+                <option value="solo">Solo (Individual registration)</option>
+                <option value="group">Group (Teams)</option>
+                <option value="closed">Closed (Invite only)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={form.registrationType === "group" ? "Max Teams" : "Max Participants"}
+              name="maxParticipants"
+              type="number"
+              value={form.maxParticipants}
+              onChange={handleChange}
+              placeholder="50"
+            />
+            {form.registrationType === "group" && (
+              <Input
+                label="Max Team Size"
+                name="maxTeamSize"
+                type="number"
+                value={form.maxTeamSize}
+                onChange={handleChange}
+                placeholder="5"
+              />
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Date"
+              name="date"
+              type="date"
+              value={form.date}
+              onChange={handleChange}
+              required
+            />
+            <Input
+              label="Time"
+              name="time"
+              type="time"
+              value={form.time}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <Input
+            label="Venue"
+            name="venue"
+            value={form.venue}
+            onChange={handleChange}
+            placeholder="Main Auditorium, Block A..."
+          />
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="ghost" type="button" onClick={() => { setShowModal(false); resetForm(); }}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={loading}
+              disabled={!form.title || !form.date || !form.time}
+              className="bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              {editingEvent ? "Update Event" : "Create Event"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

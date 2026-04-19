@@ -36,7 +36,7 @@ router.get("/dashboard", protectRoute, checkPermission("analytics:view"), async 
         .limit(10),
       Booking.find({ createdAt: { $gte: thirtyDaysAgo } })
         .populate("resource", "name type")
-        .select("status totalCost createdAt")
+        .select("status createdAt")
         .sort({ createdAt: -1 })
         .limit(10),
       Club.find({ status: "approved" })
@@ -65,7 +65,6 @@ router.get("/dashboard", protectRoute, checkPermission("analytics:view"), async 
         resource: b.resource?.name,
         type: b.resource?.type,
         status: b.status,
-        cost: b.totalCost,
         date: b.createdAt
       })),
       clubActivity: clubActivity.map(c => ({

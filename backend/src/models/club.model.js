@@ -73,10 +73,11 @@ const clubSchema = new mongoose.Schema(
       default: true,
     },
 
-    announcements: [ 
+    announcements: [
       {
         title: { type: String, required: true },
         message: { type: String, required: true },
+        image: { type: String, default: "" },
         audience: {
           type: String,
           enum: ["members", "followers", "all"],

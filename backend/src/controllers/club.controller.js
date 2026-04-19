@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const path = require("path");
 const Club = require("../models/club.model");
 const User = require("../models/user.model");
 
@@ -25,6 +26,7 @@ const createClub = async (req, res) => {
       description: description.trim(),
       createdBy: req.user._id,
       clubIcon: req.file ? `/uploads/${req.file.filename}` : "",
+      members: [{ user: req.user._id, role: "admin" }],
     });
 
     return res.status(201).json({
@@ -362,6 +364,9 @@ const addMember = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Default role is moderator when adding directly
+    const memberRole = role || "moderator";
+
     // ✅ atomic add (no duplicates possible)
     const updatedClub = await Club.findOneAndUpdate(
       {
@@ -369,7 +374,7 @@ const addMember = async (req, res) => {
         "members.user": { $ne: user._id }, // only if not already member
       },
       {
-        $push: { members: { user: user._id, role } },
+        $push: { members: { user: user._id, role: memberRole, joinedAt: new Date() } },
       },
       { new: true }
     );
@@ -378,6 +383,11 @@ const addMember = async (req, res) => {
     if (!updatedClub) {
       return res.status(400).json({ message: "Already a member" });
     }
+
+    // Also update the user's joinedClubs array
+    await User.findByIdAndUpdate(user._id, {
+      $addToSet: { joinedClubs: updatedClub._id },
+    });
 
     return res.json({ message: "Member added", club: updatedClub });
   } catch (err) {
@@ -390,6 +400,11 @@ const addMember = async (req, res) => {
 const removeMember = async (req, res) => {
   try {
     const { memberId } = req.params;
+
+    // Prevent removing the club owner
+    if (req.club.createdBy.toString() === memberId) {
+      return res.status(400).json({ message: "Cannot remove the club owner" });
+    }
 
     req.club.members = req.club.members.filter(
       (m) => m.user.toString() !== memberId
@@ -408,6 +423,10 @@ const changeMemberRole = async (req, res) => {
   try {
     const { memberId } = req.params;
     const { role } = req.body;
+
+    if (!["moderator", "member", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role" });
+    }
 
     const member = req.club.members.find(
       (m) => m.user.toString() === memberId
@@ -441,7 +460,7 @@ const getCreatedClubs = async (req, res) => {
 
 const createAnnouncement = async (req, res) => {
   try {
-    const { title, message, audience, duration } = req.body;
+    const { title, message, image, audience, duration } = req.body;
 
     if (!title || !message)
       return res.status(400).json({ message: "Title & message required" });
@@ -451,12 +470,28 @@ const createAnnouncement = async (req, res) => {
       ? new Date(Date.now() + duration * 60 * 1000)
       : null;
 
+    // Handle image upload
+    let imageUrl = "";
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    } else if (image && image.startsWith("data:")) {
+      // Handle base64 images
+      const base64Data = image.split(",")[1];
+      const buffer = Buffer.from(base64Data, "base64");
+      const filename = `announcement_${Date.now()}.jpg`;
+      const filepath = path.join(__dirname, "../../uploads", filename);
+      require("fs").writeFileSync(filepath, buffer);
+      imageUrl = `/uploads/${filename}`;
+    } else if (image) {
+      imageUrl = image;
+    }
+
     const club = await Club.findByIdAndUpdate(
       req.club._id,
       {
         $push: {
           announcements: {
-            $each: [{ title, message, audience, expiresAt }],
+            $each: [{ title, message, image: imageUrl, audience, expiresAt }],
             $position: 0,
           },
         },

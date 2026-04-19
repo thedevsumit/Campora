@@ -9,8 +9,17 @@ const isClubCreator = async (req, res, next) => {
       return res.status(404).json({ message: "Club not found" });
     }
 
-    if (club.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Only creator can access admin panel" });
+    // Check if user is the club creator (owner)
+    const isCreator = club.createdBy.toString() === req.user._id.toString();
+
+    // Check if user is a member with admin or moderator role
+    const member = club.members.find(
+      (m) => m.user.toString() === req.user._id.toString()
+    );
+    const isAdminOrModerator = member && ["admin", "moderator"].includes(member.role);
+
+    if (!isCreator && !isAdminOrModerator) {
+      return res.status(403).json({ message: "Only club admin or moderator can access" });
     }
 
     req.club = club; // useful later

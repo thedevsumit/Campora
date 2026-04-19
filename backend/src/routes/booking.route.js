@@ -56,14 +56,6 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
       });
     }
 
-    let totalCost = 0;
-    slots.forEach(slot => {
-      const start = parseInt(slot.startTime.replace(":", ""));
-      const end = parseInt(slot.endTime.replace(":", ""));
-      const hours = (end - start) / 100;
-      totalCost += hours * resourceDoc.hourlyRate;
-    });
-
     const isUserAdmin = req.user.role === "superAdmin" || req.user.userRole === "admin";
     const isCommunityResource = !!creatorId;
 
@@ -84,7 +76,6 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
       setupRequirements,
       club,
       event,
-      totalCost,
       status
     });
 

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 
 export const useResourceStore = create((set, get) => ({
   resources: [],
+  scheduledResources: [],
   bookings: [],
   selectedResource: null,
   isLoading: false,
@@ -25,6 +26,17 @@ export const useResourceStore = create((set, get) => ({
     } catch (error) {
       toast.error("Failed to fetch resources");
       set({ isLoading: false });
+    }
+  },
+
+  fetchScheduledResources: async () => {
+    try {
+      const { data } = await axiosInstance.get("/resources/scheduled/all");
+      set({ scheduledResources: data.resources || [] });
+      return data.resources;
+    } catch (error) {
+      toast.error("Failed to fetch scheduled resources");
+      throw error;
     }
   },
 

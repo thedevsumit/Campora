@@ -21,40 +21,35 @@ export const useClubAdminStore = create((set) => ({
 
   addMember: async (clubId, data) => {
     try {
-      // First find user by email
-      const userRes = await axiosInstance.get(`/users/by-email/${data.email}`);
-
-      const userId = userRes.data._id;
-
-      await axiosInstance.put(`/clubs/${clubId}/add-member`, {
-        userId,
-        role: data.role,
+      await axiosInstance.post(`/clubs/admin/${clubId}/members`, {
+        email: data.email,
+        role: data.role || "moderator",
       });
+      toast.success("Member added successfully");
     } catch (err) {
       console.error(err);
-      alert("Failed to add member");
+      toast.error(err?.response?.data?.message || "Failed to add member");
     }
   },
   removeMember: async (clubId, memberId) => {
     try {
-      await axiosInstance.put(`/clubs/${clubId}/remove-member`, {
-        userId: memberId,
-      });
+      await axiosInstance.delete(`/clubs/admin/${clubId}/members/${memberId}`);
+      toast.success("Member removed");
     } catch (err) {
       console.error(err);
-      alert("Failed to remove member");
+      toast.error(err?.response?.data?.message || "Failed to remove member");
     }
   },
 
   changeRole: async (clubId, memberId, role) => {
     try {
-      await axiosInstance.put(`/clubs/${clubId}/update-role`, {
-        userId: memberId,
-        newRole: role,
+      await axiosInstance.patch(`/clubs/admin/${clubId}/members/${memberId}`, {
+        role,
       });
+      toast.success("Role updated");
     } catch (err) {
       console.error(err);
-      alert("Failed to update role");
+      toast.error(err?.response?.data?.message || "Failed to update role");
     }
   },
 

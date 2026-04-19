@@ -320,6 +320,81 @@ const ClubsPage = () => {
         </div>
       </div>
 
+      <div className="max-w-7xl mx-auto p-6 sm:p-8 lg:p-10">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              {filteredClubs.length}{" "}
+              {filteredClubs.length === 1 ? "Club" : "Clubs"} Available
+            </h2>
+            <p className="text-slate-500 text-sm mt-1">
+              {searchQuery
+                ? `Showing results for "${searchQuery}"`
+                : "Explore and find your perfect match"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Folders className="w-4 h-4" />
+            <span>Sorted by newest</span>
+          </div>
+        </div>
+
+        {isFetchingClubs ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="flex flex-col items-center gap-5">
+              <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+              <p className="text-slate-500 animate-pulse text-lg">
+                Loading clubs...
+              </p>
+            </div>
+          </div>
+        ) : filteredClubs.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+              <Sparkles className="w-10 h-10 text-slate-300 dark:text-slate-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+              {searchQuery ? "No clubs match your search" : "No clubs yet"}
+            </h3>
+            <p className="text-slate-500 mb-8 max-w-md mx-auto leading-relaxed">
+              {searchQuery
+                ? "We couldn't find any clubs matching your search. Try different keywords or clear the search to browse all clubs."
+                : "The campus is quiet for now. Be the pioneer — create the first club and inspire your entire campus community!"}
+            </p>
+            {!searchQuery && (
+              <Button onClick={() => navigate("/create-club")}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Club
+              </Button>
+            )}
+            {searchQuery && (
+              <Button
+                variant="outline"
+                onClick={() => setSearchQuery("")}
+                className="mt-3"
+              >
+                Clear Search
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredClubs.map((club, idx) => (
+              <div
+                key={club._id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${idx * 75}ms` }}
+              >
+                <ClubCard
+                  club={club}
+                  onClick={() => navigate(`/clubs/${club._id}`)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Why Join Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
@@ -436,19 +511,30 @@ const ClubsPage = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/15 rounded-full border border-white/20 mb-6 animate-fade-in">
             <Sparkles className="w-4 h-4 text-amber-300" />
-            <span className="text-white/90 text-sm font-medium">Start Your Journey</span>
+            <span className="text-white/90 text-sm font-medium">
+              Start Your Journey
+            </span>
           </div>
 
           {/* Content */}
           <div className="relative">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-3">
               Ready to{" "}
-              <span style={{ background: 'linear-gradient(to right, #fbbf24, #f59e0b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span
+                style={{
+                  background: "linear-gradient(to right, #fbbf24, #f59e0b)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
                 Make a Difference?
               </span>
             </h2>
             <p className="text-primary-100 text-lg max-w-2xl mx-auto mb-6 leading-relaxed">
-              Every great journey begins with a single step. Whether you join an existing club or create your own, you're about to unlock a world of opportunities, friendships, and experiences that will shape your campus legacy.
+              Every great journey begins with a single step. Whether you join an
+              existing club or create your own, you're about to unlock a world
+              of opportunities, friendships, and experiences that will shape
+              your campus legacy.
             </p>
 
             {/* Stats Row */}
@@ -492,81 +578,21 @@ const ClubsPage = () => {
         </div>
       </div>
 
-      {/* Clubs Grid */}
-      <div className="max-w-7xl mx-auto p-6 sm:p-8 lg:p-10">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              {filteredClubs.length}{" "}
-              {filteredClubs.length === 1 ? "Club" : "Clubs"} Available
-            </h2>
-            <p className="text-slate-500 text-sm mt-1">
-              {searchQuery
-                ? `Showing results for "${searchQuery}"`
-                : "Explore and find your perfect match"}
+      <footer className="bg-slate-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">C</span>
+              </div>
+              <span className="text-xl font-bold">Campora</span>
+            </div>
+            <p className="text-slate-400 text-sm">
+              &copy; 2026 Campora. Connecting campus communities.
             </p>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Folders className="w-4 h-4" />
-            <span>Sorted by newest</span>
           </div>
         </div>
-
-        {isFetchingClubs ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="flex flex-col items-center gap-5">
-              <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-              <p className="text-slate-500 animate-pulse text-lg">
-                Loading clubs...
-              </p>
-            </div>
-          </div>
-        ) : filteredClubs.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-              <Sparkles className="w-10 h-10 text-slate-300 dark:text-slate-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-              {searchQuery ? "No clubs match your search" : "No clubs yet"}
-            </h3>
-            <p className="text-slate-500 mb-8 max-w-md mx-auto leading-relaxed">
-              {searchQuery
-                ? "We couldn't find any clubs matching your search. Try different keywords or clear the search to browse all clubs."
-                : "The campus is quiet for now. Be the pioneer — create the first club and inspire your entire campus community!"}
-            </p>
-            {!searchQuery && (
-              <Button onClick={() => navigate("/create-club")}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Club
-              </Button>
-            )}
-            {searchQuery && (
-              <Button
-                variant="outline"
-                onClick={() => setSearchQuery("")}
-                className="mt-3"
-              >
-                Clear Search
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClubs.map((club, idx) => (
-              <div
-                key={club._id}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${idx * 75}ms` }}
-              >
-                <ClubCard
-                  club={club}
-                  onClick={() => navigate(`/clubs/${club._id}`)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      </footer>
     </div>
   );
 };

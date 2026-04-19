@@ -69,6 +69,14 @@ const eventSchema = new mongoose.Schema({
     default: "single_club"
   },
 
+  registrationType: {
+    type: String,
+    enum: ["open", "solo", "group", "closed"],
+    default: "open"
+  },
+
+  maxTeamSize: { type: Number, default: 1 },
+
   bookedResources: [{ type: mongoose.Schema.Types.ObjectId, ref: "Booking" }],
 
   isActive: { type: Boolean, default: true },

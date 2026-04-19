@@ -3,7 +3,7 @@ const Club = require("../models/club.model");
 // ✅ 1️⃣ Add Member (Admin + Moderator)
 exports.addMember = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, role } = req.body;
     const club = req.club;
 
     const alreadyMember = club.members.find(
@@ -18,7 +18,7 @@ exports.addMember = async (req, res) => {
 
     club.members.push({
       user: userId,
-      role: "member",
+      role: role || "member",
     });
 
     await club.save();
@@ -70,7 +70,7 @@ exports.updateRole = async (req, res) => {
     const { userId, newRole } = req.body;
     const club = req.club;
 
-    if (!["moderator", "member"].includes(newRole)) {
+    if (!["moderator", "member", "admin"].includes(newRole)) {
       return res.status(400).json({
         message: "Invalid role",
       });

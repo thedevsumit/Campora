@@ -8,7 +8,7 @@ import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
 import ResourceCalendar from "../components/ResourceCalendar";
 import {
-  Search, Plus, MapPin, Clock, DollarSign, Users, Wrench, Car, Microscope,
+  Search, Plus, MapPin, Clock, Users, Wrench, Car, Microscope,
   LayoutGrid, Sparkles, ArrowRight, Calendar, CheckCircle, X, Building, Monitor,
   Projector, Volume2, Wifi, Power, ChevronRight, Filter, BookOpen, Edit3,
   Trash2, Star, Crown, Shield, Gem
@@ -68,9 +68,7 @@ const ResourceBookingPage = () => {
     type: "book",
     code: "",
     location: "",
-    campus: "",
     capacity: "",
-    hourlyRate: 0,
     amenities: [],
     availableStartTime: "09:00",
     availableEndTime: "18:00",
@@ -121,9 +119,7 @@ const ResourceBookingPage = () => {
         type: "book",
         code: "",
         location: "",
-        campus: "",
         capacity: "",
-        hourlyRate: 0,
         amenities: [],
         availableStartTime: "09:00",
         availableEndTime: "18:00",
@@ -490,12 +486,6 @@ const ResourceBookingPage = () => {
                           </span>
                         )}
                       </div>
-                      {resource.hourlyRate > 0 && (
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-medium">
-                          <DollarSign className="w-4 h-4 text-amber-500" />
-                          ₹{resource.hourlyRate}/hour
-                        </div>
-                      )}
                       {resource.type === "book" && resource.isbn && (
                         <div className="flex items-center gap-2 text-slate-500 text-xs">
                           <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
@@ -689,42 +679,18 @@ const ResourceBookingPage = () => {
               onChange={(e) => setNewResource({ ...newResource, location: e.target.value })}
               placeholder={newResource.type === "book" ? "Main Library, Shelf A-12" : "Block A, 2nd Floor"}
             />
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Campus Area
-              </label>
-              <select
-                value={newResource.campus}
-                onChange={(e) => setNewResource({ ...newResource, campus: e.target.value })}
-                className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
-              >
-                <option value="">Select campus</option>
-                <option value="Main Campus">Main Campus</option>
-                <option value="North Campus">North Campus</option>
-                <option value="South Campus">South Campus</option>
-                <option value="East Campus">East Campus</option>
-                <option value="West Campus">West Campus</option>
-              </select>
-            </div>
           </div>
 
           {/* Only show facility-specific fields for admins */}
           {isAdmin && !bookResourceTypes.includes(newResource.type) && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Capacity"
                   type="number"
                   value={newResource.capacity}
                   onChange={(e) => setNewResource({ ...newResource, capacity: e.target.value })}
                   placeholder="100"
-                />
-                <Input
-                  label="Hourly Rate (₹)"
-                  type="number"
-                  value={newResource.hourlyRate}
-                  onChange={(e) => setNewResource({ ...newResource, hourlyRate: e.target.value })}
-                  placeholder="0"
                 />
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">

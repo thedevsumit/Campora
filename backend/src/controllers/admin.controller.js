@@ -30,10 +30,10 @@ exports.approveClub = async (req, res) => {
     club.approvedAt = new Date();
 
     // Add creator as club admin
-    club.members.push({
-      user: club.createdBy,
-      role: "admin",
-    });
+    // club.members.push({
+    //   user: club.createdBy,
+    //   role: "admin",
+    // });
 
     await club.save();
 

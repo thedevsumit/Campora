@@ -10,19 +10,19 @@ router.get("/", protectRoute, async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Get user's joined and followed clubs
-    const user = await Club.findById(userId)
-      .populate("joinedClubs", "_id")
-      .populate("followedClubs", "_id");
-
-    // Fallback: also try User model
+    // Get user with their joined and followed clubs
     const User = require("../models/user.model");
     const userDoc = await User.findById(userId).populate("joinedClubs followedClubs", "_id");
 
-    const myClubIds = [
-      ...(userDoc?.joinedClubs || []).map(c => c._id),
-      ...(userDoc?.followedClubs || []).map(c => c._id),
-    ].map(id => id.toString());
+    // Collect club IDs from joined and followed
+    let myClubIds = [
+      ...(userDoc?.joinedClubs || []).map(c => c._id.toString()),
+      ...(userDoc?.followedClubs || []).map(c => c._id.toString()),
+    ];
+
+    // Also find clubs where user is a member (even if not explicitly joined)
+    const clubsAsMember = await Club.find({ "members.user": userId }, "_id");
+    myClubIds = [...new Set([...myClubIds, ...clubsAsMember.map(c => c._id.toString())])];
 
     if (myClubIds.length === 0) {
       return res.status(200).json({ feed: [], myClubs: [] });
@@ -37,10 +37,11 @@ router.get("/", protectRoute, async (req, res) => {
         { "collaboratingClubs.club": { $in: myClubIds } },
       ],
       status: "approved",
+      isActive: true,
       startDate: { $gte: thirtyDaysAgo },
     })
       .populate("leadClub", "clubName clubIcon")
-      .select("title description startDate venue image category registrations")
+      .select("title description startDate venue coverImage category registrations")
       .sort({ startDate: -1 })
       .limit(20);
 
@@ -50,7 +51,7 @@ router.get("/", protectRoute, async (req, res) => {
       .sort({ updatedAt: -1 });
 
     const feed = [];
-
+    console.log("events: ",events);
     // Add events to feed
     events.forEach(event => {
       feed.push({
@@ -60,7 +61,7 @@ router.get("/", protectRoute, async (req, res) => {
         description: event.description,
         date: event.startDate,
         venue: event.venue,
-        image: event.image,
+        image: event.coverImage,
         category: event.category,
         club: event.leadClub,
         registrations: event.registrations?.length || 0,
@@ -77,6 +78,7 @@ router.get("/", protectRoute, async (req, res) => {
             type: "announcement",
             title: ann.title,
             message: ann.message,
+            image: ann.image,
             club: {
               _id: club._id,
               clubName: club.clubName,
@@ -93,7 +95,7 @@ router.get("/", protectRoute, async (req, res) => {
 
     // Get user's clubs for the dropdown
     const myClubs = await Club.find({ _id: { $in: myClubIds } })
-      .select("clubName clubIcon description members followers")
+      .select("clubName clubIcon description members followers createdBy")
       .limit(20);
 
     return res.status(200).json({ feed, myClubs });

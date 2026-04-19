@@ -25,6 +25,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const adminRouter = require("./routes/admin.route");
 const clubManageRoutes = require("./routes/club.manage.routes");
+const { scheduleMidnightRender } = require("./lib/scheduler");
 
 dotenv.config();
 
@@ -138,4 +139,5 @@ app.set("io", io);
 server.listen(process.env.PORT, "0.0.0.0", () => {
   console.log("🚀 Server running on port:", process.env.PORT);
   connectDB();
+  scheduleMidnightRender(null);
 });

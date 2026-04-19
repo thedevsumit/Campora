@@ -20,7 +20,6 @@ const bookingSchema = new mongoose.Schema({
   rejectionReason: { type: String },
   purpose: { type: String, required: true },
   setupRequirements: { type: String },
-  totalCost: { type: Number, default: 0 },
   actualStartTime: { type: Date },
   actualEndTime: { type: Date },
   usageNotes: { type: String },

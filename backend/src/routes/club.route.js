@@ -35,7 +35,7 @@ const clubRoutes = express.Router();
 clubRoutes.post(
   "/",
   protectRoute,
-  upload.default.single("clubIcon"),
+  upload.single("clubIcon"),
   createClub,
 );
 
@@ -57,7 +57,7 @@ clubRoutes.get("/:clubId", protectRoute, getClubById);
 clubRoutes.patch(
   "/:clubId",
   protectRoute,
-  upload.default.single("clubIcon"),
+  upload.single("clubIcon"),
   updateClub,
 );
 
@@ -83,6 +83,7 @@ clubRoutes.post(
   "/:clubId/admin/announcements",
   protectRoute,
   isClubCreator,
+  upload.single("image"),
   createAnnouncement
 );
 

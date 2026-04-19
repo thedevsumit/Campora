@@ -18,6 +18,6 @@ router.get("/me/events/attended", protectRoute, getAttendedEvents);
 router.get("/:userId/profile", protectRoute, getUserProfile);
 router.get("/by-email/:email", protectRoute, getUserByEmail);
 
-router.patch("/me", protectRoute, upload.default.single("profilePic"), updateProfile);
+router.patch("/me", protectRoute, upload.single("profilePic"), updateProfile);
 
 module.exports = router;

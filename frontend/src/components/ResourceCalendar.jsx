@@ -43,16 +43,7 @@ const ResourceCalendar = ({ resource, onClose }) => {
     } catch (error) {}
   };
 
-  const calculateCost = () => {
-    if (!resource?.hourlyRate || !bookingForm.startTime || !bookingForm.endTime) return 0;
-    const start = parseInt(bookingForm.startTime.replace(":", ""));
-    const end = parseInt(bookingForm.endTime.replace(":", ""));
-    const hours = (end - start) / 100;
-    return Math.max(0, hours * resource.hourlyRate);
-  };
-
   const timeSlots = generateTimeSlots();
-  const cost = calculateCost();
   const isFormValid = bookingForm.purpose && bookingForm.startTime && bookingForm.endTime;
 
   return (
@@ -74,11 +65,6 @@ const ResourceCalendar = ({ resource, onClose }) => {
                   <Clock className="w-4 h-4 text-primary-500" />
                   {resource?.availableStartTime} - {resource?.availableEndTime}
                 </span>
-                {resource?.hourlyRate > 0 && (
-                  <span className="font-bold text-primary-600 dark:text-primary-400 text-lg">
-                    ₹{resource.hourlyRate}/hr
-                  </span>
-                )}
               </div>
             </div>
 
@@ -154,16 +140,6 @@ const ResourceCalendar = ({ resource, onClose }) => {
               </div>
             )}
 
-            {/* Cost Preview */}
-            {cost > 0 && (
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-amber-700 dark:text-amber-400">Estimated Cost</span>
-                  <span className="font-bold text-amber-600 dark:text-amber-300 text-lg">₹{cost}</span>
-                </div>
-              </div>
-            )}
-
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -221,14 +197,6 @@ const ResourceCalendar = ({ resource, onClose }) => {
                 <p className="font-medium text-slate-900 dark:text-white">{bookingForm.purpose}</p>
               </div>
 
-              {cost > 0 && (
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Estimated Cost</span>
-                    <span className="text-xl font-bold text-primary-600 dark:text-primary-400">₹{cost}</span>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Notice */}

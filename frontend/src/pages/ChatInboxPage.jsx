@@ -193,8 +193,8 @@ const ChatInboxPage = () => {
                   Start a Conversation
                 </h3>
                 <p className="text-primary-100 text-sm leading-relaxed mb-4">
-                  Want to chat with someone? Browse campus members and send
-                  them a chat request to connect.
+                  Want to chat with someone? Browse campus members and send them
+                  a chat request to connect.
                 </p>
               </div>
               <Button
@@ -210,14 +210,20 @@ const ChatInboxPage = () => {
 
         {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 50L48 45.8C96 41.7 192 33.3 288 30C384 26.7 480 28.3 576 33.3C672 38.3 768 46.7 864 48.3C960 50 1056 45 1152 40C1248 35 1344 30 1392 27.5L1440 25V100H1392C1344 100 1248 100 1152 100C1056 100 960 100 864 100C768 100 672 100 576 100C480 100 384 100 288 100C192 100 96 100 48 100H0V50Z" className="fill-slate-50 dark:fill-slate-950" />
+          <svg
+            viewBox="0 0 1440 100"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M0 50L48 45.8C96 41.7 192 33.3 288 30C384 26.7 480 28.3 576 33.3C672 38.3 768 46.7 864 48.3C960 50 1056 45 1152 40C1248 35 1344 30 1392 27.5L1440 25V100H1392C1344 100 1248 100 1152 100C1056 100 960 100 864 100C768 100 672 100 576 100C480 100 384 100 288 100C192 100 96 100 48 100H0V50Z"
+              className="fill-slate-50 dark:fill-slate-950"
+            />
           </svg>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10 pb-10">
-
         {/* Incoming Requests Section */}
         {requests.length > 0 && (
           <div className="mb-10">
@@ -226,11 +232,16 @@ const ChatInboxPage = () => {
                 <Inbox className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Incoming Requests</h2>
-                <p className="text-slate-500 text-sm">People who want to connect with you</p>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Incoming Requests
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  People who want to connect with you
+                </p>
               </div>
               <span className="ml-auto px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 text-sm font-bold rounded-full">
-                {requests.length} {requests.length === 1 ? "request" : "requests"}
+                {requests.length}{" "}
+                {requests.length === 1 ? "request" : "requests"}
               </span>
             </div>
 
@@ -249,7 +260,11 @@ const ChatInboxPage = () => {
                       <div className="relative">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                           {req.sender?.profilePic ? (
-                            <img src={getImageUrl(req.sender.profilePic)} className="w-full h-full object-cover" alt={req.sender.fullName} />
+                            <img
+                              src={getImageUrl(req.sender.profilePic)}
+                              className="w-full h-full object-cover"
+                              alt={req.sender.fullName}
+                            />
                           ) : (
                             req.sender?.fullName?.[0]
                           )}
@@ -302,8 +317,12 @@ const ChatInboxPage = () => {
                   <MessageSquare className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Conversations</h2>
-                  <p className="text-sm text-slate-500">Click on a conversation to start chatting</p>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Conversations
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Click on a conversation to start chatting
+                  </p>
                 </div>
               </div>
               <Button
@@ -333,9 +352,12 @@ const ChatInboxPage = () => {
                 <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
                   <MessageCircle className="w-12 h-12 text-slate-300 dark:text-slate-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">No conversations yet</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                  No conversations yet
+                </h3>
                 <p className="text-slate-500 mb-8 max-w-md mx-auto leading-relaxed">
-                  You haven't started any conversations yet. Accept chat requests or browse members to start connecting!
+                  You haven't started any conversations yet. Accept chat
+                  requests or browse members to start connecting!
                 </p>
                 <Button onClick={() => setShowBrowseModal(true)}>
                   <Users className="w-4 h-4 mr-2" />
@@ -355,7 +377,11 @@ const ChatInboxPage = () => {
                   <div className="relative flex-shrink-0">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                       {user.profilePic ? (
-                        <img src={getImageUrl(user.profilePic)} className="w-full h-full object-cover" alt={user.fullName} />
+                        <img
+                          src={getImageUrl(user.profilePic)}
+                          className="w-full h-full object-cover"
+                          alt={user.fullName}
+                        />
                       ) : (
                         user.fullName?.charAt(0).toUpperCase()
                       )}
@@ -384,7 +410,12 @@ const ChatInboxPage = () => {
       </div>
 
       {/* Browse Members Modal */}
-      <Modal isOpen={showBrowseModal} onClose={() => setShowBrowseModal(false)} title="Browse Campus Members" size="lg">
+      <Modal
+        isOpen={showBrowseModal}
+        onClose={() => setShowBrowseModal(false)}
+        title="Browse Campus Members"
+        size="lg"
+      >
         <div className="space-y-5">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -420,7 +451,11 @@ const ChatInboxPage = () => {
                   <div className="relative flex-shrink-0">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden">
                       {user.profilePic ? (
-                        <img src={getImageUrl(user.profilePic)} className="w-full h-full object-cover" alt={user.fullName} />
+                        <img
+                          src={getImageUrl(user.profilePic)}
+                          className="w-full h-full object-cover"
+                          alt={user.fullName}
+                        />
                       ) : (
                         user.fullName?.[0]
                       )}
@@ -473,21 +508,33 @@ const ChatInboxPage = () => {
 
       {/* Quick Profile View Modal */}
       {viewingProfile && (
-        <Modal isOpen={true} onClose={() => setViewingProfile(null)} title="User Profile" size="sm">
+        <Modal
+          isOpen={true}
+          onClose={() => setViewingProfile(null)}
+          title="User Profile"
+          size="sm"
+        >
           <div className="space-y-5">
             <div className="flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-3xl shadow-xl overflow-hidden mb-4">
                 {viewingProfile.profilePic ? (
-                  <img src={getImageUrl(viewingProfile.profilePic)} className="w-full h-full object-cover" alt={viewingProfile.fullName} />
+                  <img
+                    src={getImageUrl(viewingProfile.profilePic)}
+                    className="w-full h-full object-cover"
+                    alt={viewingProfile.fullName}
+                  />
                 ) : (
                   viewingProfile.fullName?.[0]
                 )}
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{viewingProfile.fullName}</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                {viewingProfile.fullName}
+              </h3>
               <p className="text-slate-500">{viewingProfile.email}</p>
               {viewingProfile.dept && (
                 <p className="text-sm text-slate-400 mt-1">
-                  {viewingProfile.dept} {viewingProfile.year && `• Year ${viewingProfile.year}`}
+                  {viewingProfile.dept}{" "}
+                  {viewingProfile.year && `• Year ${viewingProfile.year}`}
                 </p>
               )}
             </div>
@@ -500,7 +547,10 @@ const ChatInboxPage = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => { sendChatRequest(viewingProfile._id); setViewingProfile(null); }}
+                  onClick={() => {
+                    sendChatRequest(viewingProfile._id);
+                    setViewingProfile(null);
+                  }}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 text-white rounded-xl shadow-lg transition-all duration-300"
                 >
                   <Send className="w-4 h-4" />
@@ -511,6 +561,21 @@ const ChatInboxPage = () => {
           </div>
         </Modal>
       )}
+      <footer className="bg-slate-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">C</span>
+              </div>
+              <span className="text-xl font-bold">Campora</span>
+            </div>
+            <p className="text-slate-400 text-sm">
+              &copy; 2026 Campora. Connecting campus communities.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

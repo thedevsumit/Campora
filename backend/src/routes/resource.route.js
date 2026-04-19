@@ -3,6 +3,7 @@ const protectRoute = require("../middleware/auth.middleware");
 const { checkPermission, isAdmin } = require("../middleware/rbac.middleware");
 const Resource = require("../models/resource.model");
 const Booking = require("../models/booking.model");
+const { getScheduledResources, renderScheduledResources } = require("../lib/scheduler");
 
 const router = express.Router();
 
@@ -116,6 +117,29 @@ router.get("/:resourceId/bookings", protectRoute, isAdmin, async (req, res) => {
     return res.status(200).json({ bookings });
   } catch (error) {
     console.error("getResourceBookings error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get scheduled resources (the 5 admin resources that auto-render at midnight)
+router.get("/scheduled/all", protectRoute, checkPermission("resource:view"), async (req, res) => {
+  try {
+    const resources = await getScheduledResources();
+    return res.status(200).json({ resources });
+  } catch (error) {
+    console.error("getScheduledResources error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Manually trigger render of scheduled resources (admin only)
+router.post("/scheduled/render", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const io = req.app.get("io");
+    const resources = await renderScheduledResources(io);
+    return res.status(200).json({ message: "Scheduled resources rendered", resources });
+  } catch (error) {
+    console.error("renderScheduledResources error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 });

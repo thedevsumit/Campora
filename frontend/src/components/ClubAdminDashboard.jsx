@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useClubAdminStore } from "../store/useClubAdminStore";
 import { getImageUrl } from "../lib/utils";
 import Navbar from "./Navbar";
@@ -11,24 +11,28 @@ import Input from "./ui/Input";
 import Modal from "./ui/Modal";
 import { axiosInstance } from "../lib/axios";
 import { userAuthStore } from "../store/useAuthStore";
-import { Settings, Users, Calendar, Megaphone, Crown, Shield, Trash2, UserPlus, ArrowRight } from "lucide-react";
+import { toast } from "react-toastify";
+import { Settings, Users, Calendar, Megaphone, Crown, Shield, Trash2, UserPlus, ArrowRight, Image, X, Upload, Eye } from "lucide-react";
 
 export default function ClubAdminDashboard() {
   const { clubId } = useParams();
+  const [searchParams] = useSearchParams();
   const { adminClub, loading, fetchAdminClub, addMember, removeMember, changeRole, createAnnouncement, fetchAnnouncements, deleteAnnouncement } = useClubAdminStore();
   const { authUser } = userAuthStore();
   const [clubData, setClubData] = useState(null);
   const [sending, setSending] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "overview");
   const [isLoading, setIsLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
 
-  const [announcementData, setAnnouncementData] = useState({ title: "", message: "", audience: "members", duration: 60 });
+  const [announcementData, setAnnouncementData] = useState({ title: "", message: "", image: "", audience: "members", duration: 60 });
   const [newMember, setNewMember] = useState({ email: "", role: "member" });
   const [members, setMembers] = useState([]);
+  const [announcementImagePreview, setAnnouncementImagePreview] = useState(null);
+  const announcementImageRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -58,15 +62,43 @@ export default function ClubAdminDashboard() {
     setIsLoading(false);
   }, [adminClub]);
 
-  const currentUserRole = adminClub?.members?.find((m) => m.user._id === authUser?._id)?.role;
+  const currentUserRole = adminClub?.members?.find((m) => m.user._id?.toString() === authUser?._id?.toString())?.role;
+  const isClubCreator = adminClub?.createdBy?.toString() === authUser?._id?.toString();
+  const isModerator = currentUserRole === "moderator";
+  const isAdmin = currentUserRole === "admin";
+  const canManageClub = isClubCreator || isAdmin || isModerator;
+
+  const displayRole = isClubCreator ? "Owner" : (currentUserRole === "admin" ? "Owner" : (currentUserRole === "moderator" ? "Moderator" : (currentUserRole || "Member")));
+
+  // Check if a member is the club owner
+  const isMemberOwner = (memberId) => adminClub?.createdBy?.toString() === memberId;
+
+  // Permission checks - moderators can access dashboard and create events but cannot promote to admin
+  const canCreateAnnouncement = isClubCreator || isAdmin;
+  const canManageMembers = isClubCreator || isAdmin || isModerator; // All admin roles can manage members
+  const canPromoteToAdmin = isClubCreator || isAdmin; // Only owner/admin can promote to admin
+  const canCreateEvents = isClubCreator || isAdmin || isModerator;
 
   const handleAnnouncementSubmit = async () => {
     if (sending) return;
     setSending(true);
     try {
-      await createAnnouncement(announcementData);
+      const formData = new FormData();
+      formData.append("title", announcementData.title);
+      formData.append("message", announcementData.message);
+      formData.append("audience", announcementData.audience);
+      formData.append("duration", announcementData.duration);
+      if (announcementData.image) {
+        formData.append("image", announcementData.image);
+      }
+
+      await axiosInstance.post(`/clubs/${clubId}/admin/announcements`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       setShowAnnouncementModal(false);
-      setAnnouncementData({ title: "", message: "", audience: "members", duration: 60 });
+      setAnnouncementData({ title: "", message: "", image: "", audience: "members", duration: 60 });
+      setAnnouncementImagePreview(null);
     } catch (error) {
       console.error(error);
     } finally {
@@ -74,14 +106,40 @@ export default function ClubAdminDashboard() {
     }
   };
 
+  const handleAnnouncementImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAnnouncementData((prev) => ({ ...prev, image: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => setAnnouncementImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAnnouncementImage = () => {
+    setAnnouncementData((prev) => ({ ...prev, image: "" }));
+    setAnnouncementImagePreview(null);
+    if (announcementImageRef.current) announcementImageRef.current.value = "";
+  };
+
   const handleAddMember = async () => {
     if (!newMember.email) return;
     try {
-      await addMember(newMember);
+      await addMember(clubId, newMember);
+      await fetchAdminClub(clubId);
       setShowAddMemberModal(false);
       setNewMember({ email: "", role: "member" });
     } catch (error) {
-      console.error(error);
+      toast.error(error?.response?.data?.message || "Failed to add member");
+    }
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    try {
+      await removeMember(clubId, memberId);
+      await fetchAdminClub(clubId);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to remove member");
     }
   };
 
@@ -199,7 +257,7 @@ export default function ClubAdminDashboard() {
                   <Crown className="w-6 h-6 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900 dark:text-white capitalize">{currentUserRole}</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-white capitalize">{displayRole || "Owner"}</p>
                   <p className="text-sm text-slate-500">Your Role</p>
                 </div>
               </div>
@@ -233,11 +291,31 @@ export default function ClubAdminDashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={member.role === "owner" ? "warning" : member.role === "moderator" ? "info" : "default"}>
-                      {member.role}
-                    </Badge>
-                    {member.role !== "owner" && (
-                      <button onClick={() => removeMember(member.id)} className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-xl transition-colors">
+                    {canManageMembers && !isMemberOwner(member.id) ? (
+                      <select
+                        value={member.role}
+                        onChange={async (e) => {
+                          try {
+                            await changeRole(clubId, member.id, e.target.value);
+                            await fetchAdminClub(clubId);
+                            toast.success("Role updated");
+                          } catch (error) {
+                            toast.error(error?.response?.data?.message || "Failed to update role");
+                          }
+                        }}
+                        className="px-3 py-1.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-primary-500"
+                      >
+                        <option value="member">Member</option>
+                        <option value="moderator">Moderator</option>
+                        {canPromoteToAdmin && <option value="admin">Admin</option>}
+                      </select>
+                    ) : (
+                      <Badge variant={(member.role === "owner" || member.role === "admin") ? "warning" : member.role === "moderator" ? "info" : "default"}>
+                        {member.role === "admin" ? "Owner" : member.role === "moderator" ? "Moderator" : member.role}
+                      </Badge>
+                    )}
+                    {!isMemberOwner(member.id) && (
+                      <button onClick={() => handleRemoveMember(member.id)} className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-xl transition-colors">
                         <Trash2 className="w-4 h-4 text-danger-500" />
                       </button>
                     )}
@@ -251,7 +329,7 @@ export default function ClubAdminDashboard() {
         {/* Events Tab */}
         {activeTab === "events" && (
           <div className="animate-fade-in-up">
-            <ClubAdminEventsManager />
+            <ClubAdminEventsManager clubId={clubId} canCreateEvents={canCreateEvents} />
           </div>
         )}
 
@@ -263,10 +341,12 @@ export default function ClubAdminDashboard() {
                 <Megaphone className="w-5 h-5 text-primary-500" />
                 Announcements
               </h2>
-              <Button size="sm" onClick={() => setShowAnnouncementModal(true)}>
-                <Megaphone className="w-4 h-4 mr-1.5" />
-                New Announcement
-              </Button>
+              {canCreateAnnouncement && (
+                <Button size="sm" onClick={() => setShowAnnouncementModal(true)}>
+                  <Megaphone className="w-4 h-4 mr-1.5" />
+                  New Announcement
+                </Button>
+              )}
             </div>
             <p className="text-slate-500 text-center py-8">Create announcements to notify your club members.</p>
           </div>
@@ -280,6 +360,18 @@ export default function ClubAdminDashboard() {
       <Modal isOpen={showAddMemberModal} onClose={() => setShowAddMemberModal(false)} title="Add Member" size="sm">
         <div className="space-y-4">
           <Input label="Email Address" type="email" value={newMember.email} onChange={(e) => setNewMember({ ...newMember, email: e.target.value })} placeholder="member@email.com" />
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Role</label>
+            <select
+              value={newMember.role}
+              onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+              className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500"
+            >
+              <option value="member">Member</option>
+              <option value="moderator">Moderator</option>
+              {canPromoteToAdmin && <option value="admin">Admin</option>}
+            </select>
+          </div>
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="ghost" onClick={() => setShowAddMemberModal(false)}>Cancel</Button>
             <Button onClick={handleAddMember}>Add Member</Button>
@@ -288,16 +380,109 @@ export default function ClubAdminDashboard() {
       </Modal>
 
       {/* Announcement Modal */}
-      <Modal isOpen={showAnnouncementModal} onClose={() => setShowAnnouncementModal(false)} title="Create Announcement" size="md">
-        <div className="space-y-4">
-          <Input label="Title" value={announcementData.title} onChange={(e) => setAnnouncementData({ ...announcementData, title: e.target.value })} placeholder="Important update..." />
+      <Modal isOpen={showAnnouncementModal} onClose={() => setShowAnnouncementModal(false)} title="Create Announcement" size="lg">
+        <div className="space-y-5">
+          {/* Info Banner */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl px-4 py-3 border border-amber-200 dark:border-amber-800 flex items-start gap-3">
+            <Megaphone className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">Announce to your club</p>
+              <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">Your announcement will be visible to members and followers in their feed.</p>
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Cover Image (Optional)</label>
+            {announcementImagePreview ? (
+              <div className="relative rounded-xl overflow-hidden">
+                <img src={announcementImagePreview} alt="Preview" className="w-full h-48 object-cover" />
+                <button
+                  onClick={removeAnnouncementImage}
+                  className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => announcementImageRef.current?.click()}
+                className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all"
+              >
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                  <Image className="w-6 h-6 text-slate-400" />
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Click to upload image</p>
+                <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</p>
+                <input
+                  ref={announcementImageRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAnnouncementImageChange}
+                  className="hidden"
+                />
+              </div>
+            )}
+          </div>
+
+          <Input
+            label="Title"
+            value={announcementData.title}
+            onChange={(e) => setAnnouncementData({ ...announcementData, title: e.target.value })}
+            placeholder="Important update, upcoming event..."
+          />
+
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Message</label>
-            <textarea rows={4} value={announcementData.message} onChange={(e) => setAnnouncementData({ ...announcementData, message: e.target.value })} placeholder="Write your announcement..." className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all resize-none" />
+            <textarea
+              rows={4}
+              value={announcementData.message}
+              onChange={(e) => setAnnouncementData({ ...announcementData, message: e.target.value })}
+              placeholder="Share what's happening with your club..."
+              className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all resize-none"
+            />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="ghost" onClick={() => setShowAnnouncementModal(false)}>Cancel</Button>
-            <Button onClick={handleAnnouncementSubmit} isLoading={sending}>Publish</Button>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Audience</label>
+              <select
+                value={announcementData.audience}
+                onChange={(e) => setAnnouncementData({ ...announcementData, audience: e.target.value })}
+                className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+              >
+                <option value="members">Members Only</option>
+                <option value="followers">Followers</option>
+                <option value="all">Everyone</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Duration</label>
+              <select
+                value={announcementData.duration}
+                onChange={(e) => setAnnouncementData({ ...announcementData, duration: Number(e.target.value) })}
+                className="w-full px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all appearance-none cursor-pointer"
+              >
+                <option value={60}>1 Hour</option>
+                <option value={1440}>1 Day</option>
+                <option value={4320}>3 Days</option>
+                <option value={10080}>1 Week</option>
+                <option value={0}>Forever</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <Button variant="ghost" onClick={() => { setShowAnnouncementModal(false); setAnnouncementImagePreview(null); }}>Cancel</Button>
+            <Button
+              onClick={handleAnnouncementSubmit}
+              isLoading={sending}
+              disabled={!announcementData.title || !announcementData.message}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+            >
+              <Megaphone className="w-4 h-4 mr-2" />
+              Publish Announcement
+            </Button>
           </div>
         </div>
       </Modal>
