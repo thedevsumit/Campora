@@ -42,10 +42,15 @@ authRoutes.get("/google/callback",
         console.error("Google OAuth Error:", err);
         return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
       }
-      signAndSendToken(user, res);
+      const token = signToken(user); 
+
+      return res.redirect(
+        `${FRONTEND_URL}/oauth-success?token=${token}`
+      );
     })(req, res, next);
   }
 );
+
 
 authRoutes.post("/sendOtp", otpLimiter, sendOtp);
 authRoutes.post("/signup", authLimiter, signup);
