@@ -8,6 +8,7 @@ import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
+import PageLoader from "../components/ui/Loader";
 import {
   Calendar,
   Megaphone,
@@ -727,14 +728,12 @@ export default function FeedPage() {
             )}
 
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-                  <p className="text-slate-500 animate-pulse">
-                    Loading feed...
-                  </p>
-                </div>
-              </div>
+              <PageLoader
+                fullPage={false}
+                variant="page"
+                text="Loading your feed..."
+                className="!relative !bg-transparent !min-h-[400px]"
+              />
             ) : filteredFeed.length === 0 ? (
               <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="w-24 h-24 mx-auto mb-6 text-slate-300 dark:text-slate-600">

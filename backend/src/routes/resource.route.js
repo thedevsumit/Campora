@@ -44,6 +44,7 @@ router.post("/", protectRoute, async (req, res) => {
     }
 
     const resource = await Resource.create(req.body);
+    await resource.populate("createdBy", "fullName email");
     return res.status(201).json({ message: "Resource created", resource });
   } catch (error) {
     console.error("createResource error:", error);
@@ -77,11 +78,20 @@ router.put("/:resourceId", protectRoute, isAdmin, async (req, res) => {
   }
 });
 
-// Delete resource (soft)
-router.delete("/:resourceId", protectRoute, isAdmin, async (req, res) => {
+// Delete resource - creator can delete their own, admins can delete any
+router.delete("/:resourceId", protectRoute, async (req, res) => {
   try {
-    const resource = await Resource.findByIdAndUpdate(req.params.resourceId, { isActive: false }, { new: true });
+    const resource = await Resource.findById(req.params.resourceId);
     if (!resource) return res.status(404).json({ message: "Resource not found" });
+
+    const isUserAdmin = req.user.role === "superAdmin" || req.user.userRole === "admin";
+    const isCreator = resource.createdBy && resource.createdBy.toString() === req.user._id.toString();
+
+    if (!isUserAdmin && !isCreator) {
+      return res.status(403).json({ message: "Only the creator or admins can delete this resource" });
+    }
+
+    await Resource.findByIdAndUpdate(req.params.resourceId, { isActive: false }, { new: true });
     return res.status(200).json({ message: "Resource deleted" });
   } catch (error) {
     console.error("deleteResource error:", error);

@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useEventStore } from "../store/useEventStore";
 import { getImageUrl } from "../lib/utils";
+import { axiosInstance } from "../lib/axios";
 import Button from "./ui/Button";
 import Badge from "./ui/Badge";
 import Modal from "./ui/Modal";
 import Input from "./ui/Input";
-import { Calendar, Clock, MapPin, Users, Image, X, Upload, Plus, ChevronRight, Edit3, Trash2, Eye, Shield } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Image, X, Upload, Plus, ChevronRight, Edit3, Trash2, Eye, Shield, CheckCircle } from "lucide-react";
+import SuccessModal from "./ui/SuccessModal";
 
 const categories = ["Technical", "Cultural", "Sports", "Arts", "Business", "Social", "Other"];
 
 export default function ClubAdminEventsManager({ clubId, canCreateEvents = true }) {
   const [showModal, setShowModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [eventImagePreview, setEventImagePreview] = useState(null);
+  const [selectedEventForParticipants, setSelectedEventForParticipants] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
   const eventImageRef = useRef(null);
 
   const { clubEvents, fetchClubEvents, createEvent, updateEvent, deleteEvent, loading } = useEventStore();
@@ -106,6 +112,7 @@ export default function ClubAdminEventsManager({ clubId, canCreateEvents = true 
       // Handle update if needed
     } else {
       await createEvent(clubId, formData);
+      setShowSuccessModal(true);
     }
 
     setShowModal(false);
@@ -135,6 +142,19 @@ export default function ClubAdminEventsManager({ clubId, canCreateEvents = true 
   const handleDeleteEvent = async (eventId) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       await deleteEvent(eventId);
+    }
+  };
+
+  const handleViewParticipants = async (event) => {
+    setSelectedEventForParticipants(event);
+    setLoadingParticipants(true);
+    try {
+      const res = await axiosInstance.get(`/events/${event._id}/registrations`);
+      setParticipants(res.data.registrations || []);
+    } catch (err) {
+      console.error("Failed to load participants:", err);
+    } finally {
+      setLoadingParticipants(false);
     }
   };
 
@@ -247,6 +267,13 @@ export default function ClubAdminEventsManager({ clubId, canCreateEvents = true 
                     {event.registrations?.length || 0}/{event.maxParticipants} registered
                   </span>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleViewParticipants(event)}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                      title="View Participants"
+                    >
+                      <Eye className="w-4 h-4 text-slate-500" />
+                    </button>
                     <button
                       onClick={() => handleEditEvent(event)}
                       className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
@@ -425,6 +452,79 @@ export default function ClubAdminEventsManager({ clubId, canCreateEvents = true 
           </div>
         </form>
       </Modal>
+
+      {/* Participants Modal */}
+      <Modal
+        isOpen={!!selectedEventForParticipants}
+        onClose={() => { setSelectedEventForParticipants(null); setParticipants([]); }}
+        title={`Participants — ${selectedEventForParticipants?.title || ""}`}
+        size="md"
+      >
+        {loadingParticipants ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+          </div>
+        ) : participants.length === 0 ? (
+          <div className="text-center py-10">
+            <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <p className="text-slate-500">No participants yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {participants.map((reg, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-sm">
+                    {reg.user?.fullName?.[0] || reg.name?.[0] || "?"}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {reg.user?.fullName || reg.name}
+                    </p>
+                    <p className="text-xs text-slate-500">{reg.user?.email || reg.email}</p>
+                    {reg.year && (
+                      <p className="text-xs text-slate-400">{reg.year}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge
+                    variant={
+                      reg.status === "registered"
+                        ? "success"
+                        : reg.status === "waitlisted"
+                          ? "warning"
+                          : "danger"
+                    }
+                  >
+                    {reg.status}
+                  </Badge>
+                  {reg.teamMembers?.length > 0 && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      +{reg.teamMembers.length} members
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        type="success"
+        title="Event Created!"
+        subtitle="Your event"
+        highlightText={`"${form.title || 'New Event'}"`}
+        buttonText="Awesome!"
+        variant="green"
+      />
     </div>
   );
 }

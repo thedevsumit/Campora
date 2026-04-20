@@ -59,13 +59,19 @@ const createEvent = async (req, res) => {
 const getAllEvents = async (req, res) => {
   try {
     const { status, category, clubId } = req.query;
-    const filter = { isActive: true };
-    // Default to approved status if not specified
-    filter.status = status || "approved";
-    if (category) filter.category = category;
-    if (clubId) filter.club = clubId;
+    const now = new Date();
+    const baseFilter = { isActive: true };
+    baseFilter.status = status || "approved";
+    if (category) baseFilter.category = category;
+    if (clubId) baseFilter.club = clubId;
 
-    const events = await Event.find(filter)
+    const events = await Event.find({
+      ...baseFilter,
+      $or: [
+        { endDate: { $gte: now } },
+        { $and: [{ endDate: null }, { startDate: { $gte: now } }] },
+      ],
+    })
       .populate("club", "clubName clubIcon")
       .populate("collaboratingClubs.club", "clubName clubIcon")
       .sort({ startDate: 1 });
@@ -350,6 +356,29 @@ const getCollaborativeEvents = async (req, res) => {
   }
 };
 
+/* ================= WITHDRAW FROM EVENT ================= */
+const withdrawFromEvent = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    const registrationIndex = event.registrations.findIndex(
+      (r) => r.user?.toString() === req.user._id.toString()
+    );
+    if (registrationIndex === -1) {
+      return res.status(400).json({ message: "You are not registered for this event" });
+    }
+
+    event.registrations.splice(registrationIndex, 1);
+    await event.save();
+    res.json({ message: "Withdrawn from event successfully" });
+  } catch (err) {
+    console.error("withdrawFromEvent:", err);
+    res.status(500).json({ message: "Failed to withdraw from event" });
+  }
+};
+
 /* ================= ADMIN: VIEW REGISTRATIONS ================= */
 const getEventRegistrations = async (req, res) => {
   try {
@@ -402,7 +431,14 @@ const deleteEvent = async (req, res) => {
 const getClubEvents = async (req, res) => {
   try {
     const { clubId } = req.params;
-    const events = await Event.find({ club: clubId })
+    const now = new Date();
+    const events = await Event.find({
+      club: clubId,
+      $or: [
+        { endDate: { $gte: now } },
+        { $and: [{ endDate: null }, { startDate: { $gte: now } }] },
+      ],
+    })
       .populate("club", "clubName clubIcon")
       .sort({ createdAt: -1 });
     res.json({ events });
@@ -445,5 +481,6 @@ module.exports = {
   getMyEvents,
   addCollaboratingClub,
   respondToCollaboration,
-  getCollaborativeEvents
+  getCollaborativeEvents,
+  withdrawFromEvent
 };

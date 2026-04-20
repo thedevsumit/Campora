@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useResourceStore } from "../store/useResourceStore";
 import { userAuthStore } from "../store/useAuthStore";
@@ -6,12 +7,14 @@ import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import Input from "../components/ui/Input";
 import Modal from "../components/ui/Modal";
+import Loader from "../components/ui/Loader";
 import ResourceCalendar from "../components/ResourceCalendar";
+import { toast } from "react-toastify";
 import {
   Search, Plus, MapPin, Clock, Users, Wrench, Car, Microscope,
   LayoutGrid, Sparkles, ArrowRight, Calendar, CheckCircle, X, Building, Monitor,
   Projector, Volume2, Wifi, Power, ChevronRight, Filter, BookOpen, Edit3,
-  Trash2, Star, Crown, Shield, Gem
+  Trash2, Star, Crown, Shield, Gem, ExternalLink
 } from "lucide-react";
 
 const resourceTypeIcons = {
@@ -56,8 +59,9 @@ const resourceTypes = ["room", "hall", "lab", "equipment", "vehicle", "book", "o
 const bookResourceTypes = ["book", "other"];
 
 const ResourceBookingPage = () => {
-  const { resources, bookings, isLoading, fetchResources, createResource } = useResourceStore();
+  const { resources, bookings, isLoading, fetchResources, createResource, unbookResource, deleteResource } = useResourceStore();
   const { authUser } = userAuthStore();
+  const navigate = useNavigate();
   const [selectedResource, setSelectedResource] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [filter, setFilter] = useState({ type: "", search: "" });
@@ -407,12 +411,12 @@ const ResourceBookingPage = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="flex flex-col items-center gap-5">
-              <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-              <p className="text-slate-500 animate-pulse text-lg">Loading resources...</p>
-            </div>
-          </div>
+          <Loader
+            fullPage={false}
+            variant="page"
+            text="Loading available resources..."
+            className="!relative !bg-transparent !min-h-[400px]"
+          />
         ) : filteredResources.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
@@ -494,8 +498,21 @@ const ResourceBookingPage = () => {
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-slate-500">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <span>{resource.availableStartTime} - {resource.availableEndTime}</span>
+                        {resource.createdBy ? (
+                          <>
+                            <Calendar className="w-4 h-4 text-slate-400" />
+                            <span>
+                              {resource.availableFrom && resource.availableTo
+                                ? `${new Date(resource.availableFrom).toLocaleDateString()} - ${new Date(resource.availableTo).toLocaleDateString()}`
+                                : `${resource.availableStartTime} - ${resource.availableEndTime}`}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-4 h-4 text-slate-400" />
+                            <span>{resource.availableStartTime} - {resource.availableEndTime}</span>
+                          </>
+                        )}
                       </div>
                       {resource.createdBy ? (
                         <div className="flex items-center gap-2">
@@ -503,6 +520,13 @@ const ResourceBookingPage = () => {
                             <Users className="w-3 h-3 mr-1" />
                             Community Resource
                           </Badge>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/profile/${resource.createdBy._id || resource.createdBy}`); }}
+                            className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 font-medium"
+                          >
+                            by {resource.createdBy?.fullName || "Unknown"}
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -510,6 +534,11 @@ const ResourceBookingPage = () => {
                             <Shield className="w-3 h-3 mr-1" />
                             Admin Resource
                           </Badge>
+                          {resource.availableFrom && resource.availableTo && (
+                            <span className="text-xs text-slate-500">
+                              Available: {new Date(resource.availableFrom).toLocaleDateString()} - {new Date(resource.availableTo).toLocaleDateString()}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -530,31 +559,50 @@ const ResourceBookingPage = () => {
                     )}
 
                     <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-800">
-                      <Button
-                        className="w-full group-hover:shadow-lg transition-shadow"
-                        variant={resource.maintenanceMode ? "ghost" : "primary"}
-                        onClick={() => { setSelectedResource(resource); setShowCalendar(true); }}
-                        disabled={resource.maintenanceMode}
-                      >
-                        {resource.maintenanceMode ? (
-                          "Unavailable"
-                        ) : isResourceCreator ? (
-                          <>
-                            <Shield className="w-4 h-4 mr-2" />
-                            Your Resource
-                          </>
-                        ) : hasExistingBooking ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Already Booked
-                          </>
-                        ) : (
-                          <>
-                            Book Now
-                            <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                          </>
-                        )}
-                      </Button>
+                      {hasExistingBooking ? (
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              await unbookResource(resource._id);
+                            } catch {}
+                          }}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Unbook Resource
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full group-hover:shadow-lg transition-shadow"
+                          variant={resource.maintenanceMode ? "ghost" : isResourceCreator ? "outline" : "primary"}
+                          onClick={() => {
+                            if (isResourceCreator) {
+                              if (window.confirm(`Delete "${resource.name}"?`)) {
+                                deleteResource(resource._id);
+                              }
+                            } else {
+                              setSelectedResource(resource);
+                              setShowCalendar(true);
+                            }
+                          }}
+                          disabled={resource.maintenanceMode}
+                        >
+                          {resource.maintenanceMode ? (
+                            "Unavailable"
+                          ) : isResourceCreator ? (
+                            <>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete Resource
+                            </>
+                          ) : (
+                            <>
+                              Book Now
+                              <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -679,6 +727,22 @@ const ResourceBookingPage = () => {
               onChange={(e) => setNewResource({ ...newResource, location: e.target.value })}
               placeholder={newResource.type === "book" ? "Main Library, Shelf A-12" : "Block A, 2nd Floor"}
             />
+            {!isAdmin && (
+              <>
+                <Input
+                  label="Available From"
+                  type="date"
+                  value={newResource.availableFrom || ""}
+                  onChange={(e) => setNewResource({ ...newResource, availableFrom: e.target.value })}
+                />
+                <Input
+                  label="Available Till"
+                  type="date"
+                  value={newResource.availableTo || ""}
+                  onChange={(e) => setNewResource({ ...newResource, availableTo: e.target.value })}
+                />
+              </>
+            )}
           </div>
 
           {/* Only show facility-specific fields for admins */}

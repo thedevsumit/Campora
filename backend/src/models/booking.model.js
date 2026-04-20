@@ -7,8 +7,9 @@ const bookingSchema = new mongoose.Schema({
   event: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
   slots: [{
     date: { type: Date, required: true },
-    startTime: { type: String, required: true },
-    endTime: { type: String, required: true },
+    dateTo: { type: Date },
+    startTime: { type: String },
+    endTime: { type: String },
   }],
   status: {
     type: String,

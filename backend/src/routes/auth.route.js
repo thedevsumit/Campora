@@ -3,6 +3,7 @@ const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const { signup, login, logout, sendOtp, checkAuth, getBrowseUsers, forgotPassword, resetPassword } = require("../controllers/auth.controller");
 const protectRoute = require("../middleware/auth.middleware");
+const { otpLimiter, authLimiter } = require("../middleware/rateLimit.middleware");
 const authRoutes = express.Router();
 
 const isProd = process.env.NODE_ENV === "production";
@@ -46,12 +47,12 @@ authRoutes.get("/google/callback",
   }
 );
 
-authRoutes.post("/sendOtp", sendOtp);
-authRoutes.post("/signup", signup);
+authRoutes.post("/sendOtp", otpLimiter, sendOtp);
+authRoutes.post("/signup", authLimiter, signup);
 authRoutes.post("/login", login);
 authRoutes.post("/logout", logout);
-authRoutes.post("/forgot-password", forgotPassword);
-authRoutes.post("/reset-password", resetPassword);
+authRoutes.post("/forgot-password", otpLimiter, forgotPassword);
+authRoutes.post("/reset-password", authLimiter, resetPassword);
 authRoutes.get("/check", protectRoute, checkAuth);
 authRoutes.get("/browse-users", protectRoute, getBrowseUsers);
 

@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 export const useClubStore = create((set, get) => ({
   clubs: [],
   selectedClub: null,
+  pendingJoinRequests: new Set(),
 
   isCreatingClub: false,
   isFetchingClubs: false,
@@ -120,28 +121,31 @@ export const useClubStore = create((set, get) => ({
 
   /* ================= MEMBERSHIP ================= */
 
-  joinClub: async (clubId, user) => {
+  joinClub: async (clubId) => {
     try {
       await axiosInstance.post(`/clubs/${clubId}/join`);
 
-      const { selectedClub } = get();
-
-      set({
-        selectedClub: {
-          ...selectedClub,
-          members: [...selectedClub.members, { user, role: "Member" }],
-          followers: selectedClub.followers.filter((u) => u?._id !== user._id),
-        },
+      set((state) => {
+        const newPending = new Set(state.pendingJoinRequests);
+        newPending.add(clubId);
+        return { pendingJoinRequests: newPending };
       });
 
-      toast.success("Joined club");
+      toast.success("Join request sent!");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to join club");
+      const msg = err?.response?.data?.message || "";
+      if (msg.includes("already")) {
+        toast.info("You are already a member");
+      } else if (msg.includes("pending")) {
+        toast.info("Request already pending");
+      } else {
+        toast.error("Failed to send request");
+      }
     }
   },
 
-  leaveClub: async (clubId, user) => {
+  leaveClub: async (clubId, userId) => {
     try {
       await axiosInstance.post(`/clubs/${clubId}/leave`);
 
@@ -150,7 +154,7 @@ export const useClubStore = create((set, get) => ({
       set({
         selectedClub: {
           ...selectedClub,
-          members: selectedClub.members.filter((m) => m.user?._id !== user._id),
+          members: selectedClub.members.filter((m) => m.user?._id?.toString() !== userId?.toString()),
         },
       });
 

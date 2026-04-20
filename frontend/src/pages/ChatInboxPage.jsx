@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { axiosInstance } from "../lib/axios";
 import { getImageUrl } from "../lib/utils";
 import { useNavigate } from "react-router-dom";
+import { socket } from "../lib/socket";
 import Navbar from "../components/Navbar";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import Input from "../components/ui/Input";
+import Loader from "../components/ui/Loader";
 import {
   MessageCircle,
   Users,
@@ -37,6 +39,7 @@ const ChatInboxPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sentRequests, setSentRequests] = useState({});
   const [viewingProfile, setViewingProfile] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,9 +53,40 @@ const ChatInboxPage = () => {
         );
         setUsers(uniqueUsers);
         setRequests(reqsRes.data.requests || []);
+
+        // Fetch online status for users
+        if (uniqueUsers.length > 0) {
+          const userIds = uniqueUsers.map(u => u._id);
+          axiosInstance.post("/users/online-status", { userIds })
+            .then(({ data }) => {
+              const online = new Set(data.result?.filter(r => r.isOnline).map(r => r.userId) || []);
+              setOnlineUsers(online);
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => console.error("Failed to load chats"))
       .finally(() => setIsLoading(false));
+  }, []);
+
+  // Listen for online status changes
+  useEffect(() => {
+    const statusHandler = ({ userId, status }) => {
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        if (status === "online") {
+          newSet.add(userId);
+        } else {
+          newSet.delete(userId);
+        }
+        return newSet;
+      });
+    };
+
+    socket.on("userStatus", statusHandler);
+    return () => {
+      socket.off("userStatus", statusHandler);
+    };
   }, []);
 
   const fetchBrowseUsers = async (search = "") => {
@@ -337,14 +371,12 @@ const ChatInboxPage = () => {
 
           <div>
             {isLoading && (
-              <div className="flex items-center justify-center py-24">
-                <div className="flex flex-col items-center gap-5">
-                  <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-                  <p className="text-slate-500 animate-pulse text-lg">
-                    Loading conversations...
-                  </p>
-                </div>
-              </div>
+              <Loader
+                fullPage={false}
+                variant="page"
+                text="Loading your conversations..."
+                className="!relative !bg-transparent !min-h-[400px]"
+              />
             )}
 
             {!isLoading && users.length === 0 && (
@@ -386,7 +418,7 @@ const ChatInboxPage = () => {
                         user.fullName?.charAt(0).toUpperCase()
                       )}
                     </div>
-                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 rounded-full border-2 border-white dark:border-slate-900" />
+                    <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${onlineUsers.has(user._id) ? "bg-green-400" : "bg-red-400"}`} />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -394,7 +426,7 @@ const ChatInboxPage = () => {
                       {user.fullName}
                     </p>
                     <p className="text-sm text-slate-500 flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5 text-green-500" />
+                      <Zap className={`w-3.5 h-3.5  ${onlineUsers.has(user._id) ? "text-green-400" : "text-red-400"}`} />
                       Click to open chat
                     </p>
                   </div>

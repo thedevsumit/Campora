@@ -59,12 +59,14 @@ const isAdmin = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    if (req.user.role !== "superAdmin" && req.user.userRole !== "admin") {
+    const role = String(req.user.role || "");
+    const userRole = String(req.user.userRole || "");
+    if (role !== "superAdmin" && userRole !== "admin") {
       return res.status(403).json({ message: "Admin access required" });
     }
     next();
   } catch (error) {
-    console.error("isAdmin error:", error);
+    console.error("isAdmin middleware error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

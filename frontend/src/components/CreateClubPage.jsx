@@ -4,6 +4,7 @@ import { useClubStore } from "../store/useClubStore";
 import Navbar from "./Navbar";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
+import SuccessModal from "./ui/SuccessModal";
 import {
   ImagePlus,
   Sparkles,
@@ -64,6 +65,7 @@ export default function CreateClubPage() {
   const [iconPreview, setIconPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -124,10 +126,15 @@ export default function CreateClubPage() {
         category: formData.category,
         clubIcon: clubIcon,
       });
-      navigate("/clubs");
+      setShowSuccessModal(true);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    navigate("/clubs");
   };
 
   return (
@@ -431,6 +438,19 @@ export default function CreateClubPage() {
               </div>
             </div>
           </div>
+
+          {/* Success Modal */}
+          <SuccessModal
+            isOpen={showSuccessModal}
+            onClose={handleSuccessClose}
+            type="success"
+            title="Club Created!"
+            subtitle="Your club"
+            highlightText={`"${formData.clubName}"`}
+            buttonText="View My Clubs"
+            onButtonClick={handleSuccessClose}
+            variant="green"
+          />
 
           {/* Tips Sidebar */}
           <div className="lg:col-span-2">

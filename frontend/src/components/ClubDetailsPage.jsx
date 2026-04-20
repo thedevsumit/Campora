@@ -8,6 +8,7 @@ import Navbar from "./Navbar";
 import Button from "./ui/Button";
 import Badge from "./ui/Badge";
 import { toast } from "react-toastify";
+import Loader from "./ui/Loader";
 import { Users, Heart, Calendar, MessageCircle, Crown, LogOut, ArrowRight, Sparkles, Settings, Plus, Megaphone, CalendarPlus, Shield } from "lucide-react";
 
 const ClubDetailsPage = () => {
@@ -23,6 +24,7 @@ const ClubDetailsPage = () => {
     leaveClub,
     unfollowClub,
     isFetchingClub,
+    pendingJoinRequests,
   } = useClubStore();
 
   const { changeRole, fetchAdminClub } = useClubAdminStore();
@@ -35,12 +37,12 @@ const ClubDetailsPage = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-            <p className="text-slate-500 animate-pulse">Loading club details...</p>
-          </div>
-        </div>
+        <Loader
+          fullPage={false}
+          variant="page"
+          text="Loading club details..."
+          className="!relative !bg-slate-50 dark:!bg-slate-950 !min-h-[calc(100vh-64px)]"
+        />
       </>
     );
   }
@@ -132,14 +134,24 @@ const ClubDetailsPage = () => {
               Admin Dashboard
             </Button>
           )}
-          {!isMember && (
+          {!isMember && !pendingJoinRequests.has(selectedClub._id) && (
             <Button
               variant="secondary"
-              onClick={() => joinClub(selectedClub._id, authUser)}
+              onClick={() => joinClub(selectedClub._id)}
               className="shadow-lg shadow-secondary-500/30"
             >
               <Users className="w-4 h-4 mr-2" />
-              Join Club
+              Request to Join
+            </Button>
+          )}
+          {!isMember && pendingJoinRequests.has(selectedClub._id) && (
+            <Button
+              variant="outline"
+              disabled
+              className="border-white/50"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Request Pending
             </Button>
           )}
           {isMember && (
@@ -156,7 +168,7 @@ const ClubDetailsPage = () => {
             isFollower ? (
               <Button
                 variant="outline"
-                onClick={() => unfollowClub(selectedClub._id, authUser)}
+                onClick={() => unfollowClub(selectedClub._id)}
                 className="border-white/50"
               >
                 <Heart className="w-4 h-4 mr-2 fill-current" />
@@ -165,7 +177,7 @@ const ClubDetailsPage = () => {
             ) : (
               <Button
                 variant="outline"
-                onClick={() => followClub(selectedClub._id, authUser)}
+                onClick={() => followClub(selectedClub._id)}
                 className="border-white/50"
               >
                 <Heart className="w-4 h-4 mr-2" />
@@ -176,7 +188,7 @@ const ClubDetailsPage = () => {
           {isMember && !isOwner && (
             <Button
               variant="danger"
-              onClick={() => leaveClub(selectedClub._id, authUser)}
+              onClick={() => leaveClub(selectedClub._id, authUser._id)}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Leave Club

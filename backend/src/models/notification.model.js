@@ -11,7 +11,8 @@ const notificationSchema = new mongoose.Schema({
       "club_approved", "club_rejected", "club_invite",
       "dm_request", "dm_received",
       "chat_request_accepted", "chat_request_rejected",
-      "announcement", "role_change", "system"
+      "announcement", "role_change", "system",
+      "join_request", "join_accepted", "join_rejected"
     ],
     required: true
   },

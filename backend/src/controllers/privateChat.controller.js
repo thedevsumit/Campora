@@ -1,5 +1,6 @@
 const PrivateMessage = require("../models/privateMessage.model");
 const ChatRequest = require("../models/chatRequest.model");
+const BlockedUser = require("../models/blockedUser.model");
 const mongoose = require("mongoose");
 const sendNotification = require("../lib/sendNotification");
 
@@ -34,6 +35,17 @@ const ensureAcceptedChat = async (userA, userB) => {
     receiver: userB,
     status: "accepted",
   });
+};
+
+// 🔒 Check if user is blocked
+const isBlocked = async (userA, userB) => {
+  const block = await BlockedUser.findOne({
+    $or: [
+      { blocker: userA, blocked: userB },
+      { blocker: userB, blocked: userA },
+    ],
+  });
+  return !!block;
 };
 
 // ================== GET MESSAGES ==================
@@ -128,6 +140,14 @@ const getConversations = async (req, res) => {
   try {
     const userId = req.user._id;
 
+    // Get blocked users
+    const blockedUsers = await BlockedUser.find({
+      $or: [{ blocker: userId }, { blocked: userId }],
+    });
+    const blockedIds = blockedUsers.map(b =>
+      b.blocker.toString() === userId.toString() ? b.blocked.toString() : b.blocker.toString()
+    );
+
     const requests = await ChatRequest.find({
       status: "accepted",
       $or: [{ sender: userId }, { receiver: userId }],
@@ -139,7 +159,10 @@ const getConversations = async (req, res) => {
       const otherUser =
         r.sender._id.toString() === userId.toString() ? r.receiver : r.sender;
 
-      userMap.set(otherUser._id.toString(), otherUser);
+      // Skip blocked users
+      if (!blockedIds.includes(otherUser._id.toString())) {
+        userMap.set(otherUser._id.toString(), otherUser);
+      }
     });
 
     res.json({ users: Array.from(userMap.values()) });
@@ -149,4 +172,96 @@ const getConversations = async (req, res) => {
   }
 };
 
-module.exports = { getMessages, sendMessage, getConversations, ensureAcceptedChat };
+// ================== SEND IMAGE MESSAGE ==================
+const sendImageMessage = async (req, res) => {
+  try {
+    const senderId = req.user._id;
+    const receiverId = req.params.userId;
+    const { content } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image provided" });
+    }
+
+    // Check if blocked
+    const blocked = await isBlocked(senderId, receiverId);
+    if (blocked) {
+      return res.status(403).json({ message: "You cannot message this user" });
+    }
+
+    const allowed = await isChatAccepted(senderId, receiverId);
+    if (!allowed) {
+      return res.status(403).json({ message: "Chat request not accepted" });
+    }
+
+    const chatId = getChatId(senderId, receiverId);
+
+    // ✅ CREATE MESSAGE
+    let message = await PrivateMessage.create({
+      chatId,
+      sender: senderId,
+      receiver: receiverId,
+      content: content || "📷 Image",
+      imageUrl: `/uploads/${req.file.filename}`,
+      isImage: true,
+    });
+
+    // 🔥 POPULATE BEFORE EMIT
+    message = await message.populate("sender", "fullName profilePic");
+
+    // 🔥 SOCKET.IO EMIT
+    const io = req.app.get("io");
+    io.to(receiverId.toString()).emit("receiveMessage", message);
+
+    // 🔔 IN-APP NOTIFICATION
+    await sendNotification({
+      app: req.app,
+      recipient: receiverId,
+      sender: senderId,
+      type: "dm_received",
+      title: `New image from ${req.user.fullName}`,
+      message: "Sent you a photo",
+      actionUrl: `/chat/${senderId.toString()}`,
+      actionLabel: "View",
+    });
+
+    res.status(201).json({ message });
+  } catch (err) {
+    console.error("❌ sendImageMessage error:", err);
+    res.status(500).json({ message: "Failed to send image" });
+  }
+};
+
+// ================== BLOCK USER ==================
+const blockUser = async (req, res) => {
+  try {
+    const blockerId = req.user._id;
+    const blockedId = req.params.userId;
+
+    if (blockerId.toString() === blockedId) {
+      return res.status(400).json({ message: "Cannot block yourself" });
+    }
+
+    // Check if already blocked
+    const existing = await BlockedUser.findOne({
+      blocker: blockerId,
+      blocked: blockedId,
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: "User already blocked" });
+    }
+
+    await BlockedUser.create({
+      blocker: blockerId,
+      blocked: blockedId,
+    });
+
+    res.status(200).json({ message: "User blocked successfully" });
+  } catch (err) {
+    console.error("❌ blockUser error:", err);
+    res.status(500).json({ message: "Failed to block user" });
+  }
+};
+
+module.exports = { getMessages, sendMessage, getConversations, ensureAcceptedChat, sendImageMessage, blockUser };

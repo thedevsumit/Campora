@@ -2,10 +2,12 @@ const express = require("express");
 const protectRoute = require("../middleware/auth.middleware");
 const { checkPermission, isAdmin } = require("../middleware/rbac.middleware");
 const upload = require("../middleware/multer.middleware");
+const { eventCreateLimiter } = require("../middleware/rateLimit.middleware");
 const {
   createEvent,
   getAllEvents,
   registerForEvent,
+  withdrawFromEvent,
   getEventRegistrations,
   deleteEvent,
   getClubEvents,
@@ -26,11 +28,12 @@ const router = express.Router();
 /* STUDENT */
 router.get("/", protectRoute, getAllEvents);
 router.post("/:eventId/register", protectRoute, registerForEvent);
+router.delete("/:eventId/register", protectRoute, withdrawFromEvent);
 router.get("/my-events", protectRoute, getMyEvents);
 router.get("/collaborative", protectRoute, getCollaborativeEvents);
 
 /* ORGANIZER */
-router.post("/club/:clubId", protectRoute, upload.single("coverImage"), createEvent);
+router.post("/club/:clubId", protectRoute, eventCreateLimiter, upload.single("coverImage"), createEvent);
 router.put("/:eventId/submit", protectRoute, submitForApproval);
 router.put("/:eventId/budget", protectRoute, updateBudget);
 router.post("/:eventId/collaborate/:clubId", protectRoute, addCollaboratingClub);

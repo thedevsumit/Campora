@@ -4,6 +4,7 @@ import { useClubStore } from "../store/useClubStore";
 import ClubCard from "../components/ClubCard";
 import Navbar from "./Navbar";
 import Button from "./ui/Button";
+import Loader from "./ui/Loader";
 import { Search, Plus, Users, Sparkles, Folders, Zap, Globe, ArrowRight, Star, Heart, Trophy } from "lucide-react";
 
 const categories = ["All", "Technical", "Cultural", "Sports", "Arts", "Business", "Social"];
@@ -340,14 +341,12 @@ const ClubsPage = () => {
         </div>
 
         {isFetchingClubs ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="flex flex-col items-center gap-5">
-              <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-              <p className="text-slate-500 animate-pulse text-lg">
-                Loading clubs...
-              </p>
-            </div>
-          </div>
+          <Loader
+            fullPage={false}
+            variant="page"
+            text="Loading amazing clubs..."
+            className="!relative !bg-transparent !min-h-[400px]"
+          />
         ) : filteredClubs.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">

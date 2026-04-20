@@ -14,6 +14,8 @@ const resourceSchema = new mongoose.Schema({
   availableDays: [{ type: Number }],
   availableStartTime: { type: String, default: "08:00" },
   availableEndTime: { type: String, default: "20:00" },
+  availableFrom: { type: Date, default: null },
+  availableTo: { type: Date, default: null },
   requiresApproval: { type: Boolean, default: true },
   maxBookingHours: { type: Number, default: 4 },
   advanceBookingDays: { type: Number, default: 7 },

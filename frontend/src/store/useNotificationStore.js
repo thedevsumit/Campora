@@ -9,10 +9,19 @@ export const useNotificationStore = create((set, get) => ({
   total: 0,
   currentPage: 1,
   isBellOpen: false,
+  lastClearedAt: null,
 
   setBellOpen: (open) => set({ isBellOpen: open }),
 
   fetchNotifications: async (page = 1) => {
+    const { lastClearedAt } = get();
+
+    // If notifications were cleared very recently (within 2 seconds), don't refetch
+    if (lastClearedAt && Date.now() - lastClearedAt < 2000) {
+      set({ isLoading: false, notifications: [], unreadCount: 0 });
+      return;
+    }
+
     set({ isLoading: true });
     try {
       const { data } = await axiosInstance.get(`/notifications?page=${page}&limit=20`);
@@ -82,22 +91,21 @@ export const useNotificationStore = create((set, get) => ({
   },
 
   clearAll: async () => {
+    // Store current notifications in case of error
+    const { notifications: currentNotifications, unreadCount: currentUnreadCount } = get();
+
     // Optimistic clear — clear UI immediately, then sync with server
-    set({ notifications: [], unreadCount: 0 });
+    set({ notifications: [], unreadCount: 0, lastClearedAt: Date.now() });
+
     try {
-      const baseURL = axiosInstance.defaults.baseURL;
-      const token = localStorage.getItem("campora_token");
-      await fetch(`${baseURL}/notifications/clear-all`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: "include",
-      });
+      const { data } = await axiosInstance.delete("/notifications/clear-all");
+      console.log(`Cleared ${data.deletedCount || 'unknown'} notifications from server`);
       toast.success("All notifications cleared");
     } catch (error) {
-      // Silently fail — UI is already cleared
+      // Restore notifications on error
+      set({ notifications: currentNotifications, unreadCount: currentUnreadCount, lastClearedAt: null });
+      toast.error("Failed to clear notifications");
+      console.error("Failed to clear notifications:", error);
     }
   },
 

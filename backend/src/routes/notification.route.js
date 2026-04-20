@@ -66,7 +66,22 @@ router.put("/read-all", protectRoute, async (req, res) => {
   }
 });
 
-// Delete notification
+// Clear all notifications - MUST come before /:notifId route
+router.delete("/clear-all", protectRoute, async (req, res) => {
+  try {
+    const result = await Notification.deleteMany({ recipient: req.user._id });
+    console.log(`Cleared ${result.deletedCount} notifications for user ${req.user._id}`);
+    return res.status(200).json({
+      message: "All notifications cleared",
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error("clearAllNotifications error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Delete single notification - MUST come after /clear-all
 router.delete("/:notifId", protectRoute, async (req, res) => {
   try {
     const notification = await Notification.findOneAndDelete({ _id: req.params.notifId, recipient: req.user._id });
@@ -74,17 +89,6 @@ router.delete("/:notifId", protectRoute, async (req, res) => {
     return res.status(200).json({ message: "Notification deleted" });
   } catch (error) {
     console.error("deleteNotification error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Clear all notifications
-router.delete("/clear-all", protectRoute, async (req, res) => {
-  try {
-    await Notification.deleteMany({ recipient: req.user._id });
-    return res.status(200).json({ message: "All notifications cleared" });
-  } catch (error) {
-    console.error("clearAllNotifications error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 });

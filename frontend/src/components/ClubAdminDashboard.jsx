@@ -12,12 +12,13 @@ import Modal from "./ui/Modal";
 import { axiosInstance } from "../lib/axios";
 import { userAuthStore } from "../store/useAuthStore";
 import { toast } from "react-toastify";
-import { Settings, Users, Calendar, Megaphone, Crown, Shield, Trash2, UserPlus, ArrowRight, Image, X, Upload, Eye } from "lucide-react";
+import { Settings, Users, Calendar, Megaphone, Crown, Shield, Trash2, UserPlus, ArrowRight, Image, X, Upload, Eye, UserCheck, UserX } from "lucide-react";
+import Loader from "./ui/Loader";
 
 export default function ClubAdminDashboard() {
   const { clubId } = useParams();
   const [searchParams] = useSearchParams();
-  const { adminClub, loading, fetchAdminClub, addMember, removeMember, changeRole, createAnnouncement, fetchAnnouncements, deleteAnnouncement } = useClubAdminStore();
+  const { adminClub, loading, fetchAdminClub, addMember, removeMember, changeRole, createAnnouncement, fetchAnnouncements, deleteAnnouncement, fetchJoinRequests, acceptJoinRequest, rejectJoinRequest, joinRequests = [] } = useClubAdminStore();
   const { authUser } = userAuthStore();
   const [clubData, setClubData] = useState(null);
   const [sending, setSending] = useState(false);
@@ -27,6 +28,10 @@ export default function ClubAdminDashboard() {
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedRequestForReject, setSelectedRequestForReject] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const clubIdRef = useRef(clubId);
+  useEffect(() => { clubIdRef.current = clubId; }, [clubId]);
 
   const [announcementData, setAnnouncementData] = useState({ title: "", message: "", image: "", audience: "members", duration: 60 });
   const [newMember, setNewMember] = useState({ email: "", role: "member" });
@@ -37,30 +42,47 @@ export default function ClubAdminDashboard() {
   useEffect(() => {
     const load = async () => {
       if (!clubId) return;
-      await fetchAdminClub(clubId);
+      setIsLoading(true);
+      try {
+        await fetchAdminClub(clubId);
+      } catch {
+        // handled in store
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, [clubId, fetchAdminClub]);
 
   useEffect(() => {
     if (!adminClub) return;
-    setClubData({
-      clubName: adminClub.clubName,
-      description: adminClub.description,
-      icon: adminClub.clubIcon,
-      members: adminClub.members.length,
-      followers: adminClub.followers.length,
-    });
-    setMembers(adminClub.members.map((m) => ({
-      id: m.user._id,
-      name: m.user.fullName,
-      email: m.user.email,
-      role: m.role || "member",
-      department: "N/A",
-      joinedAt: new Date(m.joinedAt).toISOString().split("T")[0],
-    })));
+    try {
+      setClubData({
+        clubName: adminClub.clubName,
+        description: adminClub.description,
+        icon: adminClub.clubIcon,
+        members: adminClub.members?.length || 0,
+        followers: adminClub.followers?.length || 0,
+      });
+      setMembers((adminClub.members || []).map((m) => ({
+        id: m.user?._id,
+        name: m.user?.fullName,
+        email: m.user?.email,
+        role: m.role || "member",
+        department: "N/A",
+        joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString().split("T")[0] : "",
+      })));
+    } catch (e) {
+      console.error("Error mapping admin club data:", e);
+    }
     setIsLoading(false);
   }, [adminClub]);
+
+  useEffect(() => {
+    if (activeTab === "requests" && clubIdRef.current) {
+      fetchJoinRequests(clubIdRef.current);
+    }
+  }, [activeTab, fetchJoinRequests]);
 
   const currentUserRole = adminClub?.members?.find((m) => m.user._id?.toString() === authUser?._id?.toString())?.role;
   const isClubCreator = adminClub?.createdBy?.toString() === authUser?._id?.toString();
@@ -96,9 +118,11 @@ export default function ClubAdminDashboard() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
+      await fetchAdminClub(clubId);
       setShowAnnouncementModal(false);
       setAnnouncementData({ title: "", message: "", image: "", audience: "members", duration: 60 });
       setAnnouncementImagePreview(null);
+      toast.success("Announcement published!");
     } catch (error) {
       console.error(error);
     } finally {
@@ -146,18 +170,21 @@ export default function ClubAdminDashboard() {
   const tabs = [
     { id: "overview", label: "Overview", icon: Settings },
     { id: "members", label: "Members", icon: Users },
+    { id: "requests", label: "Requests", icon: UserCheck },
     { id: "events", label: "Events", icon: Calendar },
     { id: "announcements", label: "Announcements", icon: Megaphone },
   ];
 
   if (isLoading || !clubData) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <>
         <Navbar />
-        <div className="flex items-center justify-center py-24">
-          <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-        </div>
-      </div>
+        <Loader
+          variant="page"
+          text="Loading club admin dashboard..."
+          className="!relative !bg-slate-50 dark:!bg-slate-950 !min-h-[calc(100vh-64px)]"
+        />
+      </>
     );
   }
 
@@ -326,6 +353,70 @@ export default function ClubAdminDashboard() {
           </div>
         )}
 
+        {/* Requests Tab */}
+        {activeTab === "requests" && (
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-primary-500" />
+                Join Requests
+              </h2>
+            </div>
+            {joinRequests.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No join requests at the moment.</p>
+            ) : (
+              <div className="space-y-3">
+                {joinRequests.map((req) => (
+                  <div key={req._id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-bold text-sm">
+                        {req.user?.fullName?.[0] || "?"}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900 dark:text-white">{req.user?.fullName || "Unknown"}</p>
+                        <p className="text-sm text-slate-500">{req.user?.email || ""}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {req.createdAt ? new Date(req.createdAt).toLocaleDateString() : ""}
+                        </p>
+                      </div>
+                    </div>
+                    {req.status === "pending" ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            await acceptJoinRequest(clubId, req._id);
+                            await fetchJoinRequests(clubId);
+                            await fetchAdminClub(clubId);
+                          }}
+                          className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                        >
+                          <UserCheck className="w-4 h-4 mr-1" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setSelectedRequestForReject(req); setRejectReason(""); }}
+                          className="text-danger-500 border-danger-200 dark:border-danger-800 hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                        >
+                          <UserX className="w-4 h-4 mr-1" />
+                          Decline
+                        </Button>
+                      </div>
+                    ) : (
+                      <Badge variant={req.status === "accepted" ? "success" : "danger"}>
+                        {req.status === "accepted" ? "Accepted" : "Declined"}
+                        {req.rejectionReason && <span className="ml-1 text-xs">— {req.rejectionReason}</span>}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Events Tab */}
         {activeTab === "events" && (
           <div className="animate-fade-in-up">
@@ -348,13 +439,58 @@ export default function ClubAdminDashboard() {
                 </Button>
               )}
             </div>
-            <p className="text-slate-500 text-center py-8">Create announcements to notify your club members.</p>
+            {!adminClub?.announcements || adminClub.announcements.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No announcements yet. Create one to notify your club members.</p>
+            ) : (
+              <div className="space-y-4">
+                {adminClub.announcements.slice().reverse().map((ann) => (
+                  <div key={ann._id} className="border border-slate-100 dark:border-slate-700 rounded-xl p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{ann.title}</h3>
+                        <p className="text-sm text-slate-500 mt-1">{ann.message}</p>
+                        {ann.image && (
+                          <img
+                            src={getImageUrl(ann.image)}
+                            alt={ann.title}
+                            className="mt-3 rounded-lg max-h-48 object-cover"
+                          />
+                        )}
+                        <p className="text-xs text-slate-400 mt-2">
+                          {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString() : ""}
+                        </p>
+                      </div>
+                      {canCreateAnnouncement && (
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm("Delete this announcement?")) return;
+                            await deleteAnnouncement(clubId, ann._id);
+                            await fetchAdminClub(clubId);
+                          }}
+                          className="p-2 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg text-danger-500 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Edit Club Modal */}
-      {showEditModal && <EditClubModal club={adminClub} onClose={() => setShowEditModal(false)} />}
+      {showEditModal && (
+        <EditClubModal
+          show={showEditModal}
+          clubData={adminClub}
+          clubId={clubId}
+          onUpdated={() => fetchAdminClub(clubId)}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
 
       {/* Add Member Modal */}
       <Modal isOpen={showAddMemberModal} onClose={() => setShowAddMemberModal(false)} title="Add Member" size="sm">
@@ -482,6 +618,45 @@ export default function ClubAdminDashboard() {
             >
               <Megaphone className="w-4 h-4 mr-2" />
               Publish Announcement
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject Reason Modal */}
+      <Modal
+        isOpen={!!selectedRequestForReject}
+        onClose={() => { setSelectedRequestForReject(null); setRejectReason(""); }}
+        title="Decline Join Request"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-500">
+            Optionally provide a reason for declining. This will be shared with the user.
+          </p>
+          <textarea
+            rows={3}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Reason (optional)"
+            className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-primary-500 resize-none"
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => { setSelectedRequestForReject(null); setRejectReason(""); }}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={async () => {
+                if (!selectedRequestForReject) return;
+                await rejectJoinRequest(clubId, selectedRequestForReject._id, rejectReason);
+                await fetchJoinRequests(clubId);
+                setSelectedRequestForReject(null);
+                setRejectReason("");
+              }}
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+            >
+              Decline Request
             </Button>
           </div>
         </div>

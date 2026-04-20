@@ -21,6 +21,14 @@ const privateMessageSchema = new mongoose.Schema(
       trim: true,
       required: true,
     },
+    imageUrl: {
+      type: String,
+      default: null,
+    },
+    isImage: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

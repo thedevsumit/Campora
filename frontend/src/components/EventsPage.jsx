@@ -8,10 +8,11 @@ import Button from "./ui/Button";
 import Badge from "./ui/Badge";
 import Modal from "./ui/Modal";
 import Input from "./ui/Input";
+import Loader from "./ui/Loader";
 import {
   Calendar, Clock, MapPin, Users, Search, ChevronRight,
   PartyPopper, Sparkles, Ticket, Star, ArrowRight, Globe,
-  Trophy, Zap, Heart, Code, CheckCircle, Loader2, Plus, X
+  Trophy, Zap, Heart, Code, CheckCircle, Loader2, Plus, X, LogOut
 } from "lucide-react";
 
 const whyAttendItems = [
@@ -43,7 +44,7 @@ const eventTypes = [
 ];
 
 export default function EventsPage() {
-  const { events, loading, fetchAllEvents, registerForEvent } = useEventStore();
+  const { events, loading, fetchAllEvents, registerForEvent, withdrawFromEvent, fetchEventById, registeredEventIds } = useEventStore();
   const { authUser } = userAuthStore();
   const navigate = useNavigate();
   const [filterCategory, setFilterCategory] = useState("all");
@@ -78,18 +79,15 @@ export default function EventsPage() {
     setShowRegisterModal(true);
   };
 
-  const handleViewParticipants = async (event) => {
-    // Fetch full event details (including participants) before showing modal
+  const handleWithdraw = async (event) => {
+    if (!window.confirm("Are you sure you want to withdraw from this event?")) return;
     try {
-      const detailed = await fetchEventById(event._id);
-      setSelectedEvent(detailed || event);
+      await withdrawFromEvent(event._id);
+      setSelectedEvent(null);
     } catch (e) {
-      // Fallback to the passed event if fetch fails
-      console.error('Failed to fetch event details:', e);
-      setSelectedEvent(event);
+      console.error("Failed to withdraw:", e);
     }
   };
-  
 
   const addTeamMember = () => {
     setTeamMembers([...teamMembers, { name: "", email: "" }]);
@@ -146,12 +144,11 @@ export default function EventsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="flex flex-col items-center gap-5">
-          <div className="w-14 h-14 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-          <p className="text-slate-500 animate-pulse text-lg">Loading events...</p>
-        </div>
-      </div>
+      <Loader
+        variant="page"
+        text="Discovering amazing events..."
+        className="!relative !min-h-screen"
+      />
     );
   }
 
@@ -557,9 +554,7 @@ export default function EventsPage() {
               const percent = (registered / event.maxParticipants) * 100 || 0;
               const isFull = registered >= event.maxParticipants;
 
-              const isRegistered = event.registrations?.some(
-                (reg) => reg.email === authUser.email,
-              );
+              const isRegistered = registeredEventIds.has(event._id);
 
               console.log(event);
 
@@ -714,14 +709,17 @@ export default function EventsPage() {
                         }
                         onClick={() =>
                           isRegistered
-                            ? handleViewParticipants(event)
+                            ? handleWithdraw(event)
                             : handleRegister(event)
                         }
                         disabled={!isRegistered && isFull}
                         className="gap-1.5 font-semibold"
                       >
                         {isRegistered ? (
-                          "Event Info"
+                          <>
+                            <LogOut className="w-4 h-4" />
+                            Withdraw Entry
+                          </>
                         ) : isFull ? (
                           "Full"
                         ) : (
@@ -848,41 +846,6 @@ export default function EventsPage() {
           </div>
         </div>
       </div>
-
-      {selectedEvent && !showRegisterModal && (
-        <Modal
-          isOpen={true}
-          onClose={() => setSelectedEvent(null)}
-          title="Event Participants"
-          size="md"
-        >
-          <div className="space-y-3 max-h-[400px] overflow-y-auto">
-            {selectedEvent.registrations?.length > 0 ? (
-              selectedEvent.registrations.map((user, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center p-3 rounded-xl bg-slate-100 dark:bg-slate-800"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {user.name}
-                    </p>
-                    <p className="text-sm text-slate-500">{user.email}</p>
-                  </div>
-
-                  {user.email === authUser.email && (
-                    <span className="text-xs text-green-500 font-semibold">
-                      You
-                    </span>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-slate-500">No participants yet</p>
-            )}
-          </div>
-        </Modal>
-      )}
 
       {/* Register Modal */}
       <Modal

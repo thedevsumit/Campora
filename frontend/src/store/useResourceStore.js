@@ -99,7 +99,29 @@ export const useResourceStore = create((set, get) => ({
       toast.success("Booking cancelled");
     } catch (error) {
       toast.error("Failed to cancel booking");
+      throw error;
     }
+  },
+
+  deleteResource: async (resourceId) => {
+    try {
+      await axiosInstance.delete(`/resources/${resourceId}`);
+      set(state => ({
+        resources: state.resources.filter(r => r._id !== resourceId)
+      }));
+      toast.success("Resource deleted");
+    } catch (error) {
+      toast.error("Failed to delete resource");
+      throw error;
+    }
+  },
+
+  unbookResource: async (resourceId) => {
+    const booking = get().bookings.find(
+      b => b.resource?._id === resourceId && ["pending", "approved"].includes(b.status)
+    );
+    if (!booking) return;
+    await get().cancelBooking(booking._id);
   },
 
   approveBooking: async (bookingId) => {

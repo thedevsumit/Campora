@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const path = require("path");
 const Club = require("../models/club.model");
 const User = require("../models/user.model");
+const JoinRequest = require("../models/joinRequest.model");
+const sendNotification = require("../lib/sendNotification");
 
 /* =========================
    CREATE CLUB
@@ -153,7 +155,7 @@ const deleteClub = async (req, res) => {
 };
 
 /* =========================
-   JOIN CLUB
+   JOIN CLUB (request to join)
 ========================= */
 const joinClub = async (req, res) => {
   try {
@@ -172,22 +174,137 @@ const joinClub = async (req, res) => {
       return res.status(400).json({ message: "Already a member" });
     }
 
-    club.members.push({ user: userId });
-    club.followers = club.followers.filter(
-      (id) => id.toString() !== userId.toString(),
-    );
+    // Check for existing pending request
+    const existing = await JoinRequest.findOne({ club: clubId, user: userId, status: "pending" });
+    if (existing) {
+      return res.status(400).json({ message: "Request already pending" });
+    }
 
-    await club.save();
+    await JoinRequest.create({ club: clubId, user: userId });
 
-    await User.findByIdAndUpdate(userId, {
-      $addToSet: { joinedClubs: clubId },
-      $pull: { followedClubs: clubId },
-    });
+    // Notify club admins & owner
+    const admins = club.members.filter((m) => ["admin", "moderator"].includes(m.role) || club.createdBy.toString() === m.user.toString());
+    for (const admin of admins) {
+      await sendNotification({
+        app: req.app,
+        recipient: admin.user._id,
+        sender: userId,
+        type: "join_request",
+        title: "New Join Request",
+        message: `${req.user.fullName} wants to join ${club.clubName}`,
+        relatedClub: clubId,
+        actionUrl: `/clubs/${clubId}/admin`,
+        actionLabel: "Review",
+      });
+    }
 
-    return res.status(200).json({ message: "Joined club successfully" });
+    return res.status(200).json({ message: "Join request sent" });
   } catch (err) {
     console.error("joinClub error:", err);
-    return res.status(500).json({ message: "Failed to join club" });
+    return res.status(500).json({ message: "Failed to send join request" });
+  }
+};
+
+/* =========================
+   GET JOIN REQUESTS (admin)
+========================= */
+const getJoinRequests = async (req, res) => {
+  try {
+    const requests = await JoinRequest.find({ club: req.club._id })
+      .populate("user", "fullName email profilePic")
+      .sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("getJoinRequests:", err);
+    res.status(500).json({ message: "Failed to fetch requests" });
+  }
+};
+
+/* =========================
+   ACCEPT JOIN REQUEST
+========================= */
+const acceptJoinRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const request = await JoinRequest.findById(requestId);
+    if (!request || request.club.toString() !== req.club._id.toString()) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+    if (request.status !== "pending") {
+      return res.status(400).json({ message: "Request already processed" });
+    }
+
+    request.status = "accepted";
+    request.respondedAt = new Date();
+    await request.save();
+
+    const club = await Club.findById(req.club._id);
+    const alreadyMember = club.members.some((m) => m.user.toString() === request.user.toString());
+    if (!alreadyMember) {
+      club.members.push({ user: request.user, role: "member" });
+      await club.save();
+    }
+
+    await sendNotification({
+      app: req.app,
+      recipient: request.user,
+      sender: req.user._id,
+      type: "join_accepted",
+      title: "Join Request Accepted!",
+      message: `Your request to join ${club.clubName} has been accepted. You're now a member!`,
+      relatedClub: club._id,
+      actionUrl: `/clubs/${club._id}`,
+      actionLabel: "Open Club",
+    });
+
+    res.json({ message: "Request accepted" });
+  } catch (err) {
+    console.error("acceptJoinRequest:", err);
+    res.status(500).json({ message: "Failed to accept request" });
+  }
+};
+
+/* =========================
+   REJECT JOIN REQUEST
+========================= */
+const rejectJoinRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { reason } = req.body;
+
+    const request = await JoinRequest.findById(requestId);
+    if (!request || request.club.toString() !== req.club._id.toString()) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+    if (request.status !== "pending") {
+      return res.status(400).json({ message: "Request already processed" });
+    }
+
+    request.status = "rejected";
+    request.rejectionReason = reason || "";
+    request.respondedAt = new Date();
+    await request.save();
+
+    const club = await Club.findById(req.club._id);
+
+    await sendNotification({
+      app: req.app,
+      recipient: request.user,
+      sender: req.user._id,
+      type: "join_rejected",
+      title: "Join Request Declined",
+      message: reason
+        ? `Your request to join ${club.clubName} was declined: ${reason}`
+        : `Your request to join ${club.clubName} was declined.`,
+      relatedClub: club._id,
+      actionUrl: `/clubs`,
+      actionLabel: "Browse Clubs",
+    });
+
+    res.json({ message: "Request rejected" });
+  } catch (err) {
+    console.error("rejectJoinRequest:", err);
+    res.status(500).json({ message: "Failed to reject request" });
   }
 };
 
@@ -554,5 +671,8 @@ module.exports = {
   createAnnouncement,
   getAnnouncements,
   deleteAnnouncement,
+  getJoinRequests,
+  acceptJoinRequest,
+  rejectJoinRequest,
   getUserByEmail
 };

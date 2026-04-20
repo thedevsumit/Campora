@@ -3,10 +3,12 @@ const User = require("../models/user.model")
 
 const protectRoute = async (req, res, next) => {
     try {
-        // Support both cookie and URL query param (for OAuth redirect flow)
+        // Support cookie, query param, or Authorization header
         const cookie = req.cookies.token
         const queryToken = req.query.token
-        const token = cookie || queryToken
+        const authHeader = req.headers.authorization
+        const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
+        const token = cookie || queryToken || bearerToken
 
         if (!token) {
             return res.status(401).json({

@@ -25,6 +25,7 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import ResourceBookingPage from "./pages/ResourceBookingPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import FeedPage from "./pages/FeedPage";
+import NotFoundPage from "./components/NotFoundPage";
 
 
 function App() {
@@ -50,7 +51,7 @@ function App() {
         <Routes>
           <Route
             path="/home"
-            element={authUser ? <HomePage /> : <Navigate to="/signup" />}
+            element={authUser ? <HomePage /> : <Navigate to="/login" />}
           />
           <Route
             path="/"
@@ -58,7 +59,7 @@ function App() {
           />
           <Route
             path="/events"
-            element={authUser ? <EventsPage /> : <Navigate to="/signup" />}
+            element={authUser ? <EventsPage /> : <Navigate to="/login" />}
           />
           <Route
             path="/login"
@@ -70,7 +71,7 @@ function App() {
           />
           <Route
             path="/forgot-password"
-            element={<ForgotPassword />}
+            element={!authUser ? <ForgotPassword /> : <Navigate to="/" />}
           />
           <Route
             path="/clubs"
@@ -94,11 +95,26 @@ function App() {
             path="/clubs/:clubId"
             element={authUser ? <ClubDetailsPage /> : <Navigate to="/login" />}
           />
-          <Route path="/profile/:userId" element={<UserProfilePage />} />
-          <Route path="/chat/requests" element={<ChatRequestsPage />} />
-          <Route path="/chat" element={<ChatInboxPage />} />
-          <Route path="/chat/:userId" element={<PrivateChatPage />} />
-          <Route path="/clubs/:clubId/chat" element={<ClubGroupChatPage />} />
+          <Route
+            path="/profile/:userId"
+            element={authUser ? <UserProfilePage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/chat/requests"
+            element={authUser ? <ChatRequestsPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/chat"
+            element={authUser ? <ChatInboxPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/chat/:userId"
+            element={authUser ? <PrivateChatPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/clubs/:clubId/chat"
+            element={authUser ? <ClubGroupChatPage /> : <Navigate to="/login" />}
+          />
           <Route
             path="/admin/dashboard"
             element={
@@ -131,6 +147,7 @@ function App() {
             path="/feed"
             element={authUser ? <FeedPage /> : <Navigate to="/login" />}
           />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </div>

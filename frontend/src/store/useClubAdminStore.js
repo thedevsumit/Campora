@@ -6,16 +6,47 @@ export const useClubAdminStore = create((set) => ({
   adminClub: null,
   loading: false,
   announcements: [],
+  joinRequests: [],
 
   fetchAdminClub: async (clubId) => {
-    set({ loading: true });
+    set({ loading: true, adminClub: null });
     try {
       const res = await axiosInstance.get(`/clubs/admin/${clubId}`);
       set({ adminClub: res.data.club });
     } catch {
-      toast.error("Not authorized");
+      set({ adminClub: null });
+      toast.error("Not authorized to view this club's dashboard");
     } finally {
       set({ loading: false });
+    }
+  },
+
+  fetchJoinRequests: async (clubId) => {
+    try {
+      const res = await axiosInstance.get(`/clubs/${clubId}/join-requests`);
+      set({ joinRequests: res.data.requests || [] });
+    } catch {
+      set({ joinRequests: [] });
+    }
+  },
+
+  acceptJoinRequest: async (clubId, requestId) => {
+    try {
+      await axiosInstance.post(`/clubs/${clubId}/join-requests/${requestId}/accept`);
+      toast.success("Request accepted");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to accept");
+      throw err;
+    }
+  },
+
+  rejectJoinRequest: async (clubId, requestId, reason) => {
+    try {
+      await axiosInstance.post(`/clubs/${clubId}/join-requests/${requestId}/reject`, { reason });
+      toast.success("Request declined");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to decline");
+      throw err;
     }
   },
 

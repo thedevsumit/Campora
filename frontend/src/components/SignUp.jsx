@@ -16,7 +16,7 @@ export default function SignUpPage() {
   const [dept, setDept] = useState("");
   const [year, setYear] = useState("");
   const navigate = useNavigate();
-  const { signupAuth } = userAuthStore();
+  const { signupAuth, isSigningUp } = userAuthStore();
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
   const [otp, setOtp] = useState("");
@@ -232,10 +232,11 @@ export default function SignUpPage() {
             <Button
               onClick={isOtpSent ? (isOtpVerified ? handleSubmit : handleVerifyOtp) : handleGetOtp}
               disabled={!isOtpVerified && (!formData.email || (!isOtpSent && agreedToPolicy === false))}
+              isLoading={isOtpSent && isOtpVerified ? isSigningUp : isLoadingOtp}
               className="w-full"
               size="xl"
             >
-              {!isOtpSent ? "Send OTP" : isOtpVerified ? "Create Account" : "Verify Email"}
+              {!isOtpSent ? (isLoadingOtp ? "Sending OTP..." : "Send OTP") : isOtpVerified ? (isSigningUp ? "Creating Account..." : "Create Account") : (isVerifyingOtp ? "Verifying..." : "Verify Email")}
               <ArrowRight className="w-5 h-5" />
             </Button>
 

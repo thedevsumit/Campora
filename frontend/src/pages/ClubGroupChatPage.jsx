@@ -5,6 +5,7 @@ import { useClubChatStore } from "../store/useClubChatStore";
 import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import Button from "../components/ui/Button";
+import Loader from "../components/ui/Loader";
 import { Send, ArrowLeft, MessageCircle, Sparkles } from "lucide-react";
 
 const formatTime = (d) =>
@@ -29,6 +30,7 @@ const ClubGroupChatPage = () => {
 
   const {
     messages,
+    loading,
     setActiveClub,
     fetchMessages,
     sendMessage,
@@ -52,6 +54,19 @@ const ClubGroupChatPage = () => {
     sendMessage(text);
     setText("");
   };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <Loader
+          variant="page"
+          text="Loading club chat..."
+          className="!relative !bg-slate-50 dark:!bg-slate-950 !min-h-[calc(100vh-64px)]"
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">

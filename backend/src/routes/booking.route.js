@@ -10,10 +10,8 @@ const ChatRequest = require("../models/chatRequest.model");
 const sendNotification = require("../lib/sendNotification");
 const User = require("../models/user.model");
 
-// Helper: get consistent chatId between two user IDs
 const getChatId = (a, b) => [a.toString(), b.toString()].sort().join("_");
 
-// Helper: auto-accept chat between two users (used for booking → direct DM flow)
 const ensureAcceptedChat = async (userA, userB) => {
   const existing = await ChatRequest.findOne({
     $or: [
@@ -34,7 +32,20 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
     const resourceDoc = await Resource.findById(resource);
     if (!resourceDoc) return res.status(404).json({ message: "Resource not found" });
 
-    // RULE 1: Resource creator CANNOT book their own resource
+    if (slots && slots[0]) {
+      const slot = slots[0];
+      if (resourceDoc.availableFrom && new Date(slot.date) < new Date(resourceDoc.availableFrom)) {
+        return res.status(400).json({
+          message: `Booking date cannot be before ${new Date(resourceDoc.availableFrom).toLocaleDateString()}`
+        });
+      }
+      if (resourceDoc.availableTo && new Date(slot.dateTo || slot.date) > new Date(resourceDoc.availableTo)) {
+        return res.status(400).json({
+          message: `Booking end date cannot be after ${new Date(resourceDoc.availableTo).toLocaleDateString()}`
+        });
+      }
+    }
+
     const creatorId = resourceDoc.createdBy
       ? (resourceDoc.createdBy._id || resourceDoc.createdBy).toString()
       : null;
@@ -44,7 +55,6 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
       });
     }
 
-    // RULE 2: Check if user already has a pending/approved booking for this resource
     const existingBooking = await Booking.findOne({
       bookedBy: req.user._id,
       resource,
@@ -59,11 +69,9 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
     const isUserAdmin = req.user.role === "superAdmin" || req.user.userRole === "admin";
     const isCommunityResource = !!creatorId;
 
-    // RULE 3: Community resources → ALWAYS auto-approve (no pending)
-    //         Admin resources → follow requiresApproval flag
     let status;
     if (isCommunityResource) {
-      status = "approved"; // Auto-approved immediately
+      status = "approved";
     } else {
       status = resourceDoc.requiresApproval && !isUserAdmin ? "pending" : "approved";
     }
@@ -78,9 +86,12 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
       event,
       status
     });
+    await booking.populate([
+      { path: "resource", populate: { path: "createdBy", select: "fullName email" } },
+      { path: "bookedBy", select: "fullName email" }
+    ]);
 
     if (status === "approved") {
-      // Notify the booking user of confirmation
       await sendNotification({
         app: req.app,
         recipient: req.user._id,
@@ -93,13 +104,11 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
         actionLabel: "View Booking",
       });
 
-      // If community resource, also notify the resource creator and send a direct DM
-      if (isCommunityResource) {
-        // Auto-accept chat and send first message directly (no chat request permission needed)
+      if (creatorId) {
         await ensureAcceptedChat(req.user._id, creatorId);
 
         const chatId = getChatId(req.user._id, creatorId);
-        const dmContent = `Hi! I just booked your resource "${resourceDoc.name}"${booking.slots[0]?.date ? ` for ${booking.slots[0].date}` : ""}. Thanks!`;
+        const dmContent = `Hi! I just booked your resource "${resourceDoc.name}"${booking.slots[0]?.date ? ` for ${new Date(booking.slots[0].date).toLocaleDateString()}` : ""}. Thanks!`;
 
         let dm = await PrivateMessage.create({
           chatId,
@@ -109,17 +118,15 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
         });
         dm = await dm.populate("sender", "fullName profilePic");
 
-        // Emit via socket so creator sees it in real-time
         const io = req.app.get("io");
         if (io) io.to(creatorId.toString()).emit("receiveMessage", dm);
 
-        // Notify the resource creator
         await sendNotification({
           app: req.app,
           recipient: creatorId,
           sender: req.user._id,
           type: "booking_approved",
-          title: "Your Resource Was Booked!",
+          title: isCommunityResource ? "Your Resource Was Booked!" : "Resource Booked by User",
           message: `${req.user.fullName} booked your resource "${resourceDoc.name}".`,
           relatedBooking: booking._id,
           actionUrl: "/notifications",
@@ -128,13 +135,12 @@ router.post("/", protectRoute, checkPermission("booking:create:own"), checkBooki
       }
 
       return res.status(201).json({
-        message: isCommunityResource
+        message: creatorId
           ? "Booking confirmed! The resource owner has been notified."
           : "Booking confirmed!",
         booking
       });
     } else {
-      // Notify all admins about the pending booking request
       const admins = await User.find({
         $or: [{ role: "superAdmin" }, { userRole: "admin" }]
       }).select("_id");
@@ -180,6 +186,69 @@ router.get("/", protectRoute, async (req, res) => {
   }
 });
 
+// Get booking history
+router.get("/history", protectRoute, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const bookings = await Booking.find({ bookedBy: req.user._id })
+      .populate("resource", "name type code location")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    const total = await Booking.countDocuments({ bookedBy: req.user._id });
+    return res.status(200).json({ bookings, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+  } catch (error) {
+    console.error("getBookingHistory error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Check conflicts
+router.post("/check-conflicts", protectRoute, checkBookingConflicts, async (req, res) => {
+  try {
+    return res.status(200).json({ message: "No conflicts", conflicts: false });
+  } catch (error) {
+    console.error("checkConflicts error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get all bookings (admin)
+router.get("/all", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const { status, page = 1, limit = 50 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    const bookings = await Booking.find(filter)
+      .populate("resource", "name type code")
+      .populate("bookedBy", "fullName email")
+      .populate("club", "clubName")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    const total = await Booking.countDocuments(filter);
+    return res.status(200).json({ bookings, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+  } catch (error) {
+    console.error("getAllBookings error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get all pending bookings for admin dashboard
+router.get("/pending", protectRoute, isAdmin, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ status: "pending" })
+      .populate("resource", "name type code location")
+      .populate("bookedBy", "fullName email")
+      .populate("club", "clubName")
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ bookings });
+  } catch (error) {
+    console.error("getPendingBookings error:", error.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Get booking by ID
 router.get("/:bookingId", protectRoute, async (req, res) => {
   try {
@@ -201,7 +270,7 @@ router.get("/:bookingId", protectRoute, async (req, res) => {
   }
 });
 
-// Approve booking — admins or resource creators can approve
+// Approve booking
 router.put("/:bookingId/approve", protectRoute, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.bookingId).populate("resource");
@@ -211,12 +280,10 @@ router.put("/:bookingId/approve", protectRoute, async (req, res) => {
     const isResourceCreator = booking.resource?.createdBy &&
       (booking.resource.createdBy._id || booking.resource.createdBy).toString() === req.user._id.toString();
 
-    // Only admins or resource creators can approve
     if (!isUserAdmin && !isResourceCreator) {
       return res.status(403).json({ message: "Only admins or the resource creator can approve bookings" });
     }
 
-    // Prevent self-approval
     if (booking.bookedBy.toString() === req.user._id.toString()) {
       return res.status(403).json({ message: "You cannot approve your own booking request" });
     }
@@ -226,9 +293,7 @@ router.put("/:bookingId/approve", protectRoute, async (req, res) => {
     booking.approvedAt = new Date();
     await booking.save();
 
-    // When admin approves, send a direct DM to the requester
     if (isUserAdmin) {
-      // bookedBy is an ObjectId — use it directly
       const requesterId = booking.bookedBy;
       await ensureAcceptedChat(req.user._id, requesterId);
 
@@ -266,7 +331,7 @@ router.put("/:bookingId/approve", protectRoute, async (req, res) => {
   }
 });
 
-// Reject booking — admins or resource creators can reject
+// Reject booking
 router.put("/:bookingId/reject", protectRoute, async (req, res) => {
   try {
     const { rejectionReason } = req.body;
@@ -315,6 +380,30 @@ router.delete("/:bookingId", protectRoute, async (req, res) => {
     }
     booking.status = "cancelled";
     await booking.save();
+
+    let creatorId = null;
+    if (booking.resource) {
+      const resourceDoc = await Resource.findById(booking.resource);
+      if (resourceDoc?.createdBy) {
+        creatorId = typeof resourceDoc.createdBy === "object"
+          ? resourceDoc.createdBy._id?.toString()
+          : resourceDoc.createdBy.toString();
+      }
+    }
+    if (creatorId) {
+      await sendNotification({
+        app: req.app,
+        recipient: creatorId,
+        sender: req.user._id,
+        type: "booking_cancelled",
+        title: "Booking Cancelled",
+        message: `${req.user.fullName} cancelled their booking for "${booking.resource?.name}".`,
+        relatedBooking: booking._id,
+        actionUrl: "/resources",
+        actionLabel: "View Details",
+      });
+    }
+
     return res.status(200).json({ message: "Booking cancelled" });
   } catch (error) {
     console.error("cancelBooking error:", error);
@@ -337,69 +426,6 @@ router.put("/:bookingId/complete", protectRoute, async (req, res) => {
     return res.status(200).json({ message: "Booking completed", booking });
   } catch (error) {
     console.error("completeBooking error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Check conflicts
-router.post("/check-conflicts", protectRoute, checkBookingConflicts, async (req, res) => {
-  try {
-    return res.status(200).json({ message: "No conflicts", conflicts: false });
-  } catch (error) {
-    console.error("checkConflicts error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Get booking history
-router.get("/history", protectRoute, async (req, res) => {
-  try {
-    const { page = 1, limit = 20 } = req.query;
-    const bookings = await Booking.find({ bookedBy: req.user._id })
-      .populate("resource", "name type code location")
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    const total = await Booking.countDocuments({ bookedBy: req.user._id });
-    return res.status(200).json({ bookings, total, page: parseInt(page), pages: Math.ceil(total / limit) });
-  } catch (error) {
-    console.error("getBookingHistory error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Get all bookings (admin)
-router.get("/all", protectRoute, isAdmin, async (req, res) => {
-  try {
-    const { status, page = 1, limit = 50 } = req.query;
-    const filter = {};
-    if (status) filter.status = status;
-    const bookings = await Booking.find(filter)
-      .populate("resource", "name type code")
-      .populate("bookedBy", "fullName email")
-      .populate("club", "clubName")
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit));
-    const total = await Booking.countDocuments(filter);
-    return res.status(200).json({ bookings, total, page: parseInt(page), pages: Math.ceil(total / limit) });
-  } catch (error) {
-    console.error("getAllBookings error:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-// Get all pending bookings for admin dashboard
-router.get("/pending", protectRoute, isAdmin, async (req, res) => {
-  try {
-    const bookings = await Booking.find({ status: "pending" })
-      .populate("resource", "name type code location")
-      .populate("bookedBy", "fullName email")
-      .populate("club", "clubName")
-      .sort({ createdAt: -1 });
-    return res.status(200).json({ bookings });
-  } catch (error) {
-    console.error("getPendingBookings error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 });

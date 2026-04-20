@@ -1,6 +1,7 @@
 const express = require("express");
 const protectRoute = require("../middleware/auth.middleware");
 const upload = require("../middleware/multer.middleware");
+const { announcementCreateLimiter } = require("../middleware/rateLimit.middleware");
 console.log("CLUB ROUTES REGISTERED");
 
 
@@ -25,6 +26,9 @@ const {
   createAnnouncement,
   getAnnouncements,
   deleteAnnouncement,
+  getJoinRequests,
+  acceptJoinRequest,
+  rejectJoinRequest,
 } = require("../controllers/club.controller");
 
 const isClubCreator = require("../middleware/isClubCreator");
@@ -50,6 +54,11 @@ clubRoutes.post("/admin/:clubId/members", protectRoute, isClubCreator, addMember
 clubRoutes.delete("/admin/:clubId/members/:memberId", protectRoute, isClubCreator, removeMember);
 
 clubRoutes.patch("/admin/:clubId/members/:memberId", protectRoute, isClubCreator, changeMemberRole);
+
+/* ===== JOIN REQUEST ROUTES ===== */
+clubRoutes.get("/:clubId/join-requests", protectRoute, isClubCreator, getJoinRequests);
+clubRoutes.post("/:clubId/join-requests/:requestId/accept", protectRoute, isClubCreator, acceptJoinRequest);
+clubRoutes.post("/:clubId/join-requests/:requestId/reject", protectRoute, isClubCreator, rejectJoinRequest);
 
 
 clubRoutes.get("/:clubId", protectRoute, getClubById);
@@ -83,6 +92,7 @@ clubRoutes.post(
   "/:clubId/admin/announcements",
   protectRoute,
   isClubCreator,
+  announcementCreateLimiter,
   upload.single("image"),
   createAnnouncement
 );
