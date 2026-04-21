@@ -14,7 +14,7 @@ const ChatRequestsPage = () => {
     axiosInstance
       .get("/chat/requests")
       .then((res) => setRequests(res.data.requests))
-      .catch(() => console.error("Failed to load requests"));
+      .catch(() => {});
   }, []);
 
   const acceptRequest = async (req) => {

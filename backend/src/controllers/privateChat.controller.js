@@ -3,6 +3,7 @@ const ChatRequest = require("../models/chatRequest.model");
 const BlockedUser = require("../models/blockedUser.model");
 const mongoose = require("mongoose");
 const sendNotification = require("../lib/sendNotification");
+const { uploadToCloudinary } = require("../middleware/multer.middleware");
 
 // 🔑 utility: consistent chatId
 const getChatId = (a, b) => [a.toString(), b.toString()].sort().join("_");
@@ -196,13 +197,15 @@ const sendImageMessage = async (req, res) => {
 
     const chatId = getChatId(senderId, receiverId);
 
+    const result = await uploadToCloudinary(req.file.path);
+
     // ✅ CREATE MESSAGE
     let message = await PrivateMessage.create({
       chatId,
       sender: senderId,
       receiver: receiverId,
       content: content || "📷 Image",
-      imageUrl: `/uploads/${req.file.filename}`,
+      imageUrl: result.secure_url,
       isImage: true,
     });
 
@@ -264,4 +267,39 @@ const blockUser = async (req, res) => {
   }
 };
 
-module.exports = { getMessages, sendMessage, getConversations, ensureAcceptedChat, sendImageMessage, blockUser };
+// ================== UNBLOCK USER ==================
+const unblockUser = async (req, res) => {
+  try {
+    const blockerId = req.user._id;
+    const blockedId = req.params.userId;
+
+    const result = await BlockedUser.deleteOne({
+      blocker: blockerId,
+      blocked: blockedId,
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "User was not blocked" });
+    }
+
+    res.status(200).json({ message: "User unblocked successfully" });
+  } catch (err) {
+    console.error("❌ unblockUser error:", err);
+    res.status(500).json({ message: "Failed to unblock user" });
+  }
+};
+
+// ================== GET BLOCKED USERS ==================
+const getBlockedUsers = async (req, res) => {
+  try {
+    const blockedUsers = await BlockedUser.find({ blocker: req.user._id })
+      .populate("blocked", "fullName profilePic email");
+
+    res.status(200).json({ blockedUsers });
+  } catch (err) {
+    console.error("❌ getBlockedUsers error:", err);
+    res.status(500).json({ message: "Failed to fetch blocked users" });
+  }
+};
+
+module.exports = { getMessages, sendMessage, getConversations, ensureAcceptedChat, sendImageMessage, blockUser, unblockUser, getBlockedUsers };

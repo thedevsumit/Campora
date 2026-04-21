@@ -28,7 +28,6 @@ const AdminDashboard = () => {
       const res = await axiosInstance.get("/admin/pending-clubs");
       setClubs(res.data);
     } catch (error) {
-      console.error(error);
     } finally {
       setLoadingClubs(false);
     }
@@ -38,10 +37,8 @@ const AdminDashboard = () => {
     try {
       setLoadingBookings(true);
       const res = await axiosInstance.get("/bookings/pending");
-      console.log("Pending bookings response:", res.data);
       setBookings(res.data.bookings || []);
     } catch (error) {
-      console.error("Fetch bookings error:", error.response?.data || error.message);
     } finally {
       setLoadingBookings(false);
     }

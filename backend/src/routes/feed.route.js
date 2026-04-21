@@ -51,7 +51,6 @@ router.get("/", protectRoute, async (req, res) => {
       .sort({ updatedAt: -1 });
 
     const feed = [];
-    console.log("events: ",events);
     // Add events to feed
     events.forEach(event => {
       feed.push({

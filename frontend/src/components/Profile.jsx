@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EditProfileModal from "../components/EditProfile";
+import UnblockPanel from "../components/UnblockPanel";
 import { getImageUrl } from "../lib/utils";
 import { userAuthStore } from "../store/useAuthStore";
 import { useClubStore } from "../store/useClubStore";
@@ -23,6 +24,7 @@ import {
   Award,
   TrendingUp,
   Clock,
+  ShieldOff,
 } from "lucide-react";
 
 const whyJoinItems = [
@@ -192,6 +194,7 @@ const ProfilePage = () => {
   }, []);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showUnblockPanel, setShowUnblockPanel] = useState(false);
 
   const totalClubs = (joinedClubs?.length || 0) + (followedClubs?.length || 0);
 
@@ -280,22 +283,28 @@ const ProfilePage = () => {
             </div>
 
             {/* Edit Button Card */}
-            <div className="flex flex-col items-center gap-4 animate-fade-in-up stagger-3">
-              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20 text-center">
-                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Edit3 className="w-7 h-7 text-white" />
+            <div className="flex flex-col items-center gap-4 animate-fade-in-up stagger-3 relative z-10">
+              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/20 text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <Edit3 className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Edit Profile</h3>
-                <p className="text-primary-200 text-sm">Update your information</p>
+                <h3 className="text-lg font-bold text-white mb-1">Edit Profile</h3>
+                <p className="text-primary-200 text-xs">Update your info</p>
               </div>
-              <Button
-                variant="outline"
-                className="border-white/80 text-white hover:bg-white/20 w-full justify-center"
+              <button
                 onClick={() => setShowEditProfile(true)}
+                className="w-full px-6 py-3 bg-white/15 hover:bg-white/25 backdrop-blur-xl border border-white/30 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
               >
-                <Settings className="w-5 h-5 mr-2" />
+                <Settings className="w-4 h-4" />
                 Edit Profile
-              </Button>
+              </button>
+              <button
+                onClick={() => setShowUnblockPanel(true)}
+                className="w-full px-6 py-3 bg-rose-500/20 hover:bg-rose-500/30 backdrop-blur-xl border border-rose-300/30 rounded-xl text-rose-200 font-semibold flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
+              >
+                <ShieldOff className="w-4 h-4" />
+                Unblock Users
+              </button>
             </div>
           </div>
         </div>
@@ -516,6 +525,10 @@ const ProfilePage = () => {
       <EditProfileModal
         show={showEditProfile}
         onClose={() => setShowEditProfile(false)}
+      />
+      <UnblockPanel
+        isOpen={showUnblockPanel}
+        onClose={() => setShowUnblockPanel(false)}
       />
     </div>
   );

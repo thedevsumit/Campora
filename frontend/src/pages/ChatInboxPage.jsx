@@ -65,7 +65,7 @@ const ChatInboxPage = () => {
             .catch(() => {});
         }
       })
-      .catch(() => console.error("Failed to load chats"))
+      .catch(() =>{})
       .finally(() => setIsLoading(false));
   }, []);
 

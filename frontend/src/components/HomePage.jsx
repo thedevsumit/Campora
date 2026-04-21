@@ -9,8 +9,17 @@ import { useClubStore } from "../store/useClubStore";
 import { useEventStore } from "../store/useEventStore";
 import { userAuthStore } from "../store/useAuthStore";
 import {
-  Sparkles, Users, Calendar, LayoutGrid, ArrowRight,
-  TrendingUp, Star, ChevronRight, Zap, Globe, Rocket
+  Sparkles,
+  Users,
+  Calendar,
+  LayoutGrid,
+  ArrowRight,
+  TrendingUp,
+  Star,
+  ChevronRight,
+  Zap,
+  Globe,
+  Rocket,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -738,9 +747,7 @@ export default function HomePage() {
                 {/* Event Image */}
                 <div className="relative h-52 overflow-hidden">
                   <img
-                    src={
-                      getImageUrl(event.coverImage)
-                    }
+                    src={getImageUrl(event.coverImage)}
                     alt={event.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />

@@ -51,7 +51,6 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
 initializePassport(passport);
 app.use(passport.initialize());
@@ -85,7 +84,6 @@ app.use("/api/feed", require("./routes/feed.route"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error("❌ Server Error:", err);
   res.status(500).json({ message: err.message || "Internal server error" });
 });
 
@@ -104,16 +102,12 @@ const io = new Server(server, {
 const onlineUsers = new Map();
 
 io.on("connection", (socket) => {
-  console.log("🟢 Socket connected:", socket.id);
-
   socket.on("join", (userId) => {
     socket.join(userId);
-    // Mark user online and notify their contacts
     if (!onlineUsers.has(userId)) {
       onlineUsers.set(userId, new Set());
     }
     onlineUsers.get(userId).add(socket.id);
-    // Broadcast online status to everyone in this user's room (通知他们的聊天联系人)
     io.emit("userStatus", { userId, status: "online" });
   });
 
@@ -122,8 +116,6 @@ io.on("connection", (socket) => {
   socket.on("joinNotifications", (userId) => { socket.join("notifications_" + userId); });
 
   socket.on("disconnect", () => {
-    console.log("🔴 Socket disconnected:", socket.id);
-    // Remove this socket from all user sessions
     for (const [userId, sockets] of onlineUsers.entries()) {
       sockets.delete(socket.id);
       if (sockets.size === 0) {
@@ -137,7 +129,6 @@ io.on("connection", (socket) => {
 app.set("io", io);
 
 server.listen(process.env.PORT, "0.0.0.0", () => {
-  console.log("🚀 Server running on port:", process.env.PORT);
   connectDB();
   scheduleMidnightRender(null);
 });

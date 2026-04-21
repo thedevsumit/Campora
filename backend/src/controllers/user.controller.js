@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const { uploadToCloudinary } = require("../middleware/multer.middleware");
 
 /* =========================
    UPDATE PROFILE
@@ -11,7 +12,11 @@ const updateProfile = async (req, res) => {
     if (fullName) updateData.fullName = fullName.trim();
     if (dept) updateData.dept = dept.trim();
     if (about) updateData.about = about.trim();
-    if (req.file) updateData.profilePic = `/uploads/${req.file.filename}`;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.path);
+      updateData.profilePic = result.secure_url;
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user._id,

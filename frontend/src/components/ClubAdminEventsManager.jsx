@@ -152,7 +152,6 @@ export default function ClubAdminEventsManager({ clubId, canCreateEvents = true 
       const res = await axiosInstance.get(`/events/${event._id}/registrations`);
       setParticipants(res.data.registrations || []);
     } catch (err) {
-      console.error("Failed to load participants:", err);
     } finally {
       setLoadingParticipants(false);
     }

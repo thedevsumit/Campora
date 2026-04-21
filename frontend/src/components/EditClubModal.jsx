@@ -4,7 +4,13 @@ import { getImageUrl } from "../lib/utils";
 import Button from "./ui/Button";
 import { X, Image, Settings } from "lucide-react";
 
-export default function EditClubModal({ show, onClose, clubData, clubId, onUpdated }) {
+export default function EditClubModal({
+  show,
+  onClose,
+  clubData,
+  clubId,
+  onUpdated,
+}) {
   const { updateClub, isUpdatingClub } = useClubStore();
 
   const [form, setForm] = useState({
@@ -68,7 +74,8 @@ export default function EditClubModal({ show, onClose, clubData, clubId, onUpdat
     }
   };
 
-  const displayIcon = iconPreview || (currentIcon ? getImageUrl(currentIcon) : null);
+  const displayIcon =
+    iconPreview || (currentIcon ? getImageUrl(currentIcon) : null);
 
   return (
     <div
@@ -90,10 +97,14 @@ export default function EditClubModal({ show, onClose, clubData, clubId, onUpdat
                 <div className="p-1.5 bg-white/20 rounded-lg">
                   <Settings className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-white/80 text-xs font-medium">Club Settings</span>
+                <span className="text-white/80 text-xs font-medium">
+                  Club Settings
+                </span>
               </div>
               <h2 className="text-xl font-bold text-white">Edit Club</h2>
-              <p className="text-primary-100 text-xs mt-0.5">Update your club details</p>
+              <p className="text-primary-100 text-xs mt-0.5">
+                Update your club details
+              </p>
             </div>
             <button
               onClick={onClose}
@@ -106,7 +117,6 @@ export default function EditClubModal({ show, onClose, clubData, clubId, onUpdat
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-
           {/* Club Icon / Profile Photo */}
           <div className="flex flex-col items-center">
             <label className="cursor-pointer group" htmlFor="club-icon-input">
@@ -125,7 +135,9 @@ export default function EditClubModal({ show, onClose, clubData, clubId, onUpdat
                 ) : (
                   <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800 group-hover:border-primary-400 transition-colors">
                     <Image className="w-7 h-7 text-slate-400 group-hover:text-primary-500 transition-colors mb-1" />
-                    <span className="text-xs text-slate-400 group-hover:text-primary-500 transition-colors">Change</span>
+                    <span className="text-xs text-slate-400 group-hover:text-primary-500 transition-colors">
+                      Change
+                    </span>
                   </div>
                 )}
               </div>
@@ -147,7 +159,9 @@ export default function EditClubModal({ show, onClose, clubData, clubId, onUpdat
                 Remove photo
               </button>
             )}
-            <p className="text-xs text-slate-400 mt-1">Click to upload club photo</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Click to upload club photo
+            </p>
           </div>
 
           {/* Club Name */}

@@ -178,15 +178,12 @@ export default function PrivateChatPage() {
     socket.emit("join", authUser._id);
 
     const messageHandler = (msg) => {
-      console.log("MSG received:", msg);
       // Ignore if message is from self or auth not loaded
-      if (!authUser?._id) { console.log("no auth"); return; }
-      if (!msg.sender?._id) { console.log("no sender"); return; }
+      if (!authUser?._id) { return; }
+      if (!msg.sender?._id) {  return; }
 
       const senderId = msg.sender._id.toString();
-      console.log("senderId:", senderId, "authUserId:", authUser._id.toString());
       const isOwnMessage = senderId === authUser._id.toString();
-      console.log("isOwnMessage:", isOwnMessage);
       if (isOwnMessage) return;
 
       // Add message to chat
@@ -195,7 +192,6 @@ export default function PrivateChatPage() {
       // Rate limit: only notify once per minute
       const now = Date.now();
       if (now - lastNotifRef.current < NOTIFICATION_COOLDOWN) {
-        console.log("Notification suppressed (rate limit)", { timeSinceLast: now - lastNotifRef.current });
         return;
       }
 
@@ -215,7 +211,6 @@ export default function PrivateChatPage() {
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.3);
       } catch (e) {
-        console.error("Audio error:", e);
       }
 
       // Add to notification store
@@ -354,7 +349,6 @@ export default function PrivateChatPage() {
     } catch (err) {
       setMessages((prev) => prev.filter((m) => m._id !== tempMessage._id));
       setText(content);
-      console.error("Failed to send message:", err);
     }
   };
 

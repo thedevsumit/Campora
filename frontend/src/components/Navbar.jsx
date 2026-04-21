@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { userAuthStore } from "../store/useAuthStore";
+import { getImageUrl } from "../lib/utils";
 import NotificationBell from "./NotificationBell";
 import { Home, Users, Calendar, LayoutGrid, MessageCircle, BarChart3, Shield, Menu, X, LogOut, User, Settings, ChevronDown, Rss, ArrowRight } from "lucide-react";
 
@@ -114,7 +115,7 @@ export default function Navbar() {
               >
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold shadow-lg">
                   {authUser?.profilePic ? (
-                    <img src={`${import.meta.env.VITE_API_URL?.replace("/api", "")}${authUser.profilePic}`} alt={authUser.fullName} className="w-full h-full object-cover rounded-xl" />
+                    <img src={getImageUrl(authUser.profilePic)} alt={authUser.fullName} className="w-full h-full object-cover rounded-xl" />
                   ) : (
                     <span>{authUser?.fullName?.[0]}</span>
                   )}

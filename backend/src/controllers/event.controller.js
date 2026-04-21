@@ -2,6 +2,7 @@ const path = require("path");
 const Event = require("../models/event.model");
 const Club = require("../models/club.model");
 const Notification = require("../models/notification.model");
+const { uploadToCloudinary, uploadBufferToCloudinary } = require("../middleware/multer.middleware");
 
 /* ================= CREATE EVENT (ORGANIZER) ================= */
 const createEvent = async (req, res) => {
@@ -24,16 +25,15 @@ const createEvent = async (req, res) => {
     // Handle cover image
     let coverImageUrl = "";
     if (req.file) {
-      coverImageUrl = `/uploads/${req.file.filename}`;
+      const result = await uploadToCloudinary(req.file.path);
+      coverImageUrl = result.secure_url;
     } else if (req.body.coverImage && req.body.coverImage.startsWith("data:")) {
       // Handle base64 images
       try {
         const base64Data = req.body.coverImage.split(",")[1];
         const buffer = Buffer.from(base64Data, "base64");
-        const filename = `event_${Date.now()}.jpg`;
-        const filepath = path.join(__dirname, "../../uploads", filename);
-        require("fs").writeFileSync(filepath, buffer);
-        coverImageUrl = `/uploads/${filename}`;
+        const result = await uploadBufferToCloudinary(buffer);
+        coverImageUrl = result.secure_url;
       } catch (imgErr) {
         console.error("Image processing error:", imgErr);
       }

@@ -444,7 +444,7 @@ export default function CreateClubPage() {
             isOpen={showSuccessModal}
             onClose={handleSuccessClose}
             type="success"
-            title="Club Created!"
+            title="Club Request Sended!"
             subtitle="Your club"
             highlightText={`"${formData.clubName}"`}
             buttonText="View My Clubs"

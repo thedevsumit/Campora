@@ -33,7 +33,7 @@ const UserProfilePage = () => {
     axiosInstance
       .get(`/users/${userId}/profile`)
       .then((res) => setUser(res.data.user))
-      .catch(() => console.error("Failed to load profile"))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -44,7 +44,6 @@ const UserProfilePage = () => {
       setShowPopup(false);
       alert("Chat request sent!");
     } catch (err) {
-      console.error(err);
       alert("Failed to send request");
     } finally {
       setSending(false);

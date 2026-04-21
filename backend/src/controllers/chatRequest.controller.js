@@ -1,5 +1,16 @@
 const ChatRequest = require("../models/chatRequest.model");
+const BlockedUser = require("../models/blockedUser.model");
 const sendNotification = require("../lib/sendNotification");
+
+const isBlocked = async (userA, userB) => {
+  const block = await BlockedUser.findOne({
+    $or: [
+      { blocker: userA, blocked: userB },
+      { blocker: userB, blocked: userA },
+    ],
+  });
+  return !!block;
+};
 
 // ================= SEND CHAT REQUEST =================
 const sendChatRequest = async (req, res) => {
@@ -9,6 +20,12 @@ const sendChatRequest = async (req, res) => {
 
     if (senderId.toString() === receiverId) {
       return res.status(400).json({ message: "Cannot DM yourself" });
+    }
+
+    // Check if either user has blocked the other (isBlocked is already bidirectional)
+    const blocked = await isBlocked(senderId, receiverId);
+    if (blocked) {
+      return res.status(403).json({ message: "Cannot send request - block exists between users" });
     }
 
     const existing = await ChatRequest.findOne({
@@ -64,7 +81,16 @@ const getIncomingRequests = async (req, res) => {
       status: "pending",
     }).populate("sender", "fullName profilePic");
 
-    res.json({ requests });
+    // Filter out requests from blocked users
+    const filteredRequests = [];
+    for (const req of requests) {
+      const isReqBlocked = await isBlocked(req.receiver, req.sender._id);
+      if (!isReqBlocked) {
+        filteredRequests.push(req);
+      }
+    }
+
+    res.json({ requests: filteredRequests });
   } catch (err) {
     console.error("❌ getIncomingRequests error:", err);
     res.status(500).json({ message: "Failed to fetch requests" });

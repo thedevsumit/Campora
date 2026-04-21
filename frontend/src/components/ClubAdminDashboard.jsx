@@ -73,7 +73,6 @@ export default function ClubAdminDashboard() {
         joinedAt: m.joinedAt ? new Date(m.joinedAt).toISOString().split("T")[0] : "",
       })));
     } catch (e) {
-      console.error("Error mapping admin club data:", e);
     }
     setIsLoading(false);
   }, [adminClub]);
@@ -124,7 +123,6 @@ export default function ClubAdminDashboard() {
       setAnnouncementImagePreview(null);
       toast.success("Announcement published!");
     } catch (error) {
-      console.error(error);
     } finally {
       setSending(false);
     }

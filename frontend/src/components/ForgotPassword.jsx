@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, ArrowLeft, Loader } from 'lucide-react';
-import { toast } from 'react-toastify';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Mail, Lock, ArrowRight, ArrowLeft, Loader } from "lucide-react";
+import { toast } from "react-toastify";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1);
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendOtp = async (e) => {
@@ -91,7 +91,9 @@ export default function ForgotPassword() {
             <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/30">
               <span className="text-white font-bold text-2xl">C</span>
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent">Campora</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent">
+              Campora
+            </span>
           </Link>
 
           <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">
@@ -148,7 +150,9 @@ export default function ForgotPassword() {
                     <input
                       type="text"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
                       placeholder="Enter 6-digit OTP"
                       className="w-full pl-4 pr-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
                       maxLength={6}
@@ -218,8 +222,13 @@ export default function ForgotPassword() {
             )}
 
             <div className="text-center pt-4">
-              <span className="text-sm text-slate-500">Remember your password? </span>
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-semibold text-sm">
+              <span className="text-sm text-slate-500">
+                Remember your password?{" "}
+              </span>
+              <Link
+                to="/login"
+                className="text-primary-600 hover:text-primary-700 font-semibold text-sm"
+              >
                 Sign In
               </Link>
             </div>

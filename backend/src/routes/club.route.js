@@ -2,8 +2,6 @@ const express = require("express");
 const protectRoute = require("../middleware/auth.middleware");
 const upload = require("../middleware/multer.middleware");
 const { announcementCreateLimiter } = require("../middleware/rateLimit.middleware");
-console.log("CLUB ROUTES REGISTERED");
-
 
 const {
   createClub,

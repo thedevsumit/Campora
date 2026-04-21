@@ -4,6 +4,7 @@ const Club = require("../models/club.model");
 const User = require("../models/user.model");
 const JoinRequest = require("../models/joinRequest.model");
 const sendNotification = require("../lib/sendNotification");
+const { uploadToCloudinary } = require("../middleware/multer.middleware");
 
 /* =========================
    CREATE CLUB
@@ -23,11 +24,17 @@ const createClub = async (req, res) => {
       return res.status(409).json({ message: "Club already exists" });
     }
 
+    let clubIconUrl = "";
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.path);
+      clubIconUrl = result.secure_url;
+    }
+
     const club = await Club.create({
       clubName: clubName.trim(),
       description: description.trim(),
       createdBy: req.user._id,
-      clubIcon: req.file ? `/uploads/${req.file.filename}` : "",
+      clubIcon: clubIconUrl,
       members: [{ user: req.user._id, role: "admin" }],
     });
 
@@ -110,7 +117,10 @@ const updateClub = async (req, res) => {
 
     if (clubName) club.clubName = clubName.trim();
     if (description) club.description = description.trim();
-    if (req.file) club.clubIcon = `/uploads/${req.file.filename}`;
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.path);
+      club.clubIcon = result.secure_url;
+    }
 
     await club.save();
 
@@ -590,15 +600,15 @@ const createAnnouncement = async (req, res) => {
     // Handle image upload
     let imageUrl = "";
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
+      const result = await uploadToCloudinary(req.file.path);
+      imageUrl = result.secure_url;
     } else if (image && image.startsWith("data:")) {
       // Handle base64 images
       const base64Data = image.split(",")[1];
       const buffer = Buffer.from(base64Data, "base64");
-      const filename = `announcement_${Date.now()}.jpg`;
-      const filepath = path.join(__dirname, "../../uploads", filename);
-      require("fs").writeFileSync(filepath, buffer);
-      imageUrl = `/uploads/${filename}`;
+      const { uploadBufferToCloudinary } = require("../middleware/multer.middleware");
+      const result = await uploadBufferToCloudinary(buffer);
+      imageUrl = result.secure_url;
     } else if (image) {
       imageUrl = image;
     }

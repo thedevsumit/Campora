@@ -39,7 +39,6 @@ authRoutes.get("/google/callback",
       failureRedirect: `${FRONTEND_URL}/login?error=oauth_failed`,
     }, (err, user) => {
       if (err || !user) {
-        console.error("Google OAuth Error:", err);
         return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
       }
       const token = signToken(user); 

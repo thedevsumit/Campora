@@ -6,6 +6,8 @@ const {
   sendMessage,
   sendImageMessage,
   blockUser,
+  unblockUser,
+  getBlockedUsers,
 } = require("../controllers/privateChat.controller");
 
 const privateRouter = express.Router();
@@ -14,5 +16,7 @@ privateRouter.get("/messages/:userId", protectRoute, getMessages);
 privateRouter.post("/messages/:userId", protectRoute, sendMessage);
 privateRouter.post("/messages/:userId/image", protectRoute, upload.single("image"), sendImageMessage);
 privateRouter.post("/block/:userId", protectRoute, blockUser);
+privateRouter.post("/unblock/:userId", protectRoute, unblockUser);
+privateRouter.get("/blocked", protectRoute, getBlockedUsers);
 
 module.exports = privateRouter;

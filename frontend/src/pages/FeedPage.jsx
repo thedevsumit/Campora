@@ -175,7 +175,6 @@ const AnimatedSVG = ({ type }) => {
 const EventCard = ({ item, clubStatus, onClubClick }) => {
   const navigate = useNavigate();
   
-  console.log("Event item:", item.image); 
   
   return (
     <div className="group relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-500 hover:-translate-y-1">
@@ -409,11 +408,9 @@ export default function FeedPage() {
   const fetchFeed = async () => {
     try {
       const res = await axiosInstance.get("/feed");
-      console.log("res" , res.data)
       setFeed(res.data.feed || []);
       setMyClubs(res.data.myClubs || []);
     } catch (err) {
-      console.error("Feed fetch error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -430,7 +427,6 @@ export default function FeedPage() {
   const filteredFeed = selectedClubId
     ? feed.filter((item) => item.club?._id === selectedClubId)
     : feed;
-  console.log("Ff",feed)
   const selectedClubData = myClubs.find((c) => c._id === selectedClubId);
 
   const getClubAdminStatus = (club) => {

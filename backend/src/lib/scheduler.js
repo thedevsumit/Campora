@@ -9,8 +9,6 @@ function scheduleMidnightRender(io) {
 
   const msUntilMidnight = midnight.getTime() - now.getTime();
 
-  console.log(`⏰ Scheduler: Next midnight render in ${Math.round(msUntilMidnight / 1000 / 60)} minutes`);
-
   setTimeout(async () => {
     await renderScheduledResources(io);
     setInterval(async () => {
@@ -21,8 +19,6 @@ function scheduleMidnightRender(io) {
 
 async function renderScheduledResources(io) {
   try {
-    console.log("🌙 Midnight resource render triggered");
-
     const scheduledResources = await Resource.find({
       isScheduledResource: true,
       isActive: true,
@@ -30,7 +26,6 @@ async function renderScheduledResources(io) {
     }).sort({ scheduledSlot: 1 }).limit(SCHEDULED_RESOURCE_COUNT);
 
     if (scheduledResources.length === 0) {
-      console.log("📭 No scheduled resources found to render");
       return;
     }
 
@@ -40,8 +35,6 @@ async function renderScheduledResources(io) {
       { _id: { $in: resourceIds } },
       { lastRenderedAt: new Date() }
     );
-
-    console.log(`✅ Rendered ${scheduledResources.length} scheduled resources`);
 
     if (io) {
       io.emit("scheduledResourcesUpdated", {
@@ -63,7 +56,7 @@ async function renderScheduledResources(io) {
 
     return scheduledResources;
   } catch (error) {
-    console.error("❌ Error rendering scheduled resources:", error);
+    // Silent failure for scheduled task
   }
 }
 

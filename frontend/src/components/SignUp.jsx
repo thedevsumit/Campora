@@ -36,11 +36,9 @@ export default function SignUpPage() {
       const resp = await axiosInstance.post("/auth/sendOtp", {
         email: formData.email,
       });
-      console.log(resp.data);
       setIsOtpSent(true);
       alert("OTP sent to your email!");
     } catch (err) {
-      console.log(err);
       alert(err?.response?.data?.message || "Failed to send OTP");
     } finally {
       setIsLoadingOtp(false);
@@ -64,7 +62,6 @@ export default function SignUpPage() {
       signupAuth(payload);
       setIsOtpVerified(true);
     } catch (err) {
-      console.log(err);
       alert(err?.response?.data?.message || "Invalid OTP / Signup Failed");
     } finally {
       setIsVerifyingOtp(false);
