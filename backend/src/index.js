@@ -38,7 +38,7 @@ const FRONTEND_URL = isProd
   : "http://localhost:5173";
 
 const app = express();
-
+app.set("trust proxy", 1);
 app.use(cookieParser());
 app.use(
   cors({
