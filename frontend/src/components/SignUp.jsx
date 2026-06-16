@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { userAuthStore } from "../store/useAuthStore";
-import { axiosInstance } from "../lib/axios";
 import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
-import { Mail, Lock, User, GraduationCap, Calendar, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, User, GraduationCap, Calendar, Sparkles, ArrowRight } from "lucide-react";
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -17,63 +16,16 @@ export default function SignUpPage() {
   const [year, setYear] = useState("");
   const navigate = useNavigate();
   const { signupAuth, isSigningUp } = userAuthStore();
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isOtpVerified, setIsOtpVerified] = useState(false);
-  const [isLoadingOtp, setIsLoadingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
-  const handleGetOtp = async () => {
-    if (!formData.email) {
-      alert("Please enter your email address");
-      return;
-    }
-
-    try {
-      setIsLoadingOtp(true);
-      const resp = await axiosInstance.post("/auth/sendOtp", {
-        email: formData.email,
-      });
-      setIsOtpSent(true);
-      alert("OTP sent to your email!");
-    } catch (err) {
-      alert(err?.response?.data?.message || "Failed to send OTP");
-    } finally {
-      setIsLoadingOtp(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp) {
-      alert("Please enter the OTP");
-      return;
-    }
-
-    try {
-      setIsVerifyingOtp(true);
-      const payload = {
-        ...formData,
-        otp: otp,
-        dept,
-        year,
-      };
-      signupAuth(payload);
-      setIsOtpVerified(true);
-    } catch (err) {
-      alert(err?.response?.data?.message || "Invalid OTP / Signup Failed");
-    } finally {
-      setIsVerifyingOtp(false);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!isOtpVerified) {
-      alert("Please verify your email with OTP first");
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+    await signupAuth({ ...formData, dept, year });
     navigate("/");
+  };
+
+  const handleGoogleLogin = () => {
+    alert("Coming soon!");
   };
 
   const years = ["1", "2", "3", "4"];
@@ -123,35 +75,7 @@ export default function SignUpPage() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="your@email.com"
-              disabled={isOtpVerified}
             />
-
-            {/* OTP Verification - shows after OTP sent */}
-            {isOtpSent && !isOtpVerified && (
-              <div className="space-y-3 p-5 bg-primary-50 dark:bg-primary-900/20 rounded-2xl border border-primary-100 dark:border-primary-800">
-                <Input
-                  label="Enter OTP"
-                  type="text"
-                  icon={CheckCircle2}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  placeholder="6-digit OTP"
-                  maxLength={6}
-                />
-                <Button onClick={handleVerifyOtp} isLoading={isVerifyingOtp} size="sm" className="w-full">
-                  {isVerifyingOtp ? "Verifying..." : "Verify OTP"}
-                </Button>
-              </div>
-            )}
-
-            {isOtpVerified && (
-              <div className="flex items-center gap-3 p-4 bg-secondary-50 dark:bg-secondary-900/20 rounded-2xl border border-secondary-100 dark:border-secondary-800">
-                <CheckCircle2 className="w-5 h-5 text-secondary-600" />
-                <span className="text-secondary-700 dark:text-secondary-300 font-medium">
-                  Email verified successfully!
-                </span>
-              </div>
-            )}
 
             {/* Password */}
             <Input
@@ -227,13 +151,12 @@ export default function SignUpPage() {
             </label>
 
             <Button
-              onClick={isOtpSent ? (isOtpVerified ? handleSubmit : handleVerifyOtp) : handleGetOtp}
-              disabled={!isOtpVerified && (!formData.email || (!isOtpSent && agreedToPolicy === false))}
-              isLoading={isOtpSent && isOtpVerified ? isSigningUp : isLoadingOtp}
+              onClick={handleSubmit}
+              isLoading={isSigningUp}
               className="w-full"
               size="xl"
             >
-              {!isOtpSent ? (isLoadingOtp ? "Sending OTP..." : "Send OTP") : isOtpVerified ? (isSigningUp ? "Creating Account..." : "Create Account") : (isVerifyingOtp ? "Verifying..." : "Verify Email")}
+              {isSigningUp ? "Creating Account..." : "Create Account"}
               <ArrowRight className="w-5 h-5" />
             </Button>
 
@@ -249,7 +172,8 @@ export default function SignUpPage() {
 
             {/* Google Login */}
             <button
-              onClick={() => window.location.href = `${API_URL}/auth/google`}
+              type="button"
+              onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 border-2 border-slate-200 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-slate-700 dark:text-slate-300"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">

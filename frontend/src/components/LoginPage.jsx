@@ -5,8 +5,6 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import { Mail, Lock, ArrowRight, Users, Calendar, LayoutGrid, Sparkles } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const { loginAuth, isLoggingIn } = userAuthStore();
@@ -16,7 +14,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`;
+    alert("Coming soon!");
   };
 
   const features = [

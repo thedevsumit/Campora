@@ -1,7 +1,6 @@
 const bcrpyt = require("bcryptjs");
 const generateToken = require("../lib/utils");
 const User = require("../models/user.model");
-const sendOtpMail = require("../lib/sendMail");
 const Otp = require("../models/otp.model");
 
 const sendOtp = async (req, res) => {
@@ -20,8 +19,6 @@ const sendOtp = async (req, res) => {
     await Otp.deleteMany({ email });
 
     await Otp.create({ email, otp, expiresAt });
-
-    await sendOtpMail(email, otp);
 
     return res.status(200).json({ message: "OTP sent successfully" });
   } catch (err) {
@@ -101,10 +98,10 @@ const resetPassword = async (req, res) => {
   }
 };
 const signup = async (req, res) => {
-  const { fullName, password, email, profilePic, dept, year, otp } = req.body;
+  const { fullName, password, email, profilePic, dept, year } = req.body;
 
   try {
-    if (!fullName || !password || !email || !dept || !year || !otp) {
+    if (!fullName || !password || !email || !dept || !year) {
       return res.status(400).json({
         msg: "All fields are not filled",
       });
@@ -123,27 +120,6 @@ const signup = async (req, res) => {
       });
     }
 
-    const otpData = await Otp.findOne({ email });
-
-    if (!otpData) {
-      return res.status(400).json({
-        msg: "OTP not found or expired",
-      });
-    }
-
-    if (otpData.expiresAt < new Date()) {
-      await Otp.deleteMany({ email });
-      return res.status(400).json({
-        msg: "OTP expired, resend OTP",
-      });
-    }
-
-    if (otpData.otp !== otp) {
-      return res.status(400).json({
-        msg: "Invalid OTP",
-      });
-    }
-
     const salt = await bcrpyt.genSalt(10);
     const hashPass = await bcrpyt.hash(password, salt);
 
@@ -158,8 +134,6 @@ const signup = async (req, res) => {
 
     const token = generateToken(newUser._id, res);
     await newUser.save();
-
-    await Otp.deleteMany({ email });
 
     return res.status(201).json({
       _id: newUser._id,
