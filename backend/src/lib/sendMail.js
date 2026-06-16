@@ -1,31 +1,35 @@
 const nodemailer = require("nodemailer");
 
 const sendOtpMail = async (email, otp, type = "verify") => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-  });
+  try {
+    console.log("MAIL_USER:", process.env.MAIL_USER);
+    console.log("MAIL_PASS exists:", !!process.env.MAIL_PASS);
 
-  const isReset = type === "reset";
-  const subject = isReset ? "Campora Password Reset Code" : "Your OTP Verification Code";
-  const heading = isReset ? "Campora Password Reset" : "Campora OTP Verification";
-  const message = isReset
-    ? "Your password reset code is:"
-    : "Your OTP is:";
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS,
+      },
+    });
 
-  await transporter.sendMail({
-    from: process.env.MAIL_USER,
-    to: email,
-    subject,
-    html: `
-      <h2>${heading}</h2>
-      <p>${message} <b style="font-size:18px;">${otp}</b></p>
-      <p>This code will expire in 5 minutes.</p>
-    `,
-  });
+    await transporter.verify();
+    console.log("SMTP verified");
+
+    const info = await transporter.sendMail({
+      from: process.env.MAIL_USER,
+      to: email,
+      subject: "OTP Verification",
+      html: `<h2>Your OTP is ${otp}</h2>`,
+    });
+
+    console.log("Mail sent:", info.messageId);
+
+    return info;
+  } catch (err) {
+    console.error("Nodemailer Error:", err);
+    throw err;
+  }
 };
 
 module.exports = sendOtpMail;
