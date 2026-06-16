@@ -4,13 +4,6 @@ const rateLimit = require("express-rate-limit");
 const otpLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 3,
-  message: {
-    message: "Too many OTP requests. Please try again after 15 minutes.",
-    retryAfter: Math.ceil(15 * 60),
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => req.body?.email || req.ip,
 });
 
 // Moderate limit for auth operations (5 requests per 15 minutes)
