@@ -12,6 +12,7 @@ const sendOtpMail = async (email, otp, type = "verify") => {
         pass: process.env.MAIL_PASS,
       },
     });
+console.log("Starting SMTP verify");
 
     await transporter.verify();
     console.log("SMTP verified");
