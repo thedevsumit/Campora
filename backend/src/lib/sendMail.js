@@ -19,15 +19,27 @@ const sendOtpMail = async (email, otp, type = "verify") => {
 });
 console.log("Starting SMTP verify");
 
-    await transporter.verify();
+   
     console.log("SMTP verified");
   console.log("Sending OTP to:", email);
-    const info = await transporter.sendMail({
-      from: process.env.MAIL_USER,
-      to: email,
-      subject: "OTP Verification",
-      html: `<h2>Your OTP is ${otp}</h2>`,
-    });
+   try {
+  console.log("Sending mail");
+
+  const info = await transporter.sendMail({
+    from: process.env.MAIL_USER,
+    to: email,
+    subject: "OTP Verification",
+    html: `<h2>Your OTP is ${otp}</h2>`,
+  });
+
+  console.log("Mail sent:", info.messageId);
+} catch (err) {
+  console.error("FULL ERROR:", err);
+  console.error("ERROR CODE:", err.code);
+  console.error("ERROR RESPONSE:", err.response);
+  console.error("ERROR MESSAGE:", err.message);
+  throw err;
+}
 
     console.log("Mail sent:", info.messageId);
 
